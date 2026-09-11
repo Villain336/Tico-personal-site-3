@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Nav } from "@/components/nav";
 import { Footer } from "@/components/footer";
+import { AskTicoLauncher } from "@/components/chat/ask-tico-launcher";
 import { site } from "@/content/site";
 
 const geistSans = Geist({
@@ -73,6 +74,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Nav />
         <main className="flex-1">{children}</main>
         <Footer />
+        <AskTicoLauncher />
       </body>
     </html>
   );
