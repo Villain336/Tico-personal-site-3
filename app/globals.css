@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+:root {
+  /* Paper + ink: the "clean & simple" half of the brand */
+  --background: #fbfaf6;
+  --foreground: #12121a;
+  --muted: #6b6b76;
+  --border: #e8e4d9;
+  --surface: #ffffff;
+
+  /* Bold accents: the "extreme creativity" half of the brand */
+  --brand-lime: #d7ff3e;
+  --brand-violet: #6d3cf5;
+  --brand-coral: #ff5b4a;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-surface: var(--surface);
+  --color-brand-lime: var(--brand-lime);
+  --color-brand-violet: var(--brand-violet);
+  --color-brand-coral: var(--brand-coral);
+
+  --font-sans: var(--font-geist-sans);
+  --font-display: var(--font-space-grotesk);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+.font-display {
+  font-family: var(--font-display), var(--font-sans), sans-serif;
+}
+
+/* Subtle noise/texture keeps the flat lime from feeling too corporate */
+.brand-gradient {
+  background: linear-gradient(
+    135deg,
+    var(--brand-lime) 0%,
+    #eaff9e 40%,
+    var(--brand-violet) 100%
+  );
+}
+
+::selection {
+  background: var(--brand-lime);
+  color: var(--foreground);
+}
