@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
 :root {
   /* Paper + ink: the "clean & simple" half of the brand */
@@ -12,6 +14,37 @@
   --brand-lime: #d7ff3e;
   --brand-violet: #6d3cf5;
   --brand-coral: #ff5b4a;
+
+  /* Gold, for the certification plaques */
+  --gold-light: #fff1b8;
+  --gold: #e6b31e;
+  --gold-dark: #8a6508;
+
+  /* shadcn semantic tokens, mapped onto the brand palette */
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface);
+  --popover-foreground: var(--foreground);
+  --primary: var(--foreground);
+  --primary-foreground: var(--background);
+  --secondary: #f1efe7;
+  --secondary-foreground: var(--foreground);
+  --muted-foreground: var(--muted);
+  --accent: #f1efe7;
+  --accent-foreground: var(--foreground);
+  --destructive: var(--brand-coral);
+  --input: var(--border);
+  --ring: var(--brand-violet);
+  --radius: 0.625rem;
+
+  /* Beautiful UI (beautifului.dev) tokens used by the chat components */
+  --ink: var(--foreground);
+  --ink-2: #4c4c57;
+  --ink-3: #8b8b95;
+  --line: var(--border);
+  --line-strong: #cfcbbf;
+  --field: #f4f2ea;
+  --hover: #ecebe3;
 }
 
 @theme inline {
@@ -23,23 +56,105 @@
   --color-brand-lime: var(--brand-lime);
   --color-brand-violet: var(--brand-violet);
   --color-brand-coral: var(--brand-coral);
+  --color-gold-light: var(--gold-light);
+  --color-gold: var(--gold);
+  --color-gold-dark: var(--gold-dark);
+
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-field: var(--field);
+  --color-hover: var(--hover);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
 
   --font-sans: var(--font-geist-sans);
   --font-display: var(--font-space-grotesk);
   --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-space-grotesk);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-control: 12px;
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(18, 18, 26, 0.08);
+  --shadow-overlay: 0 12px 40px rgba(18, 18, 26, 0.18);
+
+  --animate-pixel-on: pixel-on 650ms ease-in-out infinite;
+
+  @keyframes pixel-on {
+    0%,
+    100% {
+      opacity: 0.15;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+  @keyframes shimmer-text {
+    from {
+      background-position: 200% 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
+  }
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  }
 }
 
 .font-display {
-  font-family: var(--font-display), var(--font-sans), sans-serif;
+  font-family: var(--font-space-grotesk), var(--font-geist-sans), sans-serif;
 }
 
-/* Subtle noise/texture keeps the flat lime from feeling too corporate */
 .brand-gradient {
   background: linear-gradient(
     135deg,
@@ -47,6 +162,20 @@ body {
     #eaff9e 40%,
     var(--brand-violet) 100%
   );
+}
+
+/* Brushed-gold surface for the certification plaques */
+.gold-plaque {
+  background:
+    linear-gradient(
+      135deg,
+      var(--gold-light) 0%,
+      var(--gold) 35%,
+      #c9971a 50%,
+      var(--gold) 65%,
+      var(--gold-light) 100%
+    );
+  color: var(--gold-dark);
 }
 
 ::selection {
