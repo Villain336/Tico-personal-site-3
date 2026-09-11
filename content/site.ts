@@ -7,7 +7,7 @@ export const site = {
   description:
     "Tico Hamphill is a marketer, web & graphic designer, and founder of the marketing agency Launchabl. Explore his work, favorite tools, blog, and Star Glide — a Star of David vs. space birds arcade game.",
   socials: {
-    twitter: "https://twitter.com/",
+    twitter: "https://x.com/PushinSaas",
     instagram: "https://instagram.com/",
     linkedin: "https://www.linkedin.com/",
   },

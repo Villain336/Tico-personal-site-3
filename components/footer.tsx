@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { nav, site } from "@/content/site";
+import { TwitterButton } from "@/components/twitter-button";
 
 export function Footer() {
   return (
@@ -14,6 +15,9 @@ export function Footer() {
             </span>
             . Building this site out in the open.
           </p>
+          <div className="mt-4">
+            <TwitterButton size="sm" label="@PushinSaas" />
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm">
