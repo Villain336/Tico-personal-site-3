@@ -356,13 +356,13 @@ export function StarGlideGame() {
 
   return (
     <div ref={containerRef} className="mx-auto w-full max-w-[400px]">
-      <div className="mb-3 flex items-center justify-between text-sm">
+      <div className="mb-3 flex items-center justify-between text-sm text-white">
         <div className="flex gap-4">
           <span className="font-display font-bold">Score: {uiScore}</span>
-          <span className="text-muted">Level {uiLevel}</span>
+          <span className="text-white/70">Level {uiLevel}</span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-muted">Best: {bestScore}</span>
+          <span className="text-white/70">Best: {bestScore}</span>
           <button
             type="button"
             onClick={() => {
@@ -371,7 +371,7 @@ export function StarGlideGame() {
               setMuted(next);
               forceRender((n) => n + 1);
             }}
-            className="rounded-full border border-border px-3 py-1 text-xs font-medium"
+            className="rounded-full border border-white/30 px-3 py-1 text-xs font-medium hover:bg-white/10"
             aria-pressed={muted}
           >
             {muted ? "Unmute" : "Mute"}
@@ -379,7 +379,7 @@ export function StarGlideGame() {
         </div>
       </div>
 
-      <div className="relative overflow-hidden rounded-2xl border border-border shadow-sm">
+      <div className="relative overflow-hidden rounded-2xl border border-white/15 shadow-2xl">
         <canvas
           ref={canvasRef}
           onPointerDown={flap}
