@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 200" width="260" height="200">
+  <!-- die-cut white border -->
+  <rect x="6" y="18" width="248" height="164" rx="30" fill="#ffffff" transform="rotate(-4 130 100)"/>
+  <rect x="18" y="30" width="224" height="140" rx="22" fill="#d7ff3e" transform="rotate(-4 130 100)"/>
+  <!-- lightning bolt -->
+  <path d="M74 52 L112 52 L98 90 L124 90 L76 152 L88 104 L64 104 Z" fill="#12121a" transform="rotate(-4 130 100)"/>
+  <!-- label -->
+  <g transform="rotate(-4 130 100)">
+    <text x="146" y="92" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="26" fill="#12121a">ALWAYS</text>
+    <text x="146" y="124" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="26" fill="#6d3cf5">WIP</text>
+    <text x="146" y="148" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="12" fill="#12121a" letter-spacing="2">BUILT IN PUBLIC</text>
+  </g>
+</svg>

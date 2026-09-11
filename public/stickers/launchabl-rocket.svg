@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <!-- die-cut white border -->
+  <circle cx="120" cy="120" r="114" fill="#ffffff"/>
+  <circle cx="120" cy="120" r="102" fill="#6d3cf5"/>
+  <!-- stars -->
+  <circle cx="62" cy="78" r="3" fill="#ffffff" opacity="0.9"/>
+  <circle cx="176" cy="66" r="2.5" fill="#ffffff" opacity="0.8"/>
+  <circle cx="186" cy="132" r="2" fill="#ffffff" opacity="0.7"/>
+  <circle cx="52" cy="150" r="2.5" fill="#ffffff" opacity="0.7"/>
+  <!-- flame -->
+  <path d="M120 176 C106 168 100 154 104 138 C110 146 114 148 116 152 C118 140 122 134 130 128 C132 146 138 152 140 160 C142 170 132 178 120 176 Z" fill="#ff5b4a"/>
+  <path d="M120 170 C113 166 110 158 112 150 C116 156 118 158 119 160 C120 152 122 148 126 145 C127 154 130 158 131 162 C132 168 126 172 120 170 Z" fill="#d7ff3e"/>
+  <!-- rocket body -->
+  <path d="M120 44 C142 62 150 90 150 120 L150 140 L90 140 L90 120 C90 90 98 62 120 44 Z" fill="#ffffff" stroke="#12121a" stroke-width="4" stroke-linejoin="round"/>
+  <!-- fins -->
+  <path d="M90 118 L70 140 L90 140 Z" fill="#d7ff3e" stroke="#12121a" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M150 118 L170 140 L150 140 Z" fill="#d7ff3e" stroke="#12121a" stroke-width="4" stroke-linejoin="round"/>
+  <!-- window -->
+  <circle cx="120" cy="100" r="14" fill="#6d3cf5" stroke="#12121a" stroke-width="4"/>
+  <circle cx="115" cy="95" r="4" fill="#ffffff" opacity="0.8"/>
+  <!-- label -->
+  <text x="120" y="212" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="20" fill="#ffffff" letter-spacing="1">LAUNCHABL</text>
+</svg>

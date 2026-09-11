@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Button, Eyebrow } from "@/components/ui";
 import { TiltCard } from "@/components/tilt-card";
 import { HeroMotion } from "@/components/hero-motion";
+import { HomeStickers } from "@/components/home-stickers";
+import { TwitterButton } from "@/components/twitter-button";
 import { homeCopy } from "@/content/copy";
 
 export default function Home() {
@@ -13,7 +15,7 @@ export default function Home() {
           aria-hidden
           className="brand-gradient absolute -top-40 right-[-10%] h-96 w-96 rounded-full opacity-30 blur-3xl sm:h-[32rem] sm:w-[32rem]"
         />
-        <div className="mx-auto flex max-w-6xl flex-col items-start px-6 pt-20 pb-16 sm:pt-28">
+        <div className="mx-auto flex max-w-6xl flex-col items-start px-6 pt-20 pb-16 sm:pt-28 sm:pb-24">
           <HeroMotion>
             <Eyebrow>{homeCopy.eyebrow}</Eyebrow>
             <h1 className="font-display mt-4 max-w-3xl text-5xl font-bold tracking-tight sm:text-6xl">
@@ -22,16 +24,19 @@ export default function Home() {
             <p className="mt-6 max-w-xl text-lg text-muted">
               {homeCopy.sub}
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-8 flex flex-wrap items-center gap-3">
               <Button href={homeCopy.ctaPrimary.href}>
                 {homeCopy.ctaPrimary.label}
               </Button>
               <Button href={homeCopy.ctaSecondary.href} variant="secondary">
                 {homeCopy.ctaSecondary.label}
               </Button>
+              <TwitterButton />
             </div>
           </HeroMotion>
         </div>
+        {/* Peelable stickers — drag them around */}
+        <HomeStickers />
       </section>
 
       {/* World intro */}
