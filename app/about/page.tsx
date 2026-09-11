@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/ui";
+import { CredentialPlaques } from "@/components/credential-plaques";
+import { GoalsTimeline } from "@/components/goals-timeline";
 import { aboutCopy } from "@/content/copy";
 import { credentials } from "@/content/credentials";
 
@@ -16,9 +18,10 @@ export default function AboutPage() {
         heading={aboutCopy.heading}
         sub={aboutCopy.sub}
       />
-      <div className="mx-auto max-w-3xl px-6 pb-20">
-        <div className="grid gap-4 sm:grid-cols-3">
-          {["My Story", "Goals", "Accomplishments"].map((label) => (
+
+      <div className="mx-auto max-w-3xl px-6">
+        <div className="grid gap-4 sm:grid-cols-2">
+          {["My Story", "Accomplishments"].map((label) => (
             <div
               key={label}
               className="rounded-2xl border border-dashed border-border bg-surface p-6 text-center"
@@ -28,31 +31,30 @@ export default function AboutPage() {
             </div>
           ))}
         </div>
-
-        <div className="mt-10">
-          <h2 className="font-display text-xl font-bold">
-            Certifications & Badges
-          </h2>
-          {credentials.length === 0 ? (
-            <div className="mt-4 rounded-2xl border border-dashed border-border bg-surface p-8 text-center text-sm text-muted">
-              No badges yet — this section fills in automatically as
-              certifications are completed. Check back soon.
-            </div>
-          ) : (
-            <div className="mt-4 grid gap-4 sm:grid-cols-3">
-              {credentials.map((c) => (
-                <div
-                  key={c.name}
-                  className="rounded-2xl border border-border bg-surface p-5 text-center"
-                >
-                  <p className="font-display text-sm font-bold">{c.name}</p>
-                  <p className="mt-1 text-xs text-muted">{c.issuer}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
       </div>
+
+      {/* Goals — Aceternity timeline */}
+      <section className="mx-auto max-w-6xl px-6 pt-6">
+        <GoalsTimeline />
+      </section>
+
+      {/* Certifications & badges — gold glare-card plaques */}
+      <section className="mx-auto max-w-6xl px-6 pb-24">
+        <div className="mb-8 text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-violet">
+            Certifications & Badges
+          </p>
+          <h2 className="font-display mt-3 text-3xl font-bold tracking-tight">
+            The wall of gold.
+          </h2>
+          <p className="mt-3 text-sm text-muted">
+            {credentials.length === 0
+              ? "Plaques unlock as certifications and courses get completed. Hover to see them shine."
+              : "Every plaque here was earned. Hover to see them shine."}
+          </p>
+        </div>
+        <CredentialPlaques />
+      </section>
     </div>
   );
 }
