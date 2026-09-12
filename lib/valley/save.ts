@@ -1,0 +1,120 @@
+import type { AwayReport, Character, SaveData } from "./types";
+import {
+  CROPS,
+  CYCLE_SECONDS,
+  HOUSE,
+  MAP_H,
+  MAP_W,
+  OFFLINE_CAP_HOURS,
+  OFFLINE_RENT_RATE,
+  PLAYER,
+  SAVE_KEY,
+  SAVE_VERSION,
+  SIN,
+  START_COINS,
+  START_WHEAT,
+  TILE,
+} from "./config";
+
+export const ALTAR_TILE = { tx: Math.floor(MAP_W / 2) - 1, ty: Math.floor(MAP_H / 2) - 1 };
+
+export function newSave(character: Character): SaveData {
+  return {
+    version: SAVE_VERSION,
+    savedAt: Date.now(),
+    character,
+    day: 1,
+    clock: 0,
+    coins: START_COINS,
+    wheat: START_WHEAT,
+    grapes: 0,
+    sin: 0,
+    health: PLAYER.maxHealth,
+    hunger: 100,
+    prayer: 40,
+    level: 1,
+    xp: 0,
+    skillPoints: 0,
+    skills: { sword: 0, fleet: 0, faith: 0, fortitude: 0, steward: 0 },
+    autoSell: true,
+    buildings: [{ type: "altar", tx: ALTAR_TILE.tx, ty: ALTAR_TILE.ty, level: 1 }],
+    villagers: [],
+    player: { x: (ALTAR_TILE.tx + 1) * TILE, y: (ALTAR_TILE.ty + 4) * TILE },
+    stats: { kills: 0, redeemed: 0, fallen: 0, idolsSmashed: 0 },
+    tutorialStep: 0,
+    won: false,
+  };
+}
+
+export function loadSave(): SaveData | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(SAVE_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw) as SaveData;
+    if (!data || typeof data !== "object" || data.version !== SAVE_VERSION) return null;
+    if (!data.character || !Array.isArray(data.buildings)) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+export function writeSave(data: SaveData) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(SAVE_KEY, JSON.stringify({ ...data, savedAt: Date.now() }));
+  } catch {
+    // storage full or blocked: play on without persistence
+  }
+}
+
+export function clearSave() {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(SAVE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+/** Worldtime (seconds) for a save: used for crop growth. */
+export function worldTime(save: Pick<SaveData, "day" | "clock">) {
+  return (save.day - 1) * CYCLE_SECONDS + save.clock;
+}
+
+/**
+ * Apply elapsed real time since the last save (capped). Crops keep growing,
+ * rent accrues at half rate per dawn passed. No raids, no sin, no clock change.
+ */
+export function applyOfflineProgress(save: SaveData, now = Date.now()): { save: SaveData; report: AwayReport | null } {
+  const elapsedMs = Math.max(0, now - (save.savedAt ?? now));
+  const capped = Math.min(elapsedMs / 1000, OFFLINE_CAP_HOURS * 3600);
+  if (capped < 60) return { save, report: null };
+
+  const next: SaveData = { ...save, buildings: save.buildings.map((b) => ({ ...b })) };
+  const t = worldTime(save);
+  let cropsGrown = 0;
+  for (const b of next.buildings) {
+    if (b.type !== "farm" && b.type !== "vineyard") continue;
+    if ((b.stage ?? 0) >= 3) continue;
+    const grow = b.type === "farm" ? CROPS.wheat.growSeconds : CROPS.grapes.growSeconds;
+    const planted = b.plantedAt ?? t;
+    const stageAfter = Math.min(3, Math.floor(((t - planted + capped) / grow) * 3));
+    if (stageAfter === 3) cropsGrown++;
+    b.stage = stageAfter;
+  }
+
+  const dawns = Math.floor(capped / CYCLE_SECONDS);
+  const stewardMult = 1 + next.skills.steward * 0.15;
+  let rentPerDawn = 0;
+  for (const v of next.villagers) rentPerDawn += v.level * HOUSE.rentPerVillagerLevel * stewardMult;
+  if (next.sin > SIN.rentHalvedAt) rentPerDawn *= 0.5;
+  const rent = Math.floor(rentPerDawn * dawns * OFFLINE_RENT_RATE);
+  next.coins += rent;
+
+  return {
+    save: next,
+    report: { hours: Math.round((capped / 3600) * 10) / 10, cropsGrown, rent },
+  };
+}

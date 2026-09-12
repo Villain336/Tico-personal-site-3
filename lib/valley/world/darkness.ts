@@ -1,0 +1,111 @@
+import Phaser from "phaser";
+import { LIT_THRESHOLD, MAP_H, MAP_W, TILE, WORLD_H, WORLD_W } from "../config";
+
+export type LightSource = { tx: number; ty: number; radius: number };
+
+/**
+ * Per-tile light in 0..1 from all sources; fog alpha is the inverse. The fog
+ * is a Graphics object redrawn only when sources change; a separate overlay
+ * tints the whole world at night.
+ */
+export class Darkness {
+  light = new Float32Array(MAP_W * MAP_H);
+  private fog: Phaser.GameObjects.Graphics;
+  private night: Phaser.GameObjects.Rectangle;
+  litRatio = 0;
+
+  constructor(scene: Phaser.Scene) {
+    this.fog = scene.add.graphics().setDepth(1000);
+    this.night = scene.add
+      .rectangle(0, 0, WORLD_W, WORLD_H, 0x0b1030, 0)
+      .setOrigin(0, 0)
+      .setDepth(999);
+  }
+
+  recompute(sources: LightSource[]) {
+    this.light.fill(0);
+    for (const s of sources) {
+      const r = s.radius;
+      const x0 = Math.max(0, Math.floor(s.tx - r));
+      const x1 = Math.min(MAP_W - 1, Math.ceil(s.tx + r));
+      const y0 = Math.max(0, Math.floor(s.ty - r));
+      const y1 = Math.min(MAP_H - 1, Math.ceil(s.ty + r));
+      for (let ty = y0; ty <= y1; ty++) {
+        for (let tx = x0; tx <= x1; tx++) {
+          const d = Math.hypot(tx - s.tx, ty - s.ty);
+          const v = Math.max(0, 1 - d / r);
+          const i = ty * MAP_W + tx;
+          if (v > this.light[i]) this.light[i] = v;
+        }
+      }
+    }
+    let lit = 0;
+    for (let i = 0; i < this.light.length; i++) if (this.light[i] >= LIT_THRESHOLD) lit++;
+    this.litRatio = lit / this.light.length;
+    this.draw();
+  }
+
+  private draw() {
+    this.fog.clear();
+    for (let ty = 0; ty < MAP_H; ty++) {
+      for (let tx = 0; tx < MAP_W; tx++) {
+        const l = this.light[ty * MAP_W + tx];
+        const a = Math.pow(1 - l, 1.6) * 0.92;
+        if (a < 0.02) continue;
+        this.fog.fillStyle(0x07060d, a);
+        this.fog.fillRect(tx * TILE, ty * TILE, TILE, TILE);
+      }
+    }
+  }
+
+  /** 0 = full day, 1 = deepest night. */
+  setNight(t: number) {
+    this.night.setFillStyle(0x0b1030, 0.45 * t);
+  }
+
+  lightAt(x: number, y: number) {
+    const tx = Math.floor(x / TILE);
+    const ty = Math.floor(y / TILE);
+    if (tx < 0 || ty < 0 || tx >= MAP_W || ty >= MAP_H) return 0;
+    return this.light[ty * MAP_W + tx];
+  }
+
+  isDark(x: number, y: number) {
+    return this.lightAt(x, y) < LIT_THRESHOLD;
+  }
+
+  /** A random dark tile on the map edge (falls back to any edge tile). */
+  randomEdgeSpawn() {
+    const edge: { tx: number; ty: number }[] = [];
+    for (let tx = 0; tx < MAP_W; tx++) {
+      edge.push({ tx, ty: 0 }, { tx, ty: MAP_H - 1 });
+    }
+    for (let ty = 1; ty < MAP_H - 1; ty++) {
+      edge.push({ tx: 0, ty }, { tx: MAP_W - 1, ty });
+    }
+    const dark = edge.filter((t) => this.light[t.ty * MAP_W + t.tx] < LIT_THRESHOLD);
+    const pool = dark.length > 0 ? dark : edge;
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    return { x: pick.tx * TILE + TILE / 2, y: pick.ty * TILE + TILE };
+  }
+
+  /** Nearest dark tile center from a point (search outward in rings). */
+  nearestDark(x: number, y: number) {
+    const sx = Math.floor(x / TILE);
+    const sy = Math.floor(y / TILE);
+    for (let r = 1; r < Math.max(MAP_W, MAP_H); r++) {
+      for (let dy = -r; dy <= r; dy++) {
+        for (let dx = -r; dx <= r; dx++) {
+          if (Math.abs(dx) !== r && Math.abs(dy) !== r) continue;
+          const tx = sx + dx;
+          const ty = sy + dy;
+          if (tx < 0 || ty < 0 || tx >= MAP_W || ty >= MAP_H) continue;
+          if (this.light[ty * MAP_W + tx] < LIT_THRESHOLD) {
+            return { x: tx * TILE + TILE / 2, y: ty * TILE + TILE / 2 };
+          }
+        }
+      }
+    }
+    return { x: x < WORLD_W / 2 ? 8 : WORLD_W - 8, y: y < WORLD_H / 2 ? 8 : WORLD_H - 8 };
+  }
+}

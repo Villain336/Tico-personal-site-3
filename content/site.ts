@@ -26,6 +26,7 @@ export const nav = [
   { label: "Work", href: "/work" },
   { label: "Gems", href: "/gems" },
   { label: "Star Glide", href: "/star-glide" },
+  { label: "Shalom Valley", href: "/shalom-valley" },
   { label: "Roast Me", href: "/roast" },
   { label: "Gallery", href: "/gallery" },
   { label: "Blog", href: "/blog" },

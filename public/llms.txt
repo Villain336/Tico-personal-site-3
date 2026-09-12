@@ -2,8 +2,8 @@
 
 > Tico Hamphill is a marketer, web & graphic designer, and founder of the
 > marketing agency Launchabl. This site is his personal portfolio, resource
-> hub, blog, free tools (a landing-page roaster), and a small arcade game
-> called Star Glide.
+> hub, blog, free tools (a landing-page roaster), and two browser games:
+> Star Glide (arcade) and Shalom Valley (tycoon defense).
 
 Tico Hamphill (ticohamphill.com) is a personal brand and portfolio site. Tico
 runs Launchabl, a marketing agency for founders and businesses that want to
@@ -24,6 +24,11 @@ game.
 - [Star Glide](https://ticohamphill.com/star-glide): A free browser game —
   a Star of David navigating a field of birds in space, flappy-bird style,
   with increasing difficulty per level.
+- [Shalom Valley](https://ticohamphill.com/shalom-valley): A free
+  top-down pixel-art tycoon / defense game set in biblical times. Create a
+  character, grow and sell crops, build houses for villagers, pray at the
+  altar, and defend against robbers, tempters, deceivers, spirits and false
+  prophets. Progress saves in the browser and continues while away.
 - [Roast Me](https://ticohamphill.com/roast): A free AI landing-page
   roaster / audit tool. Paste a URL and get scored feedback on copy, design,
   conversion, and SEO/AIO, plus three prioritized fixes. No signup, nothing

@@ -1,0 +1,96 @@
+import Phaser from "phaser";
+import type { WorldMap } from "./map";
+
+export function dist(ax: number, ay: number, bx: number, by: number) {
+  const dx = ax - bx;
+  const dy = ay - by;
+  return Math.hypot(dx, dy);
+}
+
+/**
+ * A sprite with feet-anchored movement and tile collision. All walkers
+ * (player, villagers, enemies) share this so walls behave identically.
+ */
+export class Actor {
+  sprite: Phaser.GameObjects.Sprite;
+  bob = 0;
+  facing = 1; // 1 right, -1 left
+  ghost = false;
+
+  constructor(scene: Phaser.Scene, x: number, y: number, texture: string) {
+    this.sprite = scene.add.sprite(x, y, texture).setOrigin(0.5, 1);
+    this.sprite.setDepth(y);
+  }
+
+  get x() {
+    return this.sprite.x;
+  }
+  get y() {
+    return this.sprite.y;
+  }
+
+  setPosition(x: number, y: number) {
+    this.sprite.setPosition(x, y);
+    this.sprite.setDepth(y);
+  }
+
+  /** Move by a direction vector for one frame. Returns true if any movement happened. */
+  move(dx: number, dy: number, speed: number, dt: number, map: WorldMap): boolean {
+    const len = Math.hypot(dx, dy);
+    if (len < 0.001) {
+      this.bob = 0;
+      this.sprite.y = Math.round(this.sprite.y);
+      return false;
+    }
+    const nx = (dx / len) * speed * dt;
+    const ny = (dy / len) * speed * dt;
+    let moved = false;
+    const feetY = this.sprite.y - 3;
+
+    const tryX = this.sprite.x + nx;
+    if (map.isWalkablePoint(tryX, feetY, this.ghost)) {
+      this.sprite.x = tryX;
+      moved = true;
+    }
+    const tryY = this.sprite.y + ny;
+    if (map.isWalkablePoint(this.sprite.x, tryY - 3, this.ghost)) {
+      this.sprite.y = tryY;
+      moved = true;
+    }
+    if (Math.abs(dx) > 0.01) {
+      this.facing = dx > 0 ? 1 : -1;
+      this.sprite.setFlipX(this.facing < 0);
+    }
+    if (moved) {
+      this.bob += dt * 14;
+      this.sprite.setDepth(this.sprite.y);
+    }
+    return moved;
+  }
+
+  /** Steer toward a target point. Returns true when within `arrive` px. */
+  moveToward(tx: number, ty: number, speed: number, dt: number, map: WorldMap, arrive = 4): boolean {
+    const dx = tx - this.sprite.x;
+    const dy = ty - this.sprite.y;
+    const d = Math.hypot(dx, dy);
+    if (d <= arrive) return true;
+    const step = Math.min(d, speed * dt);
+    const moved = this.move(dx, dy, step / dt, dt, map);
+    if (!moved) {
+      // Nudge sideways when blocked so walkers slide around walls instead of freezing.
+      const side = Math.random() < 0.5 ? 1 : -1;
+      this.move(-dy * side, dx * side, speed, dt, map);
+    }
+    return false;
+  }
+
+  /** Walking bob: slight vertical squish. */
+  animate() {
+    const s = this.bob > 0 ? 1 + Math.sin(this.bob) * 0.05 : 1;
+    this.sprite.setScale(1, s);
+  }
+
+  destroy() {
+    this.sprite.destroy();
+  }
+}
