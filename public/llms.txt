@@ -2,7 +2,8 @@
 
 > Tico Hamphill is a marketer, web & graphic designer, and founder of the
 > marketing agency Launchabl. This site is his personal portfolio, resource
-> hub, blog, and a small arcade game called Star Glide.
+> hub, blog, free tools (a landing-page roaster), and a small arcade game
+> called Star Glide.
 
 Tico Hamphill (ticohamphill.com) is a personal brand and portfolio site. Tico
 runs Launchabl, a marketing agency for founders and businesses that want to
@@ -23,6 +24,10 @@ game.
 - [Star Glide](https://ticohamphill.com/star-glide): A free browser game —
   a Star of David navigating a field of birds in space, flappy-bird style,
   with increasing difficulty per level.
+- [Roast Me](https://ticohamphill.com/roast): A free AI landing-page
+  roaster / audit tool. Paste a URL and get scored feedback on copy, design,
+  conversion, and SEO/AIO, plus three prioritized fixes. No signup, nothing
+  stored.
 - [Blog](https://ticohamphill.com/blog): Articles on business, marketing,
   and technology.
 - [About Me](https://ticohamphill.com/about): Tico's story, goals, and
