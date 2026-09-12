@@ -17,21 +17,26 @@ export default function StarGlidePage() {
         heading={starGlideCopy.heading}
         sub={starGlideCopy.sub}
       />
-      <div className="mx-auto max-w-6xl px-6 pb-20">
-        <div className="overflow-hidden rounded-3xl border border-border shadow-lg">
+      <div className="mx-auto max-w-5xl px-6 pb-20">
+        {/* The vortex IS the playfield: the game draws on a transparent
+            canvas layered directly over it. */}
+        <div className="overflow-hidden rounded-3xl border border-border shadow-2xl">
           <Vortex
             backgroundColor="#0b0b16"
             baseHue={230}
-            rangeY={220}
-            particleCount={450}
+            rangeY={260}
+            particleCount={420}
             baseSpeed={0.1}
-            rangeSpeed={1.2}
-            containerClassName="min-h-[780px] w-full"
-            className="flex h-full w-full flex-col items-center justify-center px-4 py-10"
+            rangeSpeed={1.1}
+            containerClassName="h-[640px] w-full sm:h-[680px]"
+            className="h-full w-full"
           >
             <StarGlideGame />
           </Vortex>
         </div>
+        <p className="mt-4 text-center text-sm text-muted">
+          {starGlideCopy.instructions}
+        </p>
       </div>
     </div>
   );
