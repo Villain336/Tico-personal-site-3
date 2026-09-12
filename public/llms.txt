@@ -28,6 +28,8 @@ game.
   roaster / audit tool. Paste a URL and get scored feedback on copy, design,
   conversion, and SEO/AIO, plus three prioritized fixes. No signup, nothing
   stored.
+- [Gallery](https://ticohamphill.com/gallery): Tico's original art and
+  music — a browsable image gallery and a track player.
 - [Blog](https://ticohamphill.com/blog): Articles on business, marketing,
   and technology.
 - [About Me](https://ticohamphill.com/about): Tico's story, goals, and
