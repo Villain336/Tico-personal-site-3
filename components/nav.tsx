@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { nav, site } from "@/content/site";
+import { RadioDock } from "@/components/radio/radio-dock";
 
 export function Nav() {
   const pathname = usePathname();
@@ -12,14 +13,17 @@ export function Nav() {
   return (
     <header className="sticky top-0 z-50 border-b border-border/80 bg-background/90 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Link href="/" className="group flex items-baseline gap-2">
-          <span className="font-display text-lg font-bold tracking-tight">
-            {site.name}
-          </span>
-          <span className="hidden rounded-full bg-brand-lime px-2 py-0.5 text-xs font-semibold text-foreground sm:inline-block">
-            {site.agency}
-          </span>
-        </Link>
+        <div className="flex items-center gap-4">
+          <RadioDock />
+          <Link href="/" className="group flex items-baseline gap-2">
+            <span className="font-display text-lg font-bold tracking-tight">
+              {site.name}
+            </span>
+            <span className="hidden rounded-full bg-brand-lime px-2 py-0.5 text-xs font-semibold text-foreground sm:inline-block">
+              {site.agency}
+            </span>
+          </Link>
+        </div>
 
         <nav className="hidden items-center gap-1 md:flex">
           {nav.map((item) => {
