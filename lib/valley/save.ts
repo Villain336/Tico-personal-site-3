@@ -1,5 +1,6 @@
 import type { AwayReport, Character, SaveData } from "./types";
 import {
+  AWAY_LETTER_THRESHOLD_S,
   CROPS,
   CYCLE_SECONDS,
   HOUSE,
@@ -15,6 +16,7 @@ import {
   START_WHEAT,
   TILE,
 } from "./config";
+import { LETTER, letterLine, pickVisitName } from "./dialogue";
 
 export const ALTAR_TILE = { tx: Math.floor(MAP_W / 2) - 1, ty: Math.floor(MAP_H / 2) - 1 };
 
@@ -86,12 +88,12 @@ export function worldTime(save: Pick<SaveData, "day" | "clock">) {
 /**
  * Apply elapsed real time since the last save (capped). Crops keep growing,
  * rent accrues at half rate per dawn passed. No raids, no sin, no clock change.
+ * Short absences (tab switch, quick refresh) apply silently with no letter.
  */
 export function applyOfflineProgress(save: SaveData, now = Date.now()): { save: SaveData; report: AwayReport | null } {
   const elapsedMs = Math.max(0, now - (save.savedAt ?? now));
   const capped = Math.min(elapsedMs / 1000, OFFLINE_CAP_HOURS * 3600);
-  // short breaks (tab switch, quick refresh) shouldn't interrupt with a report
-  if (capped < 600) return { save, report: null };
+  if (capped < AWAY_LETTER_THRESHOLD_S) return { save, report: null };
 
   const next: SaveData = { ...save, buildings: save.buildings.map((b) => ({ ...b })) };
   const t = worldTime(save);
@@ -114,8 +116,24 @@ export function applyOfflineProgress(save: SaveData, now = Date.now()): { save: 
   const rent = Math.floor(rentPerDawn * dawns * OFFLINE_RENT_RATE);
   next.coins += rent;
 
+  const villagerName = next.villagers.length > 0 ? pickVisitName(next.villagers[0].seed) : null;
+  const storyLine =
+    cropsGrown > 0
+      ? letterLine(LETTER.storyCrops)
+      : villagerName
+        ? letterLine(LETTER.storyNamed, villagerName)
+        : letterLine(LETTER.storyQuiet);
+  const voiceLine = villagerName ? letterLine(LETTER.voiceNamed, villagerName) : letterLine(LETTER.voiceValley);
+
   return {
     save: next,
-    report: { hours: Math.round((capped / 3600) * 10) / 10, cropsGrown, rent },
+    report: {
+      hours: Math.round((capped / 3600) * 10) / 10,
+      cropsGrown,
+      rent,
+      storyLine,
+      voiceLine,
+      villagerName,
+    },
   };
 }

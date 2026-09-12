@@ -16,6 +16,7 @@ const TUTORIAL: string[] = [
 export function Hud({
   hud,
   toasts,
+  topOffset = 12,
   onBuild,
   onSkills,
   onPause,
@@ -25,6 +26,8 @@ export function Hud({
 }: {
   hud: HudState;
   toasts: Toast[];
+  /** Pixels from the top; raised when the ribbon is visible so they don't overlap. */
+  topOffset?: number;
   onBuild: () => void;
   onSkills: () => void;
   onPause: () => void;
@@ -38,7 +41,7 @@ export function Hud({
   return (
     <div className="pointer-events-none absolute inset-0 z-20 font-mono text-[11px] text-white">
       {/* top-left: day + inventory */}
-      <div className="absolute left-3 top-3 space-y-2">
+      <div className="absolute left-3 space-y-2" style={{ top: topOffset }}>
         <Card>
           <div className="flex items-center gap-2">
             <span className="text-base leading-none">{hud.isNight ? "🌙" : "☀️"}</span>
@@ -57,7 +60,7 @@ export function Hud({
       </div>
 
       {/* top-right: village */}
-      <div className="absolute right-3 top-3 w-[190px] space-y-2">
+      <div className="absolute right-3 w-[190px] space-y-2" style={{ top: topOffset }}>
         <Card>
           <Row label="Sin" value={`${hud.sin}/100`} />
           <Bar value={hud.sin / 100} color="bg-brand-coral" />
@@ -74,7 +77,7 @@ export function Hud({
       </div>
 
       {/* top-center: hint / prompt */}
-      <div className="absolute inset-x-0 top-3 flex justify-center px-[210px]">
+      <div className="absolute inset-x-0 flex justify-center px-[210px]" style={{ top: topOffset }}>
         {hud.nearAltar && !hud.isNight && hud.tutorialStep > 0 ? (
           <Pill>Hold E to pray · refills prayer, earns XP</Pill>
         ) : hud.nearMarket && hasCrops ? (

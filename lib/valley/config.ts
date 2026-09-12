@@ -21,6 +21,10 @@ export const SAVE_VERSION = 1;
 export const AUTOSAVE_MS = 30_000;
 export const OFFLINE_CAP_HOURS = 8;
 export const OFFLINE_RENT_RATE = 0.5;
+/** A return earns a dawn letter only past this many seconds gone; shorter is a silent peek. */
+export const AWAY_LETTER_THRESHOLD_S = 1800;
+/** Seconds before night when the ribbon takes over as the dusk warning. */
+export const DUSK_WARN_S = 30;
 
 export const PLAYER = {
   speed: 78,

@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import type { Bridge } from "../bridge";
-import type { BuildingType, GameCommand, HudState, SaveData } from "../types";
+import type { AwayReport, BuildingType, GameCommand, HudState, SaveData } from "../types";
 import {
   ALTAR,
   AUTOSAVE_MS,
@@ -8,6 +8,7 @@ import {
   CROPS,
   CYCLE_SECONDS,
   DAY_SECONDS,
+  DUSK_WARN_S,
   IDOL_REWARD,
   SIN,
   SKILLS,
@@ -25,6 +26,7 @@ import { Buildings, type Building } from "../world/building";
 import { Darkness } from "../world/darkness";
 import { Enemies } from "../world/enemy";
 import { Fx } from "../world/fx";
+import { Jobs } from "../world/jobs";
 import { WorldMap } from "../world/map";
 import { Player } from "../world/player";
 import { Speech } from "../world/speech";
@@ -45,6 +47,7 @@ export class WorldScene extends Phaser.Scene {
   enemies!: Enemies;
   waves!: Waves;
   player!: Player;
+  jobs!: Jobs;
 
   paused = false;
   lightsDirty = true;
@@ -55,12 +58,14 @@ export class WorldScene extends Phaser.Scene {
   private wasNight = false;
   private duskWarned = false;
   private offCommand: (() => void) | null = null;
+  private awayReport: AwayReport | null;
 
-  constructor(save: SaveData, bridge: Bridge) {
+  constructor(save: SaveData, bridge: Bridge, awayReport: AwayReport | null = null) {
     super("World");
     this.state = save;
     this.bridge = bridge;
     this.playerName = save.character.name || "friend";
+    this.awayReport = awayReport;
   }
 
   create() {
@@ -74,6 +79,7 @@ export class WorldScene extends Phaser.Scene {
     this.enemies = new Enemies(this);
     this.villagers = new Villagers(this);
     this.waves = new Waves(this);
+    this.jobs = new Jobs(this);
 
     this.buildings.loadFrom(this.state.buildings);
     this.villagers.loadFrom(this.state.villagers);
@@ -100,6 +106,18 @@ export class WorldScene extends Phaser.Scene {
 
     this.wasNight = this.isNight();
     if (this.wasNight) this.waves.startNight();
+
+    // The day ribbon only exists on a qualifying return; dusk always takes
+    // the same ribbon regardless of a letter, so a return already past dusk
+    // lands straight in the dusk state instead of a stale day list.
+    if (this.awayReport) {
+      if (this.isNight() || this.state.clock >= DAY_SECONDS - DUSK_WARN_S) {
+        this.jobs.enterDusk();
+        this.duskWarned = true;
+      } else {
+        this.jobs.startFromLetter(this.awayReport);
+      }
+    }
     this.emitHud();
 
     if (this.state.day === 1 && this.state.clock < 1) {
@@ -128,9 +146,9 @@ export class WorldScene extends Phaser.Scene {
     const night = this.isNight();
     if (night && !this.wasNight) this.waves.startNight();
     this.wasNight = night;
-    if (!night && !this.duskWarned && st.clock >= DAY_SECONDS - 30) {
+    if (!night && !this.duskWarned && st.clock >= DAY_SECONDS - DUSK_WARN_S) {
       this.duskWarned = true;
-      this.toast("Dusk. Night falls in 30 seconds — stay near the light and keep your sword ready.", "info");
+      this.jobs.enterDusk();
     }
     this.darkness.setNight(this.nightAmount());
 
@@ -195,6 +213,7 @@ export class WorldScene extends Phaser.Scene {
     this.addSin(SIN.dawnDecay);
     this.advanceTutorial(6);
     this.duskWarned = false;
+    this.jobs.clearForDawn();
     this.bridge.emit({
       type: "dawn",
       report: {
@@ -256,6 +275,7 @@ export class WorldScene extends Phaser.Scene {
     const c = this.buildings.center(b);
     this.fx.burst(c.x, c.y - 4, "px_gold", 4);
     this.advanceTutorial(3);
+    if (who === "player") this.jobs.complete("harvest");
     if (st.autoSell && this.buildings.count("market") > 0) this.sell(got.kind, true);
     else if (who === "player" && st.tutorialStep <= 3 && this.buildings.count("market") === 0) {
       this.toast(`+${got.qty} ${got.kind}. Eat with F, or build a market to sell.`, "good");
@@ -472,6 +492,8 @@ export class WorldScene extends Phaser.Scene {
       paused: this.paused,
       won: st.won,
       tutorialStep: st.tutorialStep,
+      jobs: this.jobs.list,
+      ribbonMode: this.jobs.mode,
     };
     this.bridge.emit({ type: "hud", state: hud });
   }

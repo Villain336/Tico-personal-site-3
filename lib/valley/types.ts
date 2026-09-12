@@ -103,6 +103,9 @@ export type HudState = {
   paused: boolean;
   won: boolean;
   tutorialStep: number;
+  /** null when this visit has no day ribbon yet (no qualifying letter and not dusk). */
+  jobs: Job[] | null;
+  ribbonMode: "day" | "dusk" | null;
 };
 
 export type DawnReport = {
@@ -118,6 +121,20 @@ export type AwayReport = {
   hours: number;
   cropsGrown: number;
   rent: number;
+  /** Third-person beat: what happened while gone. */
+  storyLine: string;
+  /** A voice from the valley: a named villager, or the valley itself. */
+  voiceLine: string;
+  /** First name bound to a living villager for this visit only; not persisted. */
+  villagerName: string | null;
+};
+
+export type JobId = "harvest" | "pray" | "altar" | "darkEdge" | "duskWall" | "duskProtect" | "duskLight";
+
+export type Job = {
+  id: JobId;
+  label: string;
+  done: boolean;
 };
 
 export type GameCommand =

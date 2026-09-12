@@ -74,8 +74,11 @@ export class Player extends Actor {
     const altar = this.world.buildings.altar;
     const ac = this.world.buildings.center(altar);
     this.nearAltar = dist(this.x, this.y, ac.x, ac.y) < TILE * 3.2;
+    if (this.nearAltar) this.world.jobs.complete("altar");
     const market = this.world.buildings.nearest("market", this.x, this.y, TILE * 2.2);
     this.nearMarket = !!market;
+
+    if (this.world.darkness.isDark(this.x, this.y)) this.world.jobs.complete("darkEdge");
 
     // hunger + regen
     st.hunger = Math.max(0, st.hunger - this.stats.hungerRate * dt);
@@ -95,6 +98,7 @@ export class Player extends Actor {
       const mult = ALTAR.prayerRegenMult[this.world.buildings.altarLevel] ?? 1;
       st.prayer = Math.min(this.stats.maxPrayer, st.prayer + PLAYER.prayerRegenAtAltar * mult * dt);
       this.world.addXp(XP.prayTick * dt);
+      this.world.jobs.complete("pray");
       this.prayLineT -= dt;
       this.sparkleT -= dt;
       if (this.sparkleT <= 0) {

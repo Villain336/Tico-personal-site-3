@@ -38,7 +38,7 @@ export const valleyCopy = {
     },
     {
       q: "What happens while I'm away?",
-      a: "Up to 8 hours of real time count: crops keep growing and villagers pay half rent. No enemies attack while you're gone.",
+      a: "Up to 8 hours of real time count: crops keep growing and villagers pay half rent. Gone 30 minutes or more? You'll get a short letter from the valley when you return, with a couple of jobs to pick up. No enemies attack while you're gone.",
     },
     {
       q: "Can I play on my phone?",

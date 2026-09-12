@@ -10,6 +10,7 @@ import { SkillsPanel } from "./skills-panel";
 import { DawnSummary } from "./dawn-summary";
 import { PauseMenu } from "./pause-menu";
 import { Modal, ModalButton } from "./modal";
+import { Ribbon } from "./ribbon";
 
 declare global {
   interface Window {
@@ -61,7 +62,7 @@ export function ValleyGame({
         pixelArt: true,
         backgroundColor: "#07060d",
         disableContextMenu: true,
-        scene: [new WorldScene(save, bridge)],
+        scene: [new WorldScene(save, bridge, away)],
         scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
         audio: { noAudio: true },
       });
@@ -73,7 +74,7 @@ export function ValleyGame({
       destroyed = true;
       game?.destroy(true);
     };
-  }, [save, bridge]);
+  }, [save, bridge, away]);
 
   useEffect(() => {
     return bridge.subscribe((e: GameEvent) => {
@@ -141,14 +142,19 @@ export function ValleyGame({
     setPanel(null);
   }, [bridge]);
 
+  const showRibbon = !!(hud?.jobs && hud.ribbonMode && panel !== "away" && panel !== "victory");
+
   return (
     <div className="relative w-full select-none overflow-hidden rounded-3xl border border-border bg-[#07060d] shadow-2xl">
       <div ref={parentRef} className="aspect-[8/5] w-full" />
+
+      {showRibbon && hud?.jobs && hud.ribbonMode && <Ribbon jobs={hud.jobs} mode={hud.ribbonMode} />}
 
       {hud && (
         <Hud
           hud={hud}
           toasts={toasts}
+          topOffset={showRibbon ? 46 : 12}
           onBuild={() => togglePanel("build")}
           onSkills={() => togglePanel("skills")}
           onPause={() => togglePanel("pause")}
@@ -182,11 +188,12 @@ export function ValleyGame({
       )}
 
       {panel === "away" && away && (
-        <Modal title="While you were away" onClose={() => setPanel(null)}>
-          <p className="text-sm text-white/80">
-            You were gone about <b>{away.hours}h</b>. The valley kept working at half pace: <b>{away.cropsGrown}</b>{" "}
-            {away.cropsGrown === 1 ? "crop" : "crops"} ripened and villagers paid <b>{away.rent}</b> coins in rent. No raids
-            happen while you&apos;re away.
+        <Modal title="A letter from the valley" onClose={() => setPanel(null)}>
+          <p className="text-sm text-white/90">{away.storyLine}</p>
+          <p className="mt-2 text-sm italic text-brand-lime">&ldquo;{away.voiceLine}&rdquo;</p>
+          <p className="mt-3 text-xs text-white/60">
+            Gone about {away.hours}h · {away.cropsGrown} {away.cropsGrown === 1 ? "crop" : "crops"} ripened · {away.rent}{" "}
+            coins in rent. No raids happen while you&apos;re away.
           </p>
           <ModalButton onClick={() => setPanel(null)}>Back to work</ModalButton>
         </Modal>

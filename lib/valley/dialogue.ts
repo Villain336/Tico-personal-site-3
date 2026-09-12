@@ -1,3 +1,5 @@
+import type { JobId } from "./types";
+
 /**
  * Every line a character can say, keyed by speaker × mood. Lines use `{name}`
  * for the player's name. Keep them short — bubbles are 16px-tall pixel land.
@@ -159,3 +161,62 @@ export function line<S extends Speaker>(speaker: S, mood: Mood<S>, name = "frien
   const pick = list[Math.floor(Math.random() * list.length)];
   return pick.replace("{name}", name);
 }
+
+/** First names bound to a living villager for one visit only — never persisted, no memory. */
+const VISIT_NAMES = [
+  "Miriam", "Boaz", "Talitha", "Ezra", "Naomi", "Asa",
+  "Rivka", "Caleb", "Tabitha", "Josiah", "Leah", "Amos",
+  "Zilpah", "Reuben", "Hana", "Simeon",
+];
+
+export function pickVisitName(seed: number): string {
+  return VISIT_NAMES[Math.abs(seed) % VISIT_NAMES.length];
+}
+
+/** Dawn-letter copy: a story beat plus a voice line, layered onto the away numbers. */
+export const LETTER = {
+  storyCrops: [
+    "The wheat came in golden while you were gone.",
+    "Grapevines grew heavy on the far row.",
+    "The fields kept growing without you.",
+  ],
+  storyNamed: [
+    "{name} kept watch at the well the whole time.",
+    "{name} prayed at the altar every dawn you missed.",
+    "{name} watched the road, waiting for you.",
+  ],
+  storyQuiet: [
+    "The valley stayed quiet and safe.",
+    "No shadow crossed the light while you were away.",
+    "The altar's glow held steady through the dark hours.",
+  ],
+  voiceNamed: [
+    "Shalom — {name} sends thanks for the wheat.",
+    '"We kept the light lit," {name} says.',
+    "{name} says the valley missed you.",
+  ],
+  voiceValley: [
+    "Shalom. The valley kept watch.",
+    "The altar's light never dimmed.",
+    "Peace held here while you were gone.",
+  ],
+} as const;
+
+export function letterLine(list: readonly string[], name?: string): string {
+  const pick = list[Math.floor(Math.random() * list.length)];
+  return name ? pick.replace("{name}", name) : pick;
+}
+
+/** Fills a day ribbon out to 2-3 jobs when the letter's own beats aren't enough. */
+export const FALLBACK_JOBS: { id: JobId; label: string }[] = [
+  { id: "pray", label: "Pray at the altar" },
+  { id: "darkEdge", label: "Walk the dark edge" },
+  { id: "altar", label: "Stand at the altar" },
+];
+
+/** What the ribbon shows once it flips to dusk. */
+export const DUSK_JOBS: { id: JobId; label: string }[] = [
+  { id: "duskWall", label: "Hold the wall" },
+  { id: "duskProtect", label: "Protect the weakest villager" },
+  { id: "duskLight", label: "Keep the light burning" },
+];
