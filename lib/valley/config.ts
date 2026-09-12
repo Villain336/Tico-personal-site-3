@@ -117,7 +117,7 @@ export const VILLAGER = {
   staffDamage: 6,
   fallDurationS: 6,
   lureToFallS: 4,
-  hypnosisS: 3,
+  hypnosisS: 5, // base; +2 s per villager level, half speed while the deceiver is revealed
   hp: 30,
   greetCooldownMs: 15_000,
 };
@@ -128,7 +128,7 @@ export const SIN = {
   idolPlanted: 6,
   idolSmashed: -10,
   redeem: -3,
-  dawnDecay: -2,
+  dawnDecay: -4,
   rentHalvedAt: 50,
   extraEnemiesAt: 50,
 };
@@ -151,7 +151,7 @@ export type EnemyDef = {
 export const ENEMIES: Record<EnemyKind, EnemyDef> = {
   robber: { name: "Robber", minDay: 1, minLevel: 1, minAltar: 1, speed: 52, hp: 30, damage: 5, bounty: 7, swordImmune: false, ghost: false },
   tempter: { name: "Tempter", minDay: 2, minLevel: 2, minAltar: 1, speed: 118, hp: 14, damage: 0, bounty: 10, swordImmune: false, ghost: false },
-  deceiver: { name: "Deceiver", minDay: 4, minLevel: 3, minAltar: 1, speed: 40, hp: 36, damage: 0, bounty: 14, swordImmune: false, ghost: false },
+  deceiver: { name: "Deceiver", minDay: 4, minLevel: 3, minAltar: 1, speed: 34, hp: 36, damage: 0, bounty: 14, swordImmune: false, ghost: false },
   spirit: { name: "Spirit", minDay: 6, minLevel: 4, minAltar: 2, speed: 58, hp: 1, damage: 6, bounty: 18, swordImmune: true, ghost: true },
   prophet: { name: "False Prophet", minDay: 8, minLevel: 5, minAltar: 3, speed: 30, hp: 90, damage: 4, bounty: 60, swordImmune: false, ghost: false },
 };

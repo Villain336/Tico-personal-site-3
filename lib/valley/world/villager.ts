@@ -181,6 +181,13 @@ export class Villagers {
 
   fall(v: Villager, reason: string) {
     if (v.state === "fallen") return;
+    const tempter = v.lureBy;
+    if (tempter && tempter.alive && tempter.kind === "tempter") {
+      // job done — the tempter slips back into the dark instead of chain-luring
+      tempter.state = "leave";
+      tempter.target = null;
+      this.scene.speech.say(tempter.sprite, line("tempter", "flee", this.scene.playerName), "dark", 0);
+    }
     v.state = "fallen";
     v.timer = VILLAGER.fallDurationS;
     v.lureBy = null;
@@ -259,6 +266,7 @@ export class Villagers {
     this.remove(v);
     const e = this.scene.enemies.spawn("deceiver", x, y);
     e.revealed = true;
+    e.stun = 5; // freshly turned: dazed before they start preaching
     this.scene.addSin(SIN.converted);
     this.fallenToday++;
     this.scene.toast(`A villager was deceived and turned. Sin +${SIN.converted}.`, "bad");
@@ -358,7 +366,7 @@ export class Villagers {
         } else {
           v.sprite.setTint(0x9d7bd6);
           if (Math.random() < dt * 0.4) sc.speech.say(v.sprite, line("villager", "hypno"), "dark", 4000);
-          if (v.hypnoT >= VILLAGER.hypnosisS) {
+          if (v.hypnoT >= VILLAGER.hypnosisS + 2 * (v.level - 1)) {
             this.convert(v);
           }
         }

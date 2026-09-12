@@ -90,7 +90,8 @@ export function worldTime(save: Pick<SaveData, "day" | "clock">) {
 export function applyOfflineProgress(save: SaveData, now = Date.now()): { save: SaveData; report: AwayReport | null } {
   const elapsedMs = Math.max(0, now - (save.savedAt ?? now));
   const capped = Math.min(elapsedMs / 1000, OFFLINE_CAP_HOURS * 3600);
-  if (capped < 60) return { save, report: null };
+  // short breaks (tab switch, quick refresh) shouldn't interrupt with a report
+  if (capped < 600) return { save, report: null };
 
   const next: SaveData = { ...save, buildings: save.buildings.map((b) => ({ ...b })) };
   const t = worldTime(save);

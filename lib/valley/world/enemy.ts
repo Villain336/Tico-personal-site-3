@@ -51,6 +51,7 @@ export class Enemies {
     this.list.push(e);
     if (kind === "prophet") {
       e.goal = this.prophetGoal();
+      e.timer = WAVES.idolSpawnEveryS - 8;
       this.scene.toast("A false prophet approaches the valley!", "bad");
     }
     if (kind === "robber" && Math.random() < 0.5) {
@@ -247,6 +248,15 @@ export class Enemies {
         }
 
         case "tempter": {
+          if (e.state === "leave") {
+            if (e.retarget <= 0) {
+              e.retarget = 1;
+              e.goal = sc.darkness.nearestDark(e.x, e.y);
+            }
+            if (e.goal) e.moveToward(e.goal.x, e.goal.y, e.def.speed, dt, sc.map);
+            if (sc.darkness.isDark(e.x, e.y)) this.remove(e);
+            break;
+          }
           const dp = dist(e.x, e.y, player.x, player.y);
           if (e.dashT > 0) {
             e.dashT -= dt;
@@ -323,7 +333,8 @@ export class Enemies {
           if (e.moveToward(v.x, v.y, e.def.speed, dt, sc.map, 18)) {
             v.hypnoBy = e;
             if (v.state !== "hypno") v.state = "hypno";
-            v.hypnoT += dt;
+            // the lie works slower once the light has exposed the liar
+            v.hypnoT += dt * (e.revealed ? 0.5 : 1);
             sc.speech.say(e.sprite, line("deceiver", "deceive"), "dark", 3000);
             if (Math.random() < dt * 2) sc.fx.burst(v.x, v.y - 20, "px_violet", 1);
           }
