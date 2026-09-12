@@ -11,6 +11,12 @@ import { DawnSummary } from "./dawn-summary";
 import { PauseMenu } from "./pause-menu";
 import { Modal, ModalButton } from "./modal";
 
+declare global {
+  interface Window {
+    __valley?: import("phaser").Game;
+  }
+}
+
 type Panel = "build" | "skills" | "pause" | "away" | "victory" | null;
 const PAUSING: Panel[] = ["skills", "pause", "away", "victory"];
 
@@ -59,6 +65,8 @@ export function ValleyGame({
         scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
         audio: { noAudio: true },
       });
+      // `?dev` exposes the engine for playtesting/balancing from the console.
+      if (window.location.search.includes("dev")) window.__valley = game;
       setReady(true);
     })();
     return () => {
@@ -135,7 +143,7 @@ export function ValleyGame({
 
   return (
     <div className="relative w-full select-none overflow-hidden rounded-3xl border border-border bg-[#07060d] shadow-2xl">
-      <div ref={parentRef} className="aspect-[8/5] w-full [&_canvas]:!h-full [&_canvas]:!w-full" />
+      <div ref={parentRef} className="aspect-[8/5] w-full" />
 
       {hud && (
         <Hud

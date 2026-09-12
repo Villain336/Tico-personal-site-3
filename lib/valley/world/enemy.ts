@@ -166,6 +166,18 @@ export class Enemies {
     return n;
   }
 
+  /** The altar flares: stun and shove everything nearby (used when the player falls). */
+  repelAround(x: number, y: number, r: number) {
+    for (const e of this.list) {
+      if (!e.alive || dist(x, y, e.x, e.y) > r) continue;
+      e.stun = 3;
+      const ang = Math.atan2(e.y - y, e.x - x);
+      const nx = e.x + Math.cos(ang) * 40;
+      const ny = e.y + Math.sin(ang) * 40;
+      if (this.scene.map.isWalkablePoint(nx, ny - 3, e.ghost)) e.setPosition(nx, ny);
+    }
+  }
+
   /** Dawn: everything retreats without bounty. */
   clearAll() {
     for (const e of [...this.list]) {
@@ -218,11 +230,11 @@ export class Enemies {
           const tx = e.target?.alive ? e.target.x : player.x;
           const ty = e.target?.alive ? e.target.y : player.y;
           if (e.moveToward(tx, ty, e.def.speed, dt, sc.map, 13) && e.attackCd <= 0) {
-            e.attackCd = 1;
+            e.attackCd = 1.4;
             if (e.target?.alive) {
               sc.villagers.damage(e.target, e.def.damage, e);
             } else if (player.hurt(e.def.damage)) {
-              const stolen = Math.min(st.coins, 4);
+              const stolen = Math.min(Math.floor(st.coins), 2);
               if (stolen > 0) {
                 sc.addCoins(-stolen);
                 sc.speech.say(e.sprite, line("robber", "steal"), "dark", 2000);

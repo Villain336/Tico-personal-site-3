@@ -10,12 +10,15 @@ export type LightSource = { tx: number; ty: number; radius: number };
  */
 export class Darkness {
   light = new Float32Array(MAP_W * MAP_H);
-  private fog: Phaser.GameObjects.Graphics;
+  private fog: Phaser.GameObjects.RenderTexture;
+  private brush: Phaser.GameObjects.Image;
   private night: Phaser.GameObjects.Rectangle;
+  private sources: LightSource[] = [];
   litRatio = 0;
 
   constructor(scene: Phaser.Scene) {
-    this.fog = scene.add.graphics().setDepth(1000);
+    this.fog = scene.add.renderTexture(0, 0, WORLD_W, WORLD_H).setOrigin(0, 0).setDepth(1000);
+    this.brush = scene.make.image({ key: "light_grad", add: false });
     this.night = scene.add
       .rectangle(0, 0, WORLD_W, WORLD_H, 0x0b1030, 0)
       .setOrigin(0, 0)
@@ -23,6 +26,7 @@ export class Darkness {
   }
 
   recompute(sources: LightSource[]) {
+    this.sources = sources;
     this.light.fill(0);
     for (const s of sources) {
       const r = s.radius;
@@ -45,16 +49,14 @@ export class Darkness {
     this.draw();
   }
 
+  /** Solid fog with each light source erased as a soft radial gradient. */
   private draw() {
     this.fog.clear();
-    for (let ty = 0; ty < MAP_H; ty++) {
-      for (let tx = 0; tx < MAP_W; tx++) {
-        const l = this.light[ty * MAP_W + tx];
-        const a = Math.pow(1 - l, 1.6) * 0.92;
-        if (a < 0.02) continue;
-        this.fog.fillStyle(0x07060d, a);
-        this.fog.fillRect(tx * TILE, ty * TILE, TILE, TILE);
-      }
+    this.fog.fill(0x07060d, 0.9);
+    for (const s of this.sources) {
+      const d = s.radius * TILE * 2;
+      this.brush.setDisplaySize(d, d);
+      this.fog.erase(this.brush, (s.tx + 0.5) * TILE, (s.ty + 0.5) * TILE);
     }
   }
 

@@ -53,6 +53,7 @@ export class WorldScene extends Phaser.Scene {
   private hudAcc = 0;
   private autosaveAcc = 0;
   private wasNight = false;
+  private duskWarned = false;
   private offCommand: (() => void) | null = null;
 
   constructor(save: SaveData, bridge: Bridge) {
@@ -127,6 +128,10 @@ export class WorldScene extends Phaser.Scene {
     const night = this.isNight();
     if (night && !this.wasNight) this.waves.startNight();
     this.wasNight = night;
+    if (!night && !this.duskWarned && st.clock >= DAY_SECONDS - 30) {
+      this.duskWarned = true;
+      this.toast("Dusk. Night falls in 30 seconds — stay near the light and keep your sword ready.", "info");
+    }
     this.darkness.setNight(this.nightAmount());
 
     if (this.lightsDirty) {
@@ -188,7 +193,8 @@ export class WorldScene extends Phaser.Scene {
     this.addCoins(r.rent);
     const sinBefore = st.sin;
     this.addSin(SIN.dawnDecay);
-    if (st.tutorialStep === 5) this.advanceTutorial(6);
+    this.advanceTutorial(6);
+    this.duskWarned = false;
     this.bridge.emit({
       type: "dawn",
       report: {
@@ -249,7 +255,7 @@ export class WorldScene extends Phaser.Scene {
     this.addXp(XP.harvest);
     const c = this.buildings.center(b);
     this.fx.burst(c.x, c.y - 4, "px_gold", 4);
-    if (st.tutorialStep === 2) this.advanceTutorial(3);
+    this.advanceTutorial(3);
     if (st.autoSell && this.buildings.count("market") > 0) this.sell(got.kind, true);
     else if (who === "player" && st.tutorialStep <= 3 && this.buildings.count("market") === 0) {
       this.toast(`+${got.qty} ${got.kind}. Eat with F, or build a market to sell.`, "good");
@@ -277,7 +283,7 @@ export class WorldScene extends Phaser.Scene {
     if (units === 0) return;
     this.addCoins(coins);
     this.addXp(XP.sale * units);
-    if (st.tutorialStep === 3) this.advanceTutorial(4);
+    this.advanceTutorial(4);
     if (!quiet) this.toast(`Sold ${units} for ${coins} coins.`, "good");
     this.fx.coins(this.player.x, this.player.y - 12, Math.min(6, units));
   }
@@ -357,8 +363,9 @@ export class WorldScene extends Phaser.Scene {
     const b = this.buildings.place(type, tx, ty);
     const c = this.buildings.center(b);
     this.fx.burst(c.x, c.y - 6, "px_lime", 6);
-    if (type === "farm" && st.tutorialStep === 1) this.advanceTutorial(2);
-    if (type === "house" && st.tutorialStep === 4) this.advanceTutorial(5);
+    if (type === "farm") this.advanceTutorial(2);
+    if (type === "market") this.advanceTutorial(4);
+    if (type === "house") this.advanceTutorial(5);
     // walls and farms are placed in runs; everything else exits build mode
     if (type !== "wall" && type !== "farm" && type !== "lamp") this.setBuildMode(null);
     else if (st.coins < def.cost) this.setBuildMode(null);

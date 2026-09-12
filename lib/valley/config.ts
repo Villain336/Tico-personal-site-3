@@ -26,7 +26,7 @@ export const PLAYER = {
   speed: 78,
   maxHealth: 100,
   maxPrayer: 100,
-  hungerPerSecond: 100 / 480, // empty after ~8 minutes without eating
+  hungerPerSecond: 100 / 720, // empty after ~12 minutes without eating
   hungerWeakBelow: 20,
   prayerRegenAtAltar: 22, // per second while holding E near the altar
   prayerRegenIdle: 0.6,
@@ -86,7 +86,7 @@ export const BUILDINGS: Record<Exclude<BuildingType, "altar" | "idol">, Building
 
 /** A tile counts as "lit" above this light value; victory when this share of tiles is lit. */
 export const LIT_THRESHOLD = 0.2;
-export const VICTORY_LIT_RATIO = 0.9;
+export const VICTORY_LIT_RATIO = 0.85;
 
 export const TOWER_RANGE = 96;
 export const TOWER_DAMAGE = 6;
@@ -95,7 +95,7 @@ export const TOWER_COOLDOWN_MS = 1400;
 export const ALTAR = {
   maxLevel: 4,
   upgradeCost: [0, 80, 200, 450],
-  light: [0, 6, 8, 10, 13],
+  light: [0, 8, 10, 12, 15],
   prayerRegenMult: [0, 1, 1.4, 1.8, 2.4],
   villagerXpMult: [0, 1, 1.5, 2, 3],
 };
@@ -149,7 +149,7 @@ export type EnemyDef = {
 };
 
 export const ENEMIES: Record<EnemyKind, EnemyDef> = {
-  robber: { name: "Robber", minDay: 1, minLevel: 1, minAltar: 1, speed: 52, hp: 30, damage: 8, bounty: 7, swordImmune: false, ghost: false },
+  robber: { name: "Robber", minDay: 1, minLevel: 1, minAltar: 1, speed: 52, hp: 30, damage: 5, bounty: 7, swordImmune: false, ghost: false },
   tempter: { name: "Tempter", minDay: 2, minLevel: 2, minAltar: 1, speed: 118, hp: 14, damage: 0, bounty: 10, swordImmune: false, ghost: false },
   deceiver: { name: "Deceiver", minDay: 4, minLevel: 3, minAltar: 1, speed: 40, hp: 36, damage: 0, bounty: 14, swordImmune: false, ghost: false },
   spirit: { name: "Spirit", minDay: 6, minLevel: 4, minAltar: 2, speed: 58, hp: 1, damage: 6, bounty: 18, swordImmune: true, ghost: true },
@@ -157,7 +157,8 @@ export const ENEMIES: Record<EnemyKind, EnemyDef> = {
 };
 
 export const WAVES = {
-  baseCount: (day: number) => 2 + Math.floor(day * 1.2),
+  // day 1 → 1 robber, day 5 → 5, day 10 → 10 (+population and sin bonuses)
+  baseCount: (day: number) => 1 + Math.floor(day * 0.9),
   perPopulation: 0.25,
   sinBonus: 3,
   spawnIntervalS: 6,

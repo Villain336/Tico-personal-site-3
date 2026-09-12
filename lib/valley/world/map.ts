@@ -66,6 +66,10 @@ export class WorldMap {
     this.blocked[ty * MAP_W + tx] = value ? 1 : 0;
   }
 
+  isSand(tx: number, ty: number) {
+    return this.inBounds(tx, ty) && this.ground[ty * MAP_W + tx] === "sand";
+  }
+
   isWater(tx: number, ty: number) {
     return this.inBounds(tx, ty) && this.ground[ty * MAP_W + tx] === "water";
   }

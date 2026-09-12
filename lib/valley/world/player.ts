@@ -17,6 +17,7 @@ export class Player extends Actor {
   lastDir = { x: 1, y: 0 };
   private hungryLineT = 0;
   private prayLineT = 0;
+  private sparkleT = 0;
 
   constructor(private world: WorldScene, x: number, y: number) {
     super(world, x, y, "player");
@@ -28,7 +29,7 @@ export class Player extends Actor {
       this.praying = false;
     });
     kb.on("keydown-F", () => this.eat());
-    kb.on("keydown-SPACE", () => this.swing(this.lastDir.x, this.lastDir.y));
+    kb.on("keydown-SPACE", () => this.swing());
   }
 
   get stats() {
@@ -95,12 +96,16 @@ export class Player extends Actor {
       st.prayer = Math.min(this.stats.maxPrayer, st.prayer + PLAYER.prayerRegenAtAltar * mult * dt);
       this.world.addXp(XP.prayTick * dt);
       this.prayLineT -= dt;
+      this.sparkleT -= dt;
+      if (this.sparkleT <= 0) {
+        this.sparkleT = 0.35;
+        this.world.fx.burst(this.x + (Math.random() - 0.5) * 10, this.y - 16, "px_lime", 2);
+      }
       if (this.prayLineT <= 0) {
         this.prayLineT = 6;
-        this.world.speech.say(this.sprite, line("player", "pray"), "good");
-        this.world.fx.burst(this.x, this.y - 14, "px_lime", 4);
+        this.world.speech.say(this.sprite, line("player", "pray"), "good", 0);
       }
-      if (st.tutorialStep === 0) this.world.advanceTutorial(1);
+      this.world.advanceTutorial(1);
     } else {
       this.praying = false;
       st.prayer = Math.min(this.stats.maxPrayer, st.prayer + PLAYER.prayerRegenIdle * dt);
@@ -130,21 +135,34 @@ export class Player extends Actor {
     this.cast();
   }
 
-  swing(dirX: number, dirY: number) {
+  /**
+   * Space swings all the way around (so an enemy on your back still gets hit);
+   * a click swings toward the pointer in a wide arc.
+   */
+  swing(dirX?: number, dirY?: number) {
     if (this.world.paused || this.swordCd > 0) return;
     this.swordCd = PLAYER.swordCooldownMs;
-    const ang = Math.atan2(dirY, dirX);
-    this.world.fx.slash(this.x, this.y - 10, ang);
+    const aimed = dirX !== undefined && dirY !== undefined;
+    const ang = aimed ? Math.atan2(dirY, dirX) : Math.atan2(this.lastDir.y, this.lastDir.x);
+    if (aimed) this.world.fx.slash(this.x, this.y - 10, ang);
+    else this.world.fx.ring(this.x, this.y - 10, PLAYER.swordRange + 6, 0xffffff);
+    if (aimed) {
+      this.lastDir = { x: Math.cos(ang), y: Math.sin(ang) };
+      this.facing = Math.cos(ang) >= 0 ? 1 : -1;
+      this.sprite.setFlipX(this.facing < 0);
+    }
     const range = PLAYER.swordRange;
     let hit = false;
     for (const e of this.world.enemies.list) {
       if (!e.alive) continue;
       const d = dist(this.x, this.y - 8, e.x, e.y - 8);
-      if (d > range + 8) continue;
-      const a = Math.atan2(e.y - 8 - (this.y - 8), e.x - this.x);
-      let diff = Math.abs(a - ang);
-      if (diff > Math.PI) diff = Math.PI * 2 - diff;
-      if (diff > PLAYER.swordArc / 2 && d > 10) continue;
+      if (d > range + 10) continue;
+      if (aimed) {
+        const a = Math.atan2(e.y - 8 - (this.y - 8), e.x - this.x);
+        let diff = Math.abs(a - ang);
+        if (diff > Math.PI) diff = Math.PI * 2 - diff;
+        if (diff > PLAYER.swordArc / 2 && d > 12) continue;
+      }
       hit = true;
       this.world.enemies.damage(e, this.stats.swordDamage, "sword");
     }
@@ -206,13 +224,16 @@ export class Player extends Actor {
     const st = this.world.state;
     const lost = Math.floor(st.coins * 0.25);
     st.coins -= lost;
-    st.health = Math.floor(this.stats.maxHealth * 0.5);
+    st.health = Math.floor(this.stats.maxHealth * 0.6);
     st.hunger = Math.max(st.hunger, 40);
-    this.world.addSin(5);
     const ac = this.world.buildings.center(this.world.buildings.altar);
     this.setPosition(ac.x, ac.y + TILE * 2.5);
-    this.invuln = 2500;
-    this.world.toast(`You fell. Carried back to the altar. Lost ${lost} coins, sin +${5}.`, "bad");
-    this.world.fx.ring(this.x, this.y - 10, 30, 0xff5b4a);
+    this.invuln = 3000;
+    this.world.enemies.repelAround(this.x, this.y, 110);
+    this.world.toast(
+      lost > 0 ? `You fell. The altar's light carried you back — but ${lost} coins are gone.` : "You fell. The altar's light carried you back.",
+      "bad",
+    );
+    this.world.fx.ring(this.x, this.y - 10, 110, 0xffe27a);
   }
 }

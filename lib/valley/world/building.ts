@@ -86,15 +86,10 @@ export class Buildings {
         const y = ty + dy;
         if (x < 1 || y < 1 || x >= MAP_W - 1 || y >= MAP_H - 1) return false;
         if (this.scene.map.isWater(x, y)) return false;
+        // the sand around the altar is sacred ground — keeps a walkable ring
+        if (type !== "altar" && this.scene.map.isSand(x, y)) return false;
         if (this.occupant(x, y)) return false;
       }
-    }
-    // keep a walkable ring around the altar
-    const a = this.altar;
-    if (a && type !== "altar") {
-      const c = this.center(a);
-      const p = { x: (tx + size / 2) * TILE, y: (ty + size / 2) * TILE };
-      if (dist(c.x, c.y, p.x, p.y) < TILE * 2.6) return false;
     }
     return true;
   }

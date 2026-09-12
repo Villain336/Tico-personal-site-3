@@ -243,4 +243,22 @@ export function registerTextures(scene: Phaser.Scene, character: Character) {
   addCanvas(scene, "px_violet", solid(3, 3, "#c084fc"));
   addCanvas(scene, "px_gold", solid(3, 3, C.gold));
   addCanvas(scene, "arrow", solid(6, 2, "#efe6cc"));
+  addCanvas(scene, "light_grad", radialGradient(256));
+}
+
+/** White disc fading to transparent; erased from the fog to carve out light. */
+function radialGradient(size: number) {
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d")!;
+  const r = size / 2;
+  const g = ctx.createRadialGradient(r, r, 0, r, r, r);
+  g.addColorStop(0, "rgba(255,255,255,1)");
+  g.addColorStop(0.45, "rgba(255,255,255,0.85)");
+  g.addColorStop(0.8, "rgba(255,255,255,0.3)");
+  g.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, size, size);
+  return canvas;
 }
