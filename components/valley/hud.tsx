@@ -1,6 +1,7 @@
 "use client";
 
 import type { HudState } from "@/lib/valley/types";
+import { INTERIOR_TITLE } from "@/lib/valley/world/interiors";
 
 export type Toast = { id: number; text: string; tone: "info" | "good" | "bad" };
 
@@ -45,6 +46,7 @@ export function Hud({
 }) {
   const hint = hud.tutorialStep < TUTORIAL.length ? TUTORIAL[hud.tutorialStep] : null;
   const hasCrops = hud.wheat + hud.grapes + hud.olives + hud.flax > 0;
+  const hasGoods = hasCrops || hud.wool > 0;
   const readyQuests = hud.quests.filter((q) => q.state === "ready").length;
 
   return (
@@ -67,6 +69,8 @@ export function Hud({
             <Stat icon="🍇" label="grapes" value={hud.grapes} />
             <Stat icon="🫒" label="olives" value={hud.olives} />
             <Stat icon="🪻" label="flax" value={hud.flax} />
+            <Stat icon="🍖" label="meat" value={hud.meat} />
+            <Stat icon="🧶" label="wool" value={hud.wool} />
           </div>
         </Card>
       </div>
@@ -96,16 +100,21 @@ export function Hud({
 
       {/* top-center: hint / prompt */}
       <div className="absolute inset-x-0 flex justify-center px-[210px]" style={{ top: topOffset }}>
-        {hud.nearAltar && !hud.isNight && hud.tutorialStep > 0 ? (
+        {hud.inside ? (
+          <Pill>Inside {hud.inside} · E at the door to leave{hud.inside === "the town hall" ? " · G civic" : ""}</Pill>
+        ) : hud.nearAltar && !hud.isNight && hud.tutorialStep > 0 ? (
           <Pill>Hold E to pray · refills prayer, earns XP</Pill>
-        ) : hud.nearMarket && hasCrops ? (
-          <Pill>Press E to sell your crops</Pill>
+        ) : hud.nearEnter ? (
+          <Pill>
+            Press E to enter {INTERIOR_TITLE[hud.nearEnter as keyof typeof INTERIOR_TITLE] ?? "the building"}
+            {hud.nearEnter === "hall" ? " · G civic" : ""}
+          </Pill>
+        ) : hud.nearMarket && hasGoods ? (
+          <Pill>Press E to sell your crops{hud.wool > 0 ? " and wool" : ""}</Pill>
         ) : hud.nearChanger ? (
           <Pill>Press E to deposit coins · L for the books</Pill>
         ) : hud.nearStore && hasCrops ? (
           <Pill>Press E to store crops · L for the books</Pill>
-        ) : hud.nearHall ? (
-          <Pill>Press E or G — civic hall{hud.civic.docket.length > 0 ? ` · ${hud.civic.docket.length} cases` : ""}</Pill>
         ) : hud.nearDrink && hud.thirst < 90 ? (
           <Pill>Press E to drink · or stand in the shallows</Pill>
         ) : hint ? (

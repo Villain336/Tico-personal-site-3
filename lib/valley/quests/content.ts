@@ -47,7 +47,7 @@ export const BIG_RECRUITS: Record<BigRecruitId, BigRecruitDef> = {
     unlock: [{ kind: "weapon" }, { kind: "boss", boss: "goliath" }],
     rewardText: "David's blade: sword damage +50%, longer reach. A giant now waits in your future.",
     lines: {
-      arrival: "A shepherd boy walked in from the south woods at dawn, a sling at his belt. He's made camp at the Shepherd's Camp.",
+      arrival: "A shepherd boy walked in from the south woods at dawn, a sling at his belt. He's waiting in the Field of the Shepherds.",
       offer: "I kept my father's sheep from wolves and robbers. Drive off 8 robbers, and I'll stand with you against worse than wolves.",
       progress: "The flock still needs watching. Keep at it.",
       turnIn: "You have a shepherd's courage. I'm with you now — and I know a giant we'll face together one day.",
@@ -63,7 +63,7 @@ export const BIG_RECRUITS: Record<BigRecruitId, BigRecruitDef> = {
     unlock: [{ kind: "building" }],
     rewardText: "The Granary is now buildable: nearby harvests yield +1.",
     lines: {
-      arrival: "An old builder came down the river at dawn and is measuring timber at the Boatyard on the lake shore.",
+      arrival: "An old builder came down the river at dawn and is measuring timber at the Galilee landing.",
       offer: "I built through a flood on provisions gathered ahead of the rain. Bring in 12 crops, and I'll show you what to build next.",
       progress: "Keep gathering. The rain always comes eventually.",
       turnIn: "You know how to prepare for what's coming. Let's build.",
@@ -79,7 +79,7 @@ export const BIG_RECRUITS: Record<BigRecruitId, BigRecruitDef> = {
     unlock: [{ kind: "ability" }],
     rewardText: "Staff of Moses: casting (E) now strikes every enemy in the ring.",
     lines: {
-      arrival: "A bearded man with a staff was seen on the high ground at dawn, standing among the Standing Stones.",
+      arrival: "A bearded man with a staff was seen on the high ground at dawn, standing among the Bethel stones.",
       offer: "I led a people out of bondage once. Redeem 3 who have fallen, and I'll teach you what I learned in the wilderness.",
       progress: "Every soul redeemed is a small exodus. Keep going.",
       turnIn: "You have a shepherd's patience for lost sheep. Take this — you've earned it.",
@@ -95,7 +95,7 @@ export const BIG_RECRUITS: Record<BigRecruitId, BigRecruitDef> = {
     unlock: [{ kind: "ability" }],
     rewardText: "Clear Sight: casting reveals hidden deceivers far out, and their lies take twice as long to work.",
     lines: {
-      arrival: "A traveler arrived on the eastern road at dawn and is resting by the Milestone.",
+      arrival: "A traveler arrived on the eastern road at dawn and is resting by the Way of the sea.",
       offer: "Scales once covered my own eyes before I saw clearly. Strike down 5 deceivers, and I'll show you what clear sight can do.",
       progress: "The lies don't stop coming. Neither should you.",
       turnIn: "You see clearly now, same as I did. Let me share what that sight is worth.",

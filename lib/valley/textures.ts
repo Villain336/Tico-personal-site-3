@@ -7,6 +7,7 @@ import {
   ALTAR,
   CHANGER,
   HALL,
+  FOLD,
   FARM,
   FLAX,
   GROVE,
@@ -41,6 +42,7 @@ import {
   TIMBER,
   TREES,
 } from "./sprites/terrain";
+import { GAZELLE, GOAT, SHEEP } from "./sprites/beasts";
 
 /** Draw a pixel map to a fresh canvas at `scale` px per pixel. */
 export function renderMap(map: PixelMap, roles: Roles, scale = 1): HTMLCanvasElement {
@@ -399,6 +401,7 @@ export function registerTextures(scene: Phaser.Scene, character: Character) {
   addCanvas(scene, "store", renderMap(STORE, BUILDING_ROLES));
   addCanvas(scene, "changer", renderMap(CHANGER, BUILDING_ROLES));
   addCanvas(scene, "hall", renderMap(HALL, BUILDING_ROLES));
+  addCanvas(scene, "fold", renderMap(FOLD, BUILDING_ROLES));
 
   GRASS.forEach((m, i) => addCanvas(scene, `grass_${i}`, renderMap(m, TILE_ROLES)));
   addCanvas(scene, "sand", renderMap(SAND, TILE_ROLES));
@@ -420,6 +423,28 @@ export function registerTextures(scene: Phaser.Scene, character: Character) {
   addCanvas(scene, "lm_cave", renderMap(CAVE, TERRAIN_ROLES));
   addCanvas(scene, "lm_ancientOlive", renderMap(OLIVE, TERRAIN_ROLES));
   addCanvas(scene, "lm_cistern", renderMap(CISTERN, TERRAIN_ROLES));
+  addCanvas(scene, "lm_mamre", renderMap(OLIVE, TERRAIN_ROLES));
+  addCanvas(scene, "lm_beersheba", renderMap(CISTERN, TERRAIN_ROLES));
+  addCanvas(scene, "lm_cherith", renderMap(CISTERN, TERRAIN_ROLES));
+  addCanvas(scene, "lm_mizpah", renderMap(STONES, TERRAIN_ROLES));
+  addCanvas(scene, "lm_jacobWell", renderMap(CISTERN, TERRAIN_ROLES));
+  addCanvas(scene, "lm_enGedi", renderMap(CAVE, TERRAIN_ROLES));
+
+  const BEAST_ROLES: Roles = {
+    K: C.outline,
+    C: "#f4f0e4",
+    c: "#d4cfc0",
+    T: "#c4a574",
+    t: "#8a6d45",
+    B: "#b07a3a",
+    b: "#7a4e1c",
+    E: C.eye,
+    H: "#efe6cc",
+    N: C.outline,
+  };
+  addCanvas(scene, "beast_sheep", renderMap(SHEEP, BEAST_ROLES));
+  addCanvas(scene, "beast_goat", renderMap(GOAT, BEAST_ROLES));
+  addCanvas(scene, "beast_gazelle", renderMap(GAZELLE, BEAST_ROLES));
   addCanvas(scene, "granary", renderMap(GRANARY, TERRAIN_ROLES));
   addCanvas(scene, "beacon", renderMap(BEACON, TERRAIN_ROLES));
   addCanvas(scene, "marker", renderMap(MARKER, { K: C.outline, G: "#ffffff" }));

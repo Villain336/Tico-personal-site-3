@@ -29,6 +29,7 @@ export type BuildingType =
   | "store"
   | "changer"
   | "hall"
+  | "fold"
   | "idol";
 
 export type CropKind = "wheat" | "grapes" | "olives" | "flax";
@@ -86,7 +87,35 @@ export type Unlocks = {
 export type EdictId = "curfew" | "openGates" | "sanctuary" | "conscription";
 export type StatuteId = "noIdols" | "protectWeak" | "keepSabbath" | "openHand";
 export type OfficeId = "watchman" | "scribe" | "treasurer";
-export type CaseKind = "fall" | "nightSale" | "idol" | "hoard";
+export type CaseKind = "fall" | "nightSale" | "idol" | "hoard" | "hunt" | "custom";
+export type LawIntent =
+  | "curfew"
+  | "openGates"
+  | "sanctuary"
+  | "conscription"
+  | "noIdols"
+  | "protectWeak"
+  | "keepSabbath"
+  | "openHand"
+  | "noHunt"
+  | "kindToBeasts"
+  | "stayLit"
+  | "tithe";
+
+export type WrittenLaw = {
+  id: string;
+  text: string;
+  intents: LawIntent[];
+};
+
+export type BeastKind = "sheep" | "goat" | "gazelle";
+
+export type SavedBeast = {
+  kind: BeastKind;
+  tame: boolean;
+  x: number;
+  y: number;
+};
 export type Verdict = "mercy" | "fine" | "exile";
 export type TitheRate = 0 | 10 | 20;
 export type StewardId = RecruitId | "self";
@@ -109,6 +138,9 @@ export type CivicState = {
   offices: Partial<Record<OfficeId, number>>;
   docket: CivicCase[];
   nextCaseId: number;
+  /** Player-written laws. NPCs compile these into intents they can keep. */
+  laws: WrittenLaw[];
+  nextLawId: number;
 };
 
 export type LandmarkId =
@@ -118,7 +150,13 @@ export type LandmarkId =
   | "milestone"
   | "cave"
   | "ancientOlive"
-  | "cistern";
+  | "cistern"
+  | "mamre"
+  | "beersheba"
+  | "cherith"
+  | "mizpah"
+  | "jacobWell"
+  | "enGedi";
 
 export type SaveData = {
   version: number;
@@ -132,6 +170,9 @@ export type SaveData = {
   grapes: number;
   olives: number;
   flax: number;
+  meat: number;
+  wool: number;
+  beasts: SavedBeast[];
   /** Coins held by the money changer. */
   bank: number;
   /** Grain in the storehouse / granary. */
@@ -177,6 +218,10 @@ export type HudState = {
   grapes: number;
   olives: number;
   flax: number;
+  meat: number;
+  wool: number;
+  inside: string | null;
+  nearEnter: string | null;
   bank: number;
   stores: Record<CropKind, number>;
   prices: Record<CropKind, number>;
@@ -329,7 +374,9 @@ export type GameCommand =
   | { type: "setTitheRate"; rate: TitheRate }
   | { type: "setSteward"; who: StewardId }
   | { type: "setOffice"; office: OfficeId; seed: number | null }
-  | { type: "judge"; id: string; verdict: Verdict };
+  | { type: "judge"; id: string; verdict: Verdict }
+  | { type: "writeLaw"; text: string }
+  | { type: "repealLaw"; id: string };
 
 export type GameEvent =
   | { type: "hud"; state: HudState }

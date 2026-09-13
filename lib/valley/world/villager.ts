@@ -2,6 +2,7 @@ import type { WorldScene } from "../scenes/WorldScene";
 import type { Gender, SavedVillager } from "../types";
 import { ALTAR, CIVIC, HOUSE, SIN, TILE, VILLAGER, XP } from "../config";
 import { line } from "../dialogue";
+import { hasIntent, lawLines } from "./laws";
 import { VILLAGER_VARIANTS } from "../textures";
 import { Actor, dist, type Afflictable } from "./actor";
 import type { Enemy } from "./enemy";
@@ -60,7 +61,7 @@ export class Villager extends Actor implements Afflictable {
   }
 
   get canFight() {
-    const need = this.world.state.civic.edicts.conscription ? CIVIC.conscriptionFightLevel : VILLAGER.fightLevel;
+    const need = hasIntent(this.world.state.civic, "conscription") ? CIVIC.conscriptionFightLevel : VILLAGER.fightLevel;
     return this.level >= need;
   }
 
@@ -418,12 +419,15 @@ export class Villagers {
           if (v.timer > 0) break;
           const roll = Math.random();
           if (isNight) {
-            if (v.canFight && !sc.state.civic.edicts.curfew) {
+            if (v.canFight && !hasIntent(sc.state.civic, "curfew")) {
               v.state = "wander";
               v.target = this.altarSpot();
             } else {
               v.state = "toHome";
             }
+          } else if (hasIntent(sc.state.civic, "stayLit") && sc.darkness.isDark(v.x, v.y)) {
+            v.state = "toAltar";
+            v.target = this.altarSpot();
           } else if (roll < 0.45) {
             v.state = "toAltar";
             v.target = this.altarSpot();
@@ -444,7 +448,7 @@ export class Villagers {
         }
         case "wander":
         case "toHome": {
-          if (v.state === "wander" && isNight && sc.state.civic.edicts.curfew) {
+          if (v.state === "wander" && isNight && hasIntent(sc.state.civic, "curfew")) {
             v.state = "toHome";
             break;
           }
@@ -528,7 +532,9 @@ export class Villagers {
 
       // greet the player as they pass (daytime, relaxed)
       if (!isNight && v.state !== "flee" && v.state !== "fight" && dist(v.x, v.y, player.x, player.y) < 26) {
-        sc.speech.say(v.sprite, line("villager", "greet", sc.playerName), "neutral", VILLAGER.greetCooldownMs);
+        const laws = lawLines(sc.state.civic);
+        const quote = laws.length > 0 && Math.random() < 0.45 ? `The law says: "${laws[v.seed % laws.length]}"` : null;
+        sc.speech.say(v.sprite, quote ?? line("villager", "greet", sc.playerName), "neutral", VILLAGER.greetCooldownMs);
       }
     }
   }

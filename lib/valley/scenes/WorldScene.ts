@@ -10,6 +10,7 @@ import {
   DUSK_WARN_S,
   GRANARY_BONUS,
   GRANARY_RADIUS_TILES,
+  FLOCK,
   IDOL_REWARD,
   MAP_H,
   MAP_W,
@@ -31,7 +32,7 @@ import { Darkness } from "../world/darkness";
 import { Enemies } from "../world/enemy";
 import { Fx } from "../world/fx";
 import { Jobs } from "../world/jobs";
-import { LANDMARKS, Landmarks } from "../world/landmarks";
+import { Landmarks } from "../world/landmarks";
 import { WorldMap } from "../world/map";
 import { Player } from "../world/player";
 import { Quests } from "../world/quests";
@@ -43,6 +44,8 @@ import { Ledger } from "../world/ledger";
 import { Civic, defaultCivic } from "../world/civic";
 import { Sky } from "../world/sky";
 import { Waves } from "../world/waves";
+import { Interiors } from "../world/interiors";
+import { Beasts } from "../world/beasts";
 
 export class WorldScene extends Phaser.Scene {
   state: SaveData;
@@ -66,6 +69,8 @@ export class WorldScene extends Phaser.Scene {
   sky!: Sky;
   ledger!: Ledger;
   civic!: Civic;
+  interiors!: Interiors;
+  beasts!: Beasts;
 
   paused = false;
   lightsDirty = true;
@@ -119,6 +124,12 @@ export class WorldScene extends Phaser.Scene {
     this.quests.loadFrom(this.state.quests);
     this.recruitManager.loadFrom(this.state.recruits);
     this.placeArrivedStrangers();
+
+    this.interiors = new Interiors(this);
+    this.beasts = new Beasts(this);
+    this.beasts.loadFrom(this.state.beasts ?? []);
+    this.beasts.seedWild();
+    this.beasts.ensureFlock();
 
     this.sky = new Sky(this);
     this.cameraDirector = new CameraDirector(this);
@@ -204,6 +215,7 @@ export class WorldScene extends Phaser.Scene {
     this.waves.update(dt);
     this.quests.updateHolyGhost();
     this.landmarks.update(dt);
+    this.beasts.update(dt);
 
     this.hudAcc += dt;
     if (this.hudAcc >= 0.1) {
@@ -247,6 +259,8 @@ export class WorldScene extends Phaser.Scene {
     const r = this.villagers.onDawn();
     const sinBefore = st.sin;
     const civicDawn = this.civic.settleDawn();
+    const wool = this.beasts.onDawn();
+    if (wool > 0) this.toast(`The flock gave ${wool} wool.`, "good");
     const books = this.ledger.settleDawn(this.villagers.population, r.rent, this.waves.spawnedTonight);
     this.waves.spawnedTonight = 0;
     this.addSin(SIN.dawnDecay * (st.unlocks.blessing ? UNLOCK_FX.blessingDawnDecayMult : 1));
@@ -362,6 +376,11 @@ export class WorldScene extends Phaser.Scene {
       take("grapes");
       take("olives");
       take("flax");
+      if (st.wool > 0) {
+        coins += st.wool * FLOCK.woolPrice;
+        units += st.wool;
+        st.wool = 0;
+      }
     } else {
       take(what);
     }
@@ -548,7 +567,11 @@ export class WorldScene extends Phaser.Scene {
     if (type === "house") this.advanceTutorial(5);
     if (type === "hall") {
       this.civic.ensureSteward();
-      this.toast("The town hall stands. Press G to sit in judgment.", "good");
+      this.toast("The town hall stands. Press E to enter, G to sit in judgment.", "good");
+    }
+    if (type === "fold") {
+      this.beasts.ensureFlock();
+      this.toast("A flock gathers at the fold. Wool at dawn. Hunt with the sword.", "good");
     }
     // walls, farms, lamps and bridges are placed in runs; everything else exits build mode
     if (type !== "wall" && type !== "farm" && type !== "flax" && type !== "lamp" && type !== "bridge") this.setBuildMode(null);
@@ -701,6 +724,14 @@ export class WorldScene extends Phaser.Scene {
         this.toast(result.toast, result.tone);
         break;
       }
+      case "writeLaw": {
+        const result = this.civic.writeLaw(c.text);
+        this.toast(result.toast, result.tone);
+        break;
+      }
+      case "repealLaw":
+        if (this.civic.repealLaw(c.id)) this.toast("The words are struck from the tablet.", "info");
+        break;
     }
     this.emitHud();
   }
@@ -713,7 +744,9 @@ export class WorldScene extends Phaser.Scene {
     st.villagers = this.villagers.serialize();
     st.recruits = this.recruitManager.serialize();
     st.quests = this.quests.serialize();
-    st.player = { x: Math.round(this.player.x), y: Math.round(this.player.y) };
+    if (this.interiors?.active) st.player = { x: Math.round(this.interiors.exit.x), y: Math.round(this.interiors.exit.y) };
+    else st.player = { x: Math.round(this.player.x), y: Math.round(this.player.y) };
+    if (this.beasts) st.beasts = this.beasts.serialize();
     return st;
   }
 
@@ -733,6 +766,10 @@ export class WorldScene extends Phaser.Scene {
       grapes: st.grapes,
       olives: st.olives,
       flax: st.flax,
+      meat: st.meat ?? 0,
+      wool: st.wool ?? 0,
+      inside: this.interiors?.label ?? null,
+      nearEnter: p.nearEnter,
       bank: Math.floor(st.bank),
       stores: { ...st.stores },
       prices: {
@@ -757,6 +794,7 @@ export class WorldScene extends Phaser.Scene {
           statutes: { ...civic.statutes },
           offices: { ...civic.offices },
           docket: civic.docket.map((x) => ({ ...x })),
+          laws: (civic.laws ?? []).map((l) => ({ ...l, intents: [...l.intents] })),
         };
       })(),
       villagerOffices: this.villagers.list
@@ -816,7 +854,7 @@ export class WorldScene extends Phaser.Scene {
       completedQuests: this.quests.completedIds(),
       atLandmark: (() => {
         const id = this.landmarks.at(p.x, p.y);
-        return id ? LANDMARKS[id].name : null;
+        return id ? this.landmarks.hudName(id) : null;
       })(),
     };
     this.bridge.emit({ type: "hud", state: hud });

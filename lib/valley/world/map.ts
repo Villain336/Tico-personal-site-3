@@ -3,6 +3,7 @@ import { createNoise2D } from "simplex-noise";
 import { MAP_H, MAP_SEED, MAP_W, TILE, WORLD_H, WORLD_W } from "../config";
 import { ALTAR_TILE } from "../save";
 import type { LandmarkId } from "../types";
+import { LANDMARK_IDS, LANDMARKS, SECRET_LANDMARK_IDS } from "./landmarks";
 
 export type Ground = "grass" | "grassHi" | "sand" | "dirt" | "water" | "shallow" | "cliff" | "ramp";
 
@@ -15,8 +16,6 @@ export type LandmarkSpot = {
   /** World-space point to stand at (and for the quest-giver to wait at). */
   spot: { x: number; y: number };
 };
-
-const LANDMARK_IDS: LandmarkId[] = ["shepherdCamp", "boatyard", "standingStones", "milestone", "cave", "ancientOlive", "cistern"];
 
 function mulberry32(seed: number) {
   let a = seed >>> 0;
@@ -31,9 +30,9 @@ function mulberry32(seed: number) {
 
 /**
  * The valley: lowland around the altar, a river with fords to the west, a
- * cliff-edged plateau to the north-east, woods to the south, and seven
- * landmarks to find. Generated from a fixed seed so every save shares one
- * geography; only buildings persist.
+ * cliff-edged plateau to the north-east, dense woods to the south, and
+ * biblical landmarks — some hidden — to find. Generated from a fixed seed
+ * so every save shares one geography; only buildings persist.
  */
 export class WorldMap {
   ground: Ground[] = [];
@@ -46,6 +45,8 @@ export class WorldMap {
   private blocked = new Uint8Array(MAP_W * MAP_H);
   private reach = new Uint8Array(MAP_W * MAP_H);
   landmarks = {} as Record<LandmarkId, LandmarkSpot>;
+  /** When set, return true/false for that point or null to use outdoor rules. */
+  walkOverride: ((x: number, y: number) => boolean | null) | null = null;
   private rt: Phaser.GameObjects.RenderTexture;
   private rng = mulberry32(MAP_SEED);
   private noise = createNoise2D(mulberry32(MAP_SEED ^ 0x9e3779b9));
@@ -150,24 +151,31 @@ export class WorldMap {
       for (let tx = 1; tx < MAP_W - 1; tx++) {
         const i = this.idx(tx, ty);
         const g = this.ground[i];
-        if (this.altarDist(tx, ty) < 9) continue;
+        if (this.altarDist(tx, ty) < 7.5) continue;
         if (g === "grass") {
           let f = this.noise(tx / 6 + 100, ty / 6);
-          if (ty > cy + 6) f += 0.2;
-          if (tx < cx - 8 && ty < cy + 6) f += 0.1;
-          if (f > 0.38 && this.rng() < 0.85) this.prop[i] = 1;
-          else if (this.noise(tx / 3 + 300, ty / 3) > 0.72 && this.rng() < 0.3) this.prop[i] = 2;
+          if (ty > cy + 3) f += 0.46;
+          if (tx < cx - 5) f += 0.28;
+          if (tx > cx + 8 && ty > cy + 1) f += 0.24;
+          if (f > 0.12 && this.rng() < 0.95) this.prop[i] = 1;
+          else if (this.noise(tx / 3 + 300, ty / 3) > 0.7 && this.rng() < 0.28) this.prop[i] = 2;
         } else if (g === "grassHi") {
           if (this.noise(tx / 4 + 50, ty / 4 + 50) > 0.58 && this.rng() < 0.5) this.prop[i] = 2;
-          else if (this.noise(tx / 5 + 200, ty / 5) > 0.62 && this.rng() < 0.4) this.prop[i] = 1;
+          else if (this.noise(tx / 5 + 200, ty / 5) > 0.48 && this.rng() < 0.55) this.prop[i] = 1;
         }
       }
     }
 
-    // --- landmarks, then make sure each is walkable-to
-    this.placeLandmarks(lake);
+    // --- known landmarks first, then secret sites on already-reachable ground
+    this.placeLandmarks(lake, false);
     this.rebuildBlocked();
-    for (const id of LANDMARK_IDS) this.ensureReachable(this.landmarks[id].spot);
+    for (const id of LANDMARK_IDS) {
+      if (LANDMARKS[id].secret) continue;
+      this.ensureReachable(this.landmarks[id].spot);
+    }
+    this.rebuildBlocked();
+    this.computeReach();
+    this.placeLandmarks(lake, true);
     this.rebuildBlocked();
     this.computeReach();
   }
@@ -245,37 +253,57 @@ export class WorldMap {
     }
   }
 
-  private placeLandmarks(lake: { x: number; y: number; rx: number; ry: number }) {
+  private placeLandmarks(lake: { x: number; y: number; rx: number; ry: number }, secrets: boolean) {
     const { cx, cy } = this;
     const low = (tx: number, ty: number) => this.ground[this.idx(tx, ty)] === "grass" || this.ground[this.idx(tx, ty)] === "dirt";
     const hi = (tx: number, ty: number) => this.ground[this.idx(tx, ty)] === "grassHi";
+    const reached = (tx: number, ty: number) => !secrets || this.reach[this.idx(tx, ty)] === 1;
 
-    this.landmarks.shepherdCamp = this.findSpot(cx + 9, cy + 15, 2, 2, low);
-    this.landmarks.ancientOlive = this.findSpot(cx - 5, cy + 17, 2, 2, low);
-    this.landmarks.cistern = this.findSpot(cx - 25, cy - 7, 2, 1, low);
-    this.landmarks.standingStones = this.findSpot(cx + 18, cy - 13, 2, 2, hi);
-    this.landmarks.milestone = this.findSpot(cx + 22, cy - 3, 1, 1, low);
-    this.landmarks.boatyard = this.findSpot(lake.x + lake.rx + 2, lake.y - 1, 2, 1, (tx, ty) => {
-      if (!low(tx, ty)) return false;
-      for (const [dx, dy] of [[-1, 0], [0, 1], [0, -1], [-2, 0]]) {
-        if (this.inBounds(tx + dx, ty + dy) && this.ground[this.idx(tx + dx, ty + dy)] === "water") return true;
-      }
-      return false;
-    });
-    // The cave sits in a south-facing cliff; the player stands on the lowland below it.
-    this.landmarks.cave = this.findSpot(cx + 10, cy - 12, 2, 1, (tx, ty) => {
-      const i = this.idx(tx, ty);
-      return this.ground[i] === "cliff" && this.cliffFace[i] === 1 && this.ground[this.idx(tx + 1, ty)] === "cliff";
-    });
+    if (!secrets) {
+      this.landmarks.shepherdCamp = this.findSpot(cx + 9, cy + 15, 2, 2, low);
+      this.landmarks.ancientOlive = this.findSpot(cx - 5, cy + 17, 2, 2, low);
+      this.landmarks.cistern = this.findSpot(cx - 25, cy - 7, 2, 1, low);
+      this.landmarks.standingStones = this.findSpot(cx + 18, cy - 13, 2, 2, hi);
+      this.landmarks.milestone = this.findSpot(cx + 22, cy - 3, 1, 1, low);
+      this.landmarks.boatyard = this.findSpot(lake.x + lake.rx + 2, lake.y - 1, 2, 1, (tx, ty) => {
+        if (!low(tx, ty)) return false;
+        for (const [dx, dy] of [
+          [-1, 0],
+          [0, 1],
+          [0, -1],
+          [-2, 0],
+        ]) {
+          if (this.inBounds(tx + dx, ty + dy) && this.ground[this.idx(tx + dx, ty + dy)] === "water") return true;
+        }
+        return false;
+      });
+      this.landmarks.cave = this.findSpot(cx + 10, cy - 12, 2, 1, (tx, ty) => {
+        const i = this.idx(tx, ty);
+        return this.ground[i] === "cliff" && this.cliffFace[i] === 1 && this.ground[this.idx(tx + 1, ty)] === "cliff";
+      });
+    } else {
+      this.landmarks.mamre = this.findSpot(cx - 18, cy + 20, 2, 2, (tx, ty) => low(tx, ty) && reached(tx, ty));
+      this.landmarks.beersheba = this.findSpot(cx - 28, cy + 16, 2, 1, (tx, ty) => low(tx, ty) && reached(tx, ty));
+      this.landmarks.cherith = this.findSpot(cx - 24, cy - 18, 1, 1, (tx, ty) => {
+        const g = this.ground[this.idx(tx, ty)];
+        return (g === "grass" || g === "dirt" || g === "shallow") && reached(tx, ty);
+      });
+      this.landmarks.mizpah = this.findSpot(cx + 24, cy - 20, 2, 2, (tx, ty) => hi(tx, ty) && reached(tx, ty));
+      this.landmarks.jacobWell = this.findSpot(cx + 22, cy + 18, 2, 1, (tx, ty) => low(tx, ty) && reached(tx, ty));
+      this.landmarks.enGedi = this.findSpot(cx + 4, cy + 22, 2, 2, (tx, ty) => low(tx, ty) && reached(tx, ty));
+    }
 
-    for (const id of LANDMARK_IDS) {
+    const ids = secrets ? SECRET_LANDMARK_IDS : LANDMARK_IDS.filter((id) => !LANDMARKS[id].secret);
+    for (const id of ids) {
       const lm = this.landmarks[id];
-      // Clear brush around each landmark and make sure its doorstep is walkable ground.
-      for (let dy = -2; dy <= lm.fh + 1; dy++) {
-        for (let dx = -2; dx <= lm.fw + 1; dx++) {
+      const pad = LANDMARKS[id].secret ? 0 : 2;
+      for (let dy = -pad; dy <= lm.fh + (pad ? 1 : 0); dy++) {
+        for (let dx = -pad; dx <= lm.fw + (pad ? 1 : 0); dx++) {
           const x = lm.tx + dx;
           const y = lm.ty + dy;
-          if (this.inBounds(x, y)) this.prop[this.idx(x, y)] = 0;
+          if (this.inBounds(x, y) && (pad > 0 || (dx >= 0 && dy >= 0 && dx < lm.fw && dy < lm.fh))) {
+            this.prop[this.idx(x, y)] = 0;
+          }
         }
       }
       const sx = lm.tx + Math.floor(lm.fw / 2);
@@ -284,6 +312,7 @@ export class WorldMap {
         const i = this.idx(sx, sy);
         if (this.ground[i] === "water") this.ground[i] = "shallow";
         if (this.ground[i] === "cliff") this.ground[i] = "ramp";
+        if (LANDMARKS[id].secret) this.prop[i] = 0;
       }
       lm.spot = { x: (sx + 0.5) * TILE, y: (sy + 1) * TILE - 2 };
     }
@@ -314,6 +343,7 @@ export class WorldMap {
     }
     for (const id of LANDMARK_IDS) {
       const lm = this.landmarks[id];
+      if (!lm) continue;
       for (let fy = 0; fy < lm.fh; fy++) for (let fx = 0; fx < lm.fw; fx++) if (this.inBounds(lm.tx + fx, lm.ty + fy)) this.blocked[this.idx(lm.tx + fx, lm.ty + fy)] = 1;
     }
   }
@@ -419,6 +449,7 @@ export class WorldMap {
     }
     for (const id of LANDMARK_IDS) {
       const lm = this.landmarks[id];
+      if (!lm) continue;
       const y = (lm.ty + lm.fh) * TILE;
       scene.add.image(lm.tx * TILE, y, `lm_${id}`).setOrigin(0, 1).setDepth(y - 1);
     }
@@ -471,6 +502,7 @@ export class WorldMap {
   isLandmarkTile(tx: number, ty: number) {
     for (const id of LANDMARK_IDS) {
       const lm = this.landmarks[id];
+      if (!lm) continue;
       if (tx >= lm.tx && tx < lm.tx + lm.fw && ty >= lm.ty && ty < lm.ty + lm.fh) return true;
     }
     return false;
@@ -488,6 +520,10 @@ export class WorldMap {
   }
 
   isWalkablePoint(x: number, y: number, ghost: boolean) {
+    if (this.walkOverride) {
+      const over = this.walkOverride(x, y);
+      if (over !== null) return over;
+    }
     if (x < 2 || y < 2 || x > WORLD_W - 2 || y > WORLD_H - 2) return false;
     if (ghost) return true;
     return !this.isBlocked(Math.floor(x / TILE), Math.floor(y / TILE));

@@ -229,6 +229,8 @@ export function ValleyGame({
           onSteward={(who) => bridge.send({ type: "setSteward", who })}
           onOffice={(office, seed) => bridge.send({ type: "setOffice", office, seed })}
           onJudge={(id, verdict) => bridge.send({ type: "judge", id, verdict })}
+          onWriteLaw={(text) => bridge.send({ type: "writeLaw", text })}
+          onRepealLaw={(id) => bridge.send({ type: "repealLaw", id })}
           onClose={() => setPanel(null)}
         />
       )}

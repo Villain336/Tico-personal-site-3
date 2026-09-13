@@ -28,6 +28,7 @@ export class CameraDirector {
   private talkX = 0;
   private talkY = 0;
   private dawnT = 0;
+  private interior: { x: number; y: number; w: number; h: number } | null = null;
 
   constructor(private scene: WorldScene) {
     const cam = scene.cameras.main;
@@ -59,6 +60,13 @@ export class CameraDirector {
   /** Brief pull-back at dawn so the new day reads as a new shot. */
   pulseDawn() {
     this.dawnT = 2.4;
+  }
+
+  setInterior(room: { x: number; y: number; w: number; h: number } | null) {
+    this.interior = room;
+    const cam = this.scene.cameras.main;
+    if (room) cam.setBounds(room.x, room.y, room.w, room.h);
+    else cam.setBounds(-48, -80, WORLD_W + 96, WORLD_H + 112);
   }
 
   update(dt: number) {
@@ -95,13 +103,14 @@ export class CameraDirector {
   }
 
   private baseZoom() {
+    if (this.interior) return ZOOM_MODES.talk;
     if (this.dawnT > 0) return ZOOM_MODES.dawn;
     const st = this.scene.state;
     if (st.clock >= DAY_SECONDS) return ZOOM_MODES.night;
     if (st.clock >= DAY_SECONDS - DUSK_WARN_S) return ZOOM_MODES.dusk;
     if (this.talkT > 0) return ZOOM_MODES.talk;
     if (this.scene.player.praying && this.scene.player.nearAltar) return ZOOM_MODES.pray;
-    if (this.scene.landmarks.at(this.scene.player.x, this.scene.player.y)) return ZOOM_MODES.landmark;
+    if (this.scene.landmarks.atKnown(this.scene.player.x, this.scene.player.y)) return ZOOM_MODES.landmark;
     const { tx, ty } = WorldMap.tileOf(this.scene.player.x, this.scene.player.y);
     if (this.scene.map.isHigh(tx, ty)) return ZOOM_MODES.highland;
     return ZOOM_MODES.explore;

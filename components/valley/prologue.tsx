@@ -25,8 +25,8 @@ function pages(name: string): Page[] {
     {
       title: "More than the light",
       body: [
-        "The valley is bigger than the light reaches. A river runs to the west with fords you can wade; high ground rises to the north-east behind cliffs; the south is deep woods.",
-        "There are places worth finding out there — and strangers will walk in at dawn over the coming days. Each has a story. Each needs something from you first.",
+        "The valley is bigger than the light reaches. A river runs to the west with fords you can wade; high ground rises to the north-east behind cliffs; the south is deep woods, thick enough to hide a spring.",
+        "Some places are named in Scripture and hard to find. Walk the woods. Strangers will come at dawn — each has a story, and each needs something from you first.",
       ],
       note: "J opens the journal · R the roster · 📍 counts places found",
     },
