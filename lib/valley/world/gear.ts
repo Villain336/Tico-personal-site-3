@@ -69,6 +69,50 @@ export const GEAR: Record<GearId, GearDef> = {
     armor: 0,
     lanternBonus: 2,
   },
+  raidBanner: {
+    id: "raidBanner",
+    slot: "lamp",
+    name: "Raid banner",
+    blurb: "A captured hill-flag. Your lantern reaches a little farther.",
+    unique: true,
+    damageMult: 1,
+    rangeBonus: 0,
+    armor: 0,
+    lanternBonus: 1.2,
+  },
+  baalsCenser: {
+    id: "baalsCenser",
+    slot: "lamp",
+    name: "Baal's censer",
+    blurb: "Stolen fire. Your lantern reaches much farther.",
+    unique: true,
+    damageMult: 1,
+    rangeBonus: 0,
+    armor: 0,
+    lanternBonus: 3,
+  },
+  molochBrand: {
+    id: "molochBrand",
+    slot: "blade",
+    name: "Moloch's brand",
+    blurb: "+70% sword damage. A furnace-iron blade.",
+    unique: true,
+    damageMult: 1.7,
+    rangeBonus: 6,
+    armor: 0,
+    lanternBonus: 0,
+  },
+  dragonScale: {
+    id: "dragonScale",
+    slot: "wrap",
+    name: "Dragon scale",
+    blurb: "Hide of the outer dark. 45% less damage taken.",
+    unique: true,
+    damageMult: 1,
+    rangeBonus: 0,
+    armor: 0.45,
+    lanternBonus: 0,
+  },
 };
 
 export const GEAR_SLOTS: GearSlot[] = ["blade", "wrap", "lamp"];
@@ -185,6 +229,26 @@ const DROPS: Record<EnemyKind, DropTable> = {
     scraps: () => 8,
     relic: true,
     gear: [{ id: "goliathMail", chance: 1 }],
+  },
+  raidLeader: {
+    scraps: () => 5,
+    relic: false,
+    gear: [{ id: "raidBanner", chance: 1 }],
+  },
+  baal: {
+    scraps: () => 10,
+    relic: true,
+    gear: [{ id: "baalsCenser", chance: 1 }],
+  },
+  moloch: {
+    scraps: () => 12,
+    relic: true,
+    gear: [{ id: "molochBrand", chance: 1 }],
+  },
+  dragon: {
+    scraps: () => 16,
+    relic: true,
+    gear: [{ id: "dragonScale", chance: 1 }],
   },
 };
 

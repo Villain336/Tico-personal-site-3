@@ -17,10 +17,12 @@ import {
   TILE,
   emptySkills,
   emptyStores,
+  emptyUnlocks,
   evenPrices,
 } from "./config";
 import { defaultCivic } from "./world/civic";
 import { emptyGear } from "./world/gear";
+import { emptyWar } from "./world/war";
 import { settleDawnOn } from "./world/ledger";
 import { LETTER, letterLine, pickVisitName } from "./dialogue";
 
@@ -65,7 +67,8 @@ export function newSave(character: Character): SaveData {
     villagers: [],
     recruits: [],
     quests: [],
-    unlocks: { weapon: false, goliathBoss: false, goliathDefeated: false, building: false, abilities: [], blessing: false },
+    unlocks: emptyUnlocks(),
+    war: emptyWar(),
     discovered: [],
     introSeen: false,
     player: { x: (ALTAR_TILE.tx + 1) * TILE, y: (ALTAR_TILE.ty + 4) * TILE },
@@ -94,7 +97,8 @@ export function loadSave(): SaveData | null {
     if (!data.beasts) data.beasts = [];
     if (!data.gear) data.gear = emptyGear();
     data.skills = { ...emptySkills(), ...data.skills };
-    if (data.unlocks && data.unlocks.goliathDefeated == null) data.unlocks.goliathDefeated = false;
+    if (!data.war) data.war = emptyWar();
+    if (data.unlocks) data.unlocks = { ...emptyUnlocks(), ...data.unlocks, abilities: data.unlocks.abilities ?? [] };
     return data;
   } catch {
     return null;

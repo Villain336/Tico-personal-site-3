@@ -35,6 +35,7 @@ export function CivicPanel({
   onJudge,
   onWriteLaw,
   onRepealLaw,
+  onMuster,
   onClose,
 }: {
   hud: HudState;
@@ -46,6 +47,7 @@ export function CivicPanel({
   onJudge: (id: string, verdict: Verdict) => void;
   onWriteLaw: (text: string) => void;
   onRepealLaw: (id: string) => void;
+  onMuster: () => void;
   onClose: () => void;
 }) {
   const c = hud.civic;
@@ -161,6 +163,22 @@ export function CivicPanel({
                 </p>
               </div>
             ))}
+          </div>
+        </section>
+
+        <section className="mt-3 rounded-xl border border-white/10 p-3">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold">War</span>
+            <span className="text-white/50">
+              Raids broken {hud.war.raidsCleared} · Sieges held {hud.war.victories}
+            </span>
+          </div>
+          <p className="mt-1 text-white/45">{hud.war.hint}</p>
+          {hud.war.siegeNext && <p className="mt-1 text-amber-200">The host is mustered. Night will be a siege.</p>}
+          <div className="mt-2">
+            <Mini disabled={locked || !hud.war.canMuster} onClick={onMuster}>
+              Muster a host ({hud.war.cost} coins)
+            </Mini>
           </div>
         </section>
 

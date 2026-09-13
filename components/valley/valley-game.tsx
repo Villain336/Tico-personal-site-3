@@ -27,6 +27,11 @@ declare global {
       david: () => void;
       points: (n?: number) => void;
       swingNear: () => void;
+      raid: () => void;
+      siege: () => void;
+      baal: () => void;
+      moloch: () => void;
+      dragon: () => void;
     };
   }
 }
@@ -276,6 +281,7 @@ export function ValleyGame({
           onJudge={(id, verdict) => bridge.send({ type: "judge", id, verdict })}
           onWriteLaw={(text) => bridge.send({ type: "writeLaw", text })}
           onRepealLaw={(id) => bridge.send({ type: "repealLaw", id })}
+          onMuster={() => bridge.send({ type: "muster" })}
           onClose={() => setPanel(null)}
         />
       )}

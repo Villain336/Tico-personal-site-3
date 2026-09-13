@@ -1,3 +1,5 @@
+import type { NightKind, WarState } from "./world/war";
+
 export type Gender = "man" | "woman";
 
 export type Character = {
@@ -39,7 +41,16 @@ export type CropKind = "wheat" | "grapes" | "olives" | "flax";
 export type SkillId = "sword" | "fleet" | "faith" | "fortitude" | "steward" | "ward" | "hunter";
 
 export type GearSlot = "blade" | "wrap" | "lamp";
-export type GearId = "davidsBlade" | "scrapBlade" | "hideWrap" | "goliathMail" | "prophetLamp";
+export type GearId =
+  | "davidsBlade"
+  | "scrapBlade"
+  | "hideWrap"
+  | "goliathMail"
+  | "prophetLamp"
+  | "raidBanner"
+  | "baalsCenser"
+  | "molochBrand"
+  | "dragonScale";
 
 export type GearState = {
   blade: GearId | null;
@@ -93,6 +104,12 @@ export type Unlocks = {
   weapon: boolean;
   goliathBoss: boolean;
   goliathDefeated: boolean;
+  baalBoss: boolean;
+  baalDefeated: boolean;
+  molochBoss: boolean;
+  molochDefeated: boolean;
+  dragonBoss: boolean;
+  dragonDefeated: boolean;
   building: boolean;
   abilities: BigRecruitId[];
   blessing: boolean;
@@ -223,6 +240,7 @@ export type SaveData = {
   stats: { kills: number; redeemed: number; fallen: number; idolsSmashed: number };
   tutorialStep: number;
   won: boolean;
+  war: WarState;
 };
 
 /** What the scene pushes to React ~10×/s. */
@@ -243,6 +261,15 @@ export type HudState = {
   relics: number;
   gear: GearState;
   boss: { name: string; hp: number; maxHp: number } | null;
+  nightKind: NightKind;
+  war: {
+    raidsCleared: number;
+    victories: number;
+    siegeNext: boolean;
+    canMuster: boolean;
+    hint: string;
+    cost: number;
+  };
   inside: string | null;
   nearEnter: string | null;
   bank: number;
@@ -401,7 +428,8 @@ export type GameCommand =
   | { type: "writeLaw"; text: string }
   | { type: "repealLaw"; id: string }
   | { type: "equip"; id: GearId }
-  | { type: "unequip"; slot: GearSlot };
+  | { type: "unequip"; slot: GearSlot }
+  | { type: "muster" };
 
 export type GameEvent =
   | { type: "hud"; state: HudState }

@@ -33,7 +33,7 @@ export const NIGHT_SECONDS = 120;
 export const CYCLE_SECONDS = DAY_SECONDS + NIGHT_SECONDS;
 
 export const SAVE_KEY = "shalom-valley-save";
-export const SAVE_VERSION = 9;
+export const SAVE_VERSION = 10;
 export const AUTOSAVE_MS = 30_000;
 export const OFFLINE_CAP_HOURS = 8;
 export const OFFLINE_RENT_RATE = 0.5;
@@ -74,6 +74,10 @@ export const XP = {
   idol: 40,
   prophet: 60,
   goliath: 140,
+  raidLeader: 40,
+  baal: 160,
+  moloch: 180,
+  dragon: 220,
 };
 
 export const SKILLS: Record<
@@ -97,6 +101,21 @@ export const emptySkills = (): Record<SkillId, number> => ({
   steward: 0,
   ward: 0,
   hunter: 0,
+});
+
+export const emptyUnlocks = () => ({
+  weapon: false,
+  goliathBoss: false,
+  goliathDefeated: false,
+  baalBoss: false,
+  baalDefeated: false,
+  molochBoss: false,
+  molochDefeated: false,
+  dragonBoss: false,
+  dragonDefeated: false,
+  building: false,
+  abilities: [] as import("./types").BigRecruitId[],
+  blessing: false,
 });
 
 export type BuildingDef = {
@@ -279,7 +298,23 @@ export const SIN = {
   extraEnemiesAt: 50,
 };
 
-export type EnemyKind = "robber" | "tempter" | "deceiver" | "spirit" | "prophet" | "goliath";
+export type EnemyKind =
+  | "robber"
+  | "tempter"
+  | "deceiver"
+  | "spirit"
+  | "prophet"
+  | "goliath"
+  | "raidLeader"
+  | "baal"
+  | "moloch"
+  | "dragon";
+
+export const NAMED_BOSSES: EnemyKind[] = ["goliath", "baal", "moloch", "dragon"];
+
+export function isNamedBoss(kind: EnemyKind) {
+  return NAMED_BOSSES.includes(kind);
+}
 
 export type EnemyDef = {
   name: string;
@@ -303,6 +338,10 @@ export const ENEMIES: Record<EnemyKind, EnemyDef> = {
   spirit: { name: "Spirit", minDay: 6, minLevel: 4, minAltar: 2, speed: 58, hp: 1, damage: 6, bounty: 18, swordImmune: true, ghost: true },
   prophet: { name: "False Prophet", minDay: 8, minLevel: 5, minAltar: 3, speed: 30, hp: 90, damage: 4, bounty: 60, swordImmune: false, ghost: false },
   goliath: { name: "Goliath", minDay: 99, minLevel: 99, minAltar: 99, speed: 26, hp: 220, damage: 12, bounty: 80, swordImmune: false, ghost: false, hitRadius: 38 },
+  raidLeader: { name: "Raid captain", minDay: 99, minLevel: 99, minAltar: 99, speed: 48, hp: 80, damage: 8, bounty: 28, swordImmune: false, ghost: false, hitRadius: 16 },
+  baal: { name: "Baal", minDay: 99, minLevel: 99, minAltar: 99, speed: 28, hp: 240, damage: 8, bounty: 90, swordImmune: false, ghost: false, hitRadius: 36 },
+  moloch: { name: "Moloch", minDay: 99, minLevel: 99, minAltar: 99, speed: 24, hp: 280, damage: 14, bounty: 100, swordImmune: false, ghost: false, hitRadius: 40 },
+  dragon: { name: "The dragon", minDay: 99, minLevel: 99, minAltar: 99, speed: 34, hp: 320, damage: 16, bounty: 140, swordImmune: false, ghost: false, hitRadius: 42 },
 };
 
 export const WAVES = {

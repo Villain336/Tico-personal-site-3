@@ -1,6 +1,7 @@
 import type { WorldScene } from "../scenes/WorldScene";
-import { CIVIC, ENEMIES, SIN, TILE, UNLOCK_FX, WAVES, XP, type EnemyDef, type EnemyKind } from "../config";
+import { CIVIC, ENEMIES, SIN, TILE, UNLOCK_FX, WAVES, XP, isNamedBoss, type EnemyDef, type EnemyKind } from "../config";
 import { applyDrop, bountyCoins, emptyGear, GEAR, rollEnemyDrop } from "./gear";
+import { unlockAfterCaptain } from "./war";
 import { hasIntent } from "./laws";
 import { line } from "../dialogue";
 import { Actor, dist, type Afflictable } from "./actor";
@@ -36,14 +37,34 @@ export class Enemy extends Actor {
       this.ghost = true;
       this.sprite.setAlpha(0.6);
     }
-    if (kind === "goliath") {
-      this.sprite.setTint(0xd4b483);
-    }
+    const tint = BOSS_TINT[kind];
+    if (tint) this.sprite.setTint(tint);
+    if (kind === "dragon" || kind === "moloch" || kind === "baal") this.sprite.setScale(kind === "dragon" ? 1.15 : 1);
   }
 }
 
+const BOSS_TINT: Partial<Record<EnemyKind, number>> = {
+  goliath: 0xd4b483,
+  raidLeader: 0xe0b53a,
+  baal: 0xc9a227,
+  moloch: 0xff6a2a,
+  dragon: 0x7a3cff,
+};
+
+const BOSS_XP: Partial<Record<EnemyKind, number>> = {
+  prophet: XP.prophet,
+  goliath: XP.goliath,
+  raidLeader: XP.raidLeader,
+  baal: XP.baal,
+  moloch: XP.moloch,
+  dragon: XP.dragon,
+};
+
+type Burn = { x: number; y: number; r: number; t: number; pulse: number };
+
 export class Enemies {
   list: Enemy[] = [];
+  burns: Burn[] = [];
 
   constructor(private scene: WorldScene) {}
 
@@ -64,6 +85,22 @@ export class Enemies {
     if (kind === "goliath") {
       this.scene.toast("Goliath has come down to the valley. Stand with David.", "bad");
       this.scene.speech.say(e.sprite, line("goliath", "arrive"), "dark", 0);
+    }
+    if (kind === "raidLeader") {
+      this.scene.toast("A raid captain carries a banner from the idol city.", "bad");
+      this.scene.speech.say(e.sprite, line("raidLeader", "arrive"), "dark", 0);
+    }
+    if (kind === "baal") {
+      this.scene.toast("Baal walks the valley. Smash his idols. Do not kneel.", "bad");
+      this.scene.speech.say(e.sprite, line("baal", "arrive"), "dark", 0);
+    }
+    if (kind === "moloch") {
+      this.scene.toast("Moloch's furnace has come. Keep off the fire.", "bad");
+      this.scene.speech.say(e.sprite, line("moloch", "arrive"), "dark", 0);
+    }
+    if (kind === "dragon") {
+      this.scene.toast("A dragon of the outer dark. God is not this beast.", "bad");
+      this.scene.speech.say(e.sprite, line("dragon", "arrive"), "dark", 0);
     }
     if (kind === "robber" && Math.random() < 0.5) {
       this.scene.speech.say(e.sprite, line("robber", "taunt"), "dark", 0);
@@ -171,13 +208,18 @@ export class Enemies {
     this.scene.time.delayedCall(70, () => {
       if (!e.alive) return;
       e.sprite.clearTint();
-      if (e.kind === "goliath") e.sprite.setTint(0xd4b483);
+      const tint = BOSS_TINT[e.kind];
+      if (tint) e.sprite.setTint(tint);
     });
     if (e.kind === "robber") this.scene.speech.say(e.sprite, line("robber", "hit"), "dark", 2500);
     else if (e.kind === "tempter") this.scene.speech.say(e.sprite, line("tempter", "hit"), "dark", 2500);
     else if (e.kind === "deceiver") this.scene.speech.say(e.sprite, line("deceiver", "hit"), "dark", 2500);
     else if (e.kind === "prophet") this.scene.speech.say(e.sprite, line("prophet", "anger"), "dark", 2500);
     else if (e.kind === "goliath") this.scene.speech.say(e.sprite, line("goliath", "hit"), "dark", 2500);
+    else if (e.kind === "raidLeader") this.scene.speech.say(e.sprite, line("raidLeader", "hit"), "dark", 2500);
+    else if (e.kind === "baal") this.scene.speech.say(e.sprite, line("baal", "hit"), "dark", 2500);
+    else if (e.kind === "moloch") this.scene.speech.say(e.sprite, line("moloch", "hit"), "dark", 2500);
+    else if (e.kind === "dragon") this.scene.speech.say(e.sprite, line("dragon", "hit"), "dark", 2500);
     if (e.kind === "deceiver") e.revealed = true;
     if (e.hp <= 0) this.kill(e, true);
   }
@@ -195,7 +237,7 @@ export class Enemies {
         this.scene.toast(`Protection bounty +${e.def.bounty}`, "good");
       }
       this.scene.addCoins(coins);
-      this.scene.addXp(e.kind === "goliath" ? XP.goliath : e.kind === "prophet" ? XP.prophet : XP.kill);
+      this.scene.addXp(BOSS_XP[e.kind] ?? XP.kill);
       st.stats.kills++;
       if (e.kind === "robber") this.scene.quests.reportProgress("david", 1);
       else if (e.kind === "deceiver") this.scene.quests.reportProgress("paul", 1);
@@ -212,7 +254,35 @@ export class Enemies {
       }
       if (e.kind === "goliath") {
         st.unlocks.goliathDefeated = true;
-        this.scene.toast("Goliath falls. His mail is yours.", "good");
+        this.scene.toast("Goliath falls. His mail is yours. The hills will send raids.", "good");
+      }
+      if (e.kind === "raidLeader") {
+        this.scene.waves.captainKilledTonight = true;
+        const next = unlockAfterCaptain(st.war.raidsCleared, st.unlocks.baalDefeated);
+        st.war.raidsCleared = next.raidsCleared;
+        if (this.scene.waves.nightKind === "siege") st.war.victories += 1;
+        if (next.unlockBaal) {
+          st.unlocks.baalBoss = true;
+          this.scene.toast("The captain falls. Baal will answer from the idol city.", "good");
+        } else {
+          this.scene.toast("The captain falls. The banner is yours.", "good");
+        }
+      }
+      if (e.kind === "baal") {
+        st.unlocks.baalDefeated = true;
+        st.unlocks.molochBoss = true;
+        this.scene.toast("Baal falls. Moloch's furnace is not far behind.", "good");
+      }
+      if (e.kind === "moloch") {
+        st.unlocks.molochDefeated = true;
+        st.unlocks.dragonBoss = true;
+        this.scene.toast("Moloch's fire goes out. Something older uncoils in the dark.", "good");
+      }
+      if (e.kind === "dragon") {
+        st.unlocks.dragonDefeated = true;
+        st.war.victories += 1;
+        st.civic.loyalty = Math.min(100, st.civic.loyalty + 8);
+        this.scene.toast("The dragon falls. The outer dark lost a beast — not a god.", "good");
       }
       this.scene.fx.coins(x, y - 10, Math.min(6, Math.ceil(coins / 5)));
     }
@@ -257,23 +327,43 @@ export class Enemies {
     }
   }
 
-  /** Dawn: night shadows retreat without bounty. Goliath stays. */
+  /** Dawn: night shadows retreat without bounty. Named bosses stay. */
   clearAll() {
+    this.burns = [];
     for (const e of [...this.list]) {
-      if (e.kind === "goliath") continue;
+      if (isNamedBoss(e.kind)) continue;
       this.scene.fx.burst(e.x, e.y - 10, "px_violet", 4);
       this.remove(e);
     }
   }
 
   livingBoss(): Enemy | null {
-    return this.list.find((e) => e.alive && e.kind === "goliath") ?? null;
+    return this.list.find((e) => e.alive && isNamedBoss(e.kind)) ?? null;
+  }
+
+  livingCaptain(): Enemy | null {
+    return this.list.find((e) => e.alive && e.kind === "raidLeader") ?? null;
+  }
+
+  private tickBurns(dt: number) {
+    const player = this.scene.player;
+    this.burns = this.burns.filter((b) => {
+      b.t -= dt;
+      b.pulse -= dt;
+      if (b.t <= 0) return false;
+      if (b.pulse <= 0 && dist(player.x, player.y, b.x, b.y) < b.r) {
+        player.hurt(4);
+        b.pulse = 0.8;
+      }
+      return true;
+    });
   }
 
   update(dt: number) {
     const sc = this.scene;
     const player = sc.player;
     const st = sc.state;
+    this.tickBurns(dt);
 
     for (let i = this.list.length - 1; i >= 0; i--) {
       const e = this.list[i];
@@ -491,6 +581,150 @@ export class Enemies {
             this.scene.speech.say(e.sprite, line("goliath", "windup"), "dark", 2000);
           } else if (Math.random() < dt * 0.08 && dp < 120) {
             this.scene.speech.say(e.sprite, line("goliath", "taunt"), "dark", 6000);
+          }
+          break;
+        }
+
+        case "raidLeader": {
+          if (e.hp < e.def.hp * 0.15) {
+            if (e.state !== "flee") {
+              e.state = "flee";
+              sc.speech.say(e.sprite, line("raidLeader", "flee"), "dark", 0);
+            }
+            if (e.retarget <= 0) {
+              e.retarget = 1;
+              e.goal = sc.darkness.nearestDark(e.x, e.y);
+            }
+            if (e.goal) e.moveToward(e.goal.x, e.goal.y, e.def.speed * 1.1, dt, sc.map);
+            break;
+          }
+          const tx = player.x;
+          const ty = player.y;
+          if (e.moveToward(tx, ty, e.def.speed, dt, sc.map, 14) && e.attackCd <= 0) {
+            e.attackCd = 1.3;
+            player.hurt(e.def.damage);
+          } else if (Math.random() < dt * 0.12 && dist(e.x, e.y, player.x, player.y) < 110) {
+            sc.speech.say(e.sprite, line("raidLeader", "taunt"), "dark", 7000);
+          }
+          break;
+        }
+
+        case "baal": {
+          const dp = dist(e.x, e.y, player.x, player.y);
+          e.timer += dt;
+          if (e.timer >= 9 && sc.buildings.idols().length < 2) {
+            e.timer = 0;
+            const { tx, ty } = sc.tileAt(e.x + (e.facing > 0 ? TILE : -TILE), e.y - 1);
+            if (sc.buildings.canPlace("idol", tx, ty)) {
+              sc.buildings.place("idol", tx, ty);
+              sc.addSin(SIN.idolPlanted);
+              sc.speech.say(e.sprite, line("baal", "plant"), "dark", 0);
+              sc.toast("Baal planted an idol. Smash it.", "bad");
+            }
+          }
+          if (e.attackCd <= 0 && dp < 34) {
+            e.attackCd = 2.6;
+            sc.fx.ring(e.x, e.y - 10, 34, 0xe0b53a);
+            player.hurt(e.def.damage);
+            sc.speech.say(e.sprite, line("baal", "pulse"), "dark", 2000);
+          }
+          if (e.retarget <= 0) {
+            e.retarget = 18;
+            const pos = sc.darkness.randomEdgeSpawn();
+            if (this.count((x) => x.kind === "tempter") < 2) this.spawn("tempter", pos.x, pos.y);
+          }
+          e.moveToward(player.x, player.y, e.def.speed, dt, sc.map, 20);
+          if (Math.random() < dt * 0.08 && dp < 140) sc.speech.say(e.sprite, line("baal", "taunt"), "dark", 7000);
+          break;
+        }
+
+        case "moloch": {
+          const dp = dist(e.x, e.y, player.x, player.y);
+          if (e.state === "windup") {
+            e.timer -= dt;
+            e.sprite.setTintFill(e.timer * 8 % 2 < 1 ? 0xffe27a : 0xff6a2a);
+            if (e.timer <= 0) {
+              e.sprite.clearTint();
+              e.sprite.setTint(0xff6a2a);
+              const slamR = e.def.hitRadius ?? 40;
+              sc.fx.ring(e.x, e.y - 12, slamR, 0xff6a2a);
+              sc.cameras.main.shake(160, 0.007);
+              sc.speech.say(e.sprite, line("moloch", "slam"), "dark", 0);
+              this.burns.push({ x: e.x, y: e.y, r: slamR, t: 4.5, pulse: 0 });
+              if (dp < slamR) player.hurt(e.def.damage);
+              for (const v of sc.villagers.list) {
+                if (v.alive && dist(e.x, e.y, v.x, v.y) < slamR) sc.villagers.damage(v, e.def.damage, e);
+              }
+              e.state = "recover";
+              e.timer = 1.2;
+              e.attackCd = 2.4;
+            }
+            break;
+          }
+          if (e.state === "recover") {
+            e.timer -= dt;
+            e.moveToward(player.x, player.y, e.def.speed * 0.3, dt, sc.map, 20);
+            if (e.timer <= 0) e.state = "hunt";
+            break;
+          }
+          if (e.moveToward(player.x, player.y, e.def.speed, dt, sc.map, 16) && e.attackCd <= 0) {
+            e.state = "windup";
+            e.timer = 0.9;
+            sc.speech.say(e.sprite, line("moloch", "windup"), "dark", 2000);
+          } else if (Math.random() < dt * 0.08 && dp < 130) {
+            sc.speech.say(e.sprite, line("moloch", "taunt"), "dark", 6000);
+          }
+          break;
+        }
+
+        case "dragon": {
+          const dp = dist(e.x, e.y, player.x, player.y);
+          if (e.state === "windup") {
+            e.timer -= dt;
+            e.sprite.setTintFill(e.timer * 10 % 2 < 1 ? 0xd7ff3e : 0x7a3cff);
+            if (e.timer <= 0) {
+              e.sprite.clearTint();
+              e.sprite.setTint(0x7a3cff);
+              const ang = Math.atan2(player.y - e.y, player.x - e.x);
+              const reach = 70;
+              sc.fx.slash(e.x, e.y - 12, ang);
+              sc.fx.ring(e.x + Math.cos(ang) * 28, e.y + Math.sin(ang) * 28, 26, 0x7a3cff);
+              sc.cameras.main.shake(150, 0.007);
+              sc.speech.say(e.sprite, line("dragon", "breath"), "dark", 0);
+              const a = Math.atan2(player.y - e.y, player.x - e.x);
+              let diff = Math.abs(a - ang);
+              if (diff > Math.PI) diff = Math.PI * 2 - diff;
+              if (dp < reach && diff < 0.7) player.hurt(e.def.damage);
+              e.state = "recover";
+              e.timer = 1;
+              e.attackCd = 2;
+            }
+            break;
+          }
+          if (e.state === "recover") {
+            e.timer -= dt;
+            if (e.timer <= 0) e.state = "hunt";
+            break;
+          }
+          if (e.dashT > 0) {
+            e.dashT -= dt;
+            e.move(e.dashDir.x, e.dashDir.y, e.def.speed * 1.8, dt, sc.map);
+            break;
+          }
+          if (dp > 80 && e.retarget <= 0) {
+            e.retarget = 3;
+            const ang = Math.atan2(player.y - e.y, player.x - e.x);
+            e.dashT = 0.45;
+            e.dashDir = { x: Math.cos(ang), y: Math.sin(ang) };
+            sc.speech.say(e.sprite, line("dragon", "dash"), "dark", 2000);
+            break;
+          }
+          if (e.moveToward(player.x, player.y, e.def.speed, dt, sc.map, 22) && e.attackCd <= 0) {
+            e.state = "windup";
+            e.timer = 0.75;
+            sc.speech.say(e.sprite, line("dragon", "windup"), "dark", 2000);
+          } else if (Math.random() < dt * 0.07 && dp < 160) {
+            sc.speech.say(e.sprite, line("dragon", "taunt"), "dark", 7000);
           }
           break;
         }

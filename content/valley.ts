@@ -31,6 +31,10 @@ export const valleyCopy = {
     { name: "Spirit", body: "Passes through walls, drains villager faith. Immune to steel; only prayer banishes it." },
     { name: "False prophet", body: "Slow, loud, plants golden idols that spawn tempters. Smash the idol, then the prophet. Sometimes drops a lamp." },
     { name: "Goliath", body: "A real giant after David's quest. One slam pattern, one drop: his mail. He does not flee at dawn." },
+    { name: "Raid captain", body: "After Goliath, some nights are bannered raids. Kill the captain. Muster a host at the hall (conscription + coins) for a siege." },
+    { name: "Baal", body: "The idol city's priest. Plants calves, pulses gold fire. Drops a censer. After the first captain falls." },
+    { name: "Moloch", body: "A walking furnace. Slam leaves burning ground. Drops a brand. After Baal." },
+    { name: "The dragon", body: "A beast of the outer dark — not a god. Dashes and breathes fire. Drops a scale. After Moloch." },
   ],
   faq: [
     {
