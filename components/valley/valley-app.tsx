@@ -9,7 +9,7 @@ import { CharacterCreator } from "./character-creator";
 const ValleyGame = dynamic(() => import("./valley-game").then((m) => m.ValleyGame), {
   ssr: false,
   loading: () => (
-    <div className="flex aspect-[8/5] w-full items-center justify-center rounded-3xl border border-border bg-[#07060d] text-sm text-white/70">
+    <div className="flex h-full w-full items-center justify-center bg-[#07060d] text-sm text-white/70">
       Loading the valley…
     </div>
   ),
@@ -60,7 +60,7 @@ export function ValleyApp() {
 
   if (mode.kind === "loading") {
     return (
-      <div className="flex aspect-[8/5] w-full flex-col items-center justify-center gap-3 rounded-3xl border border-border bg-[#07060d] text-sm text-white/70">
+      <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-[#07060d] text-sm text-white/70">
         <p>Opening your save…</p>
         {mounted && (
           <button

@@ -40,6 +40,7 @@ export function ValleyGame({
   onNewGame: () => void;
 }) {
   const parentRef = useRef<HTMLDivElement>(null);
+  const gameRef = useRef<import("phaser").Game | null>(null);
   const bridge = useMemo(() => createBridge(), []);
   const [hud, setHud] = useState<HudState | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -73,13 +74,28 @@ export function ValleyGame({
       });
       // `?dev` exposes the engine for playtesting/balancing from the console.
       if (window.location.search.includes("dev")) window.__valley = game;
+      gameRef.current = game;
       setReady(true);
     })();
     return () => {
       destroyed = true;
+      gameRef.current = null;
       game?.destroy(true);
     };
   }, [save, bridge, away]);
+
+  useEffect(() => {
+    const el = parentRef.current;
+    if (!el) return;
+    const refresh = () => gameRef.current?.scale.refresh();
+    const ro = new ResizeObserver(refresh);
+    ro.observe(el);
+    window.addEventListener("resize", refresh);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", refresh);
+    };
+  }, [ready]);
 
   useEffect(() => {
     return bridge.subscribe((e: GameEvent) => {
@@ -170,8 +186,14 @@ export function ValleyGame({
   const showRibbon = !!(hud?.jobs && hud.ribbonMode && panel !== "away" && panel !== "victory" && panel !== "intro");
 
   return (
-    <div className="relative w-full select-none overflow-hidden rounded-3xl border border-border bg-[#07060d] shadow-2xl">
-      <div ref={parentRef} className="aspect-[8/5] w-full" />
+    <div
+      className="relative mx-auto select-none overflow-hidden bg-[#07060d]"
+      style={{
+        width: "min(100vw, calc((100dvh - var(--valley-chrome, 2.75rem)) * 8 / 5))",
+        height: "min(calc(100dvh - var(--valley-chrome, 2.75rem)), calc(100vw * 5 / 8))",
+      }}
+    >
+      <div ref={parentRef} className="absolute inset-0" />
 
       {showRibbon && hud?.jobs && hud.ribbonMode && <Ribbon jobs={hud.jobs} mode={hud.ribbonMode} />}
 
