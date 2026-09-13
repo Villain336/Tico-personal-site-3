@@ -22,6 +22,7 @@ export function Hud({
   onRoster,
   onJournal,
   onBooks,
+  onCivic,
   onPause,
   onSell,
   onAutoSell,
@@ -36,6 +37,7 @@ export function Hud({
   onRoster: () => void;
   onJournal: () => void;
   onBooks: () => void;
+  onCivic: () => void;
   onPause: () => void;
   onSell: () => void;
   onAutoSell: () => void;
@@ -76,6 +78,8 @@ export function Hud({
           <Bar value={hud.sin / 100} color="bg-brand-coral" />
           <Row label="Light" value={`${Math.round(hud.darknessPushed * 100)}%`} className="mt-1.5" />
           <Bar value={hud.darknessPushed} color="bg-brand-lime" />
+          <Row label="Loyalty" value={`${hud.civic.loyalty}/100`} className="mt-1.5" />
+          <Bar value={hud.civic.loyalty / 100} color={hud.civic.loyalty < 40 ? "bg-brand-coral" : "bg-amber-300"} />
         </Card>
         <Card>
           <div className="flex justify-between text-white/80">
@@ -100,6 +104,8 @@ export function Hud({
           <Pill>Press E to deposit coins · L for the books</Pill>
         ) : hud.nearStore && hasCrops ? (
           <Pill>Press E to store crops · L for the books</Pill>
+        ) : hud.nearHall ? (
+          <Pill>Press E or G — civic hall{hud.civic.docket.length > 0 ? ` · ${hud.civic.docket.length} cases` : ""}</Pill>
         ) : hud.nearDrink && hud.thirst < 90 ? (
           <Pill>Press E to drink · or stand in the shallows</Pill>
         ) : hint ? (
@@ -153,6 +159,9 @@ export function Hud({
           </Btn>
           <Btn onClick={onBooks}>
             Books <Key>L</Key>
+          </Btn>
+          <Btn onClick={onCivic} badge={hud.civic.docket.length > 0 ? hud.civic.docket.length : undefined}>
+            Civic <Key>G</Key>
           </Btn>
           <Btn onClick={onPause}>
             <Key>Esc</Key>

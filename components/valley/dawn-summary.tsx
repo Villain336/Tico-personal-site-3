@@ -60,6 +60,20 @@ export function DawnSummary({ report, onClose }: { report: DawnReport; onClose: 
               </span>
             </>
           )}
+          <span>Loyalty</span>
+          <span className={`text-right ${report.loyalty < 40 ? "text-brand-coral" : ""}`}>{report.loyalty}</span>
+          {report.casesIgnored > 0 && (
+            <>
+              <span>Cases ignored</span>
+              <span className="text-right text-brand-coral">{report.casesIgnored}</span>
+            </>
+          )}
+          {report.casesPending > 0 && (
+            <>
+              <span>Still on the docket</span>
+              <span className="text-right">{report.casesPending} · press G</span>
+            </>
+          )}
         </div>
         {report.arrivals?.length > 0 && (
           <div className="mt-3 rounded-lg border border-amber-300/30 bg-amber-300/10 p-2 text-amber-100">

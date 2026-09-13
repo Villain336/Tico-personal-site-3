@@ -98,7 +98,16 @@ export function BooksPanel({
         </section>
 
         <section className="mt-3 flex flex-wrap gap-2">
-          <Toggle on={hud.titheOn} onClick={onToggleTithe} label="Tithe" hint="A tenth of each sale goes to the altar. Lowers sin." />
+          <Toggle
+            on={hud.civic.titheRate > 0}
+            onClick={onToggleTithe}
+            label="Tithe"
+            hint={
+              hud.civic.titheRate > 0
+                ? `${hud.civic.titheRate}% of each sale goes to the altar. Set 0 / 10 / 20 in Civic (G).`
+                : "Off. Set a rate in Civic (G) or toggle back on for a tenth."
+            }
+          />
           <Toggle on={hud.shareOn} onClick={onToggleShare} label="Share the bread" hint="At dawn the village eats from the barn, then your pack." />
         </section>
       </div>

@@ -1,6 +1,7 @@
 import type { WorldScene } from "../scenes/WorldScene";
 import { CROP_KINDS, CROPS, ECONOMY } from "../config";
 import type { CropKind, SaveData } from "../types";
+import { civicDawnMods, defaultCivic } from "./civic";
 
 const FOOD_ORDER: CropKind[] = ["wheat", "olives", "grapes", "flax"];
 
@@ -54,6 +55,7 @@ export function unitPrice(st: Pick<SaveData, "prices">, kind: CropKind) {
  * Order: rations → wages → rent in → interest → bank run → prices.
  */
 export function settleDawnOn(st: SaveData, pop: number, rent: number, enemiesLastNight: number): DawnBooks {
+  const mods = civicDawnMods(st.civic ?? defaultCivic());
   const books: DawnBooks = {
     wages: 0,
     wagesShort: 0,
@@ -79,20 +81,21 @@ export function settleDawnOn(st: SaveData, pop: number, rent: number, enemiesLas
   }
 
   if (pop > 0) {
-    const due = pop * ECONOMY.wagePerVillager;
+    const due = pop * (ECONOMY.wagePerVillager + mods.wageExtra);
     const w = pay(st, due);
     books.wages = w.paid;
     books.wagesShort = w.short;
     if (w.short > 0) st.sin = clampSin(st.sin + ECONOMY.unpaidWageSin);
   }
 
-  let rentPaid = Math.floor(rent);
+  let rentPaid = Math.floor(rent + mods.rentDelta);
   if (pop > 0 && books.rationsShort > 0) rentPaid = Math.floor(rentPaid * 0.5);
+  rentPaid = Math.max(0, rentPaid);
   st.coins += rentPaid;
   books.rentPaid = rentPaid;
 
   if (st.bank > 0) {
-    const rate = st.sin < 50 ? ECONOMY.interestGood : st.sin < 80 ? ECONOMY.interestMid : 0;
+    const rate = (st.sin < 50 ? ECONOMY.interestGood : st.sin < 80 ? ECONOMY.interestMid : 0) + mods.interestBump;
     books.interest = Math.round(st.bank * rate);
     if (rate > 0 && st.bank >= 20 && books.interest < 1) books.interest = 1;
     st.bank += books.interest;
@@ -134,8 +137,9 @@ export class Ledger {
 
   takeTithe(gross: number) {
     const st = this.scene.state;
-    if (!st.titheOn || gross <= 0) return 0;
-    const tithe = Math.floor(gross * ECONOMY.titheRate);
+    const rate = st.civic.titheRate / 100;
+    if (rate <= 0 || gross <= 0) return 0;
+    const tithe = Math.floor(gross * rate);
     if (tithe <= 0) return 0;
     this.titheToday += tithe;
     this.scene.addSin(ECONOMY.titheSinRelief);

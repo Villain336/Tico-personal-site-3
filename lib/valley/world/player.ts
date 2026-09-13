@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import type { WorldScene } from "../scenes/WorldScene";
-import { ALTAR, PLAYER, TILE, UNLOCK_FX, XP } from "../config";
+import { ALTAR, CIVIC, PLAYER, TILE, UNLOCK_FX, XP } from "../config";
 import { line } from "../dialogue";
 import { Actor, dist } from "./actor";
 
@@ -17,6 +17,7 @@ export class Player extends Actor {
   nearDrink = false;
   nearChanger = false;
   nearStore = false;
+  nearHall = false;
   lastDir = { x: 1, y: 0 };
   private hungryLineT = 0;
   private prayLineT = 0;
@@ -44,9 +45,13 @@ export class Player extends Actor {
       speed: PLAYER.speed * (1 + s.fleet * 0.12) * (weak ? 0.6 : 1),
       maxHealth: PLAYER.maxHealth + s.fortitude * 30,
       maxPrayer: PLAYER.maxPrayer + s.faith * 30,
-      swordDamage: PLAYER.swordDamage * (1 + s.sword * 0.35) * (u.weapon ? UNLOCK_FX.weaponDamageMult : 1),
+      swordDamage:
+        PLAYER.swordDamage *
+        (1 + s.sword * 0.35) *
+        (u.weapon ? UNLOCK_FX.weaponDamageMult : 1) *
+        (this.world.state.civic.edicts.conscription ? CIVIC.conscriptionDamage : 1),
       swordRange: PLAYER.swordRange + (u.weapon ? UNLOCK_FX.weaponRangeBonus : 0),
-      castRadius: PLAYER.castRadius + s.faith * 12,
+      castRadius: PLAYER.castRadius + s.faith * 12 + (this.world.state.civic.edicts.sanctuary ? CIVIC.sanctuaryCastBonus : 0),
       hungerRate: PLAYER.hungerPerSecond * drain,
       thirstRate: PLAYER.thirstPerSecond * drain,
       idleRegen: PLAYER.prayerRegenIdle * (u.blessing ? UNLOCK_FX.blessingIdleRegenMult : 1),
@@ -94,6 +99,7 @@ export class Player extends Actor {
       this.world.buildings.nearest("store", this.x, this.y, TILE * 2.4) ||
       this.world.buildings.nearest("granary", this.x, this.y, TILE * 2.4)
     );
+    this.nearHall = !!this.world.buildings.nearest("hall", this.x, this.y, TILE * 2.6);
 
     if (this.world.darkness.isDark(this.x, this.y)) this.world.jobs.complete("darkEdge");
 
@@ -174,6 +180,11 @@ export class Player extends Actor {
     if (this.nearStore && this.world.hasCrops()) {
       const n = this.world.ledger.depositAllCrops();
       if (n > 0) this.world.toast(`Stored ${n} crops. Press L for the books.`, "good");
+      return;
+    }
+    if (this.nearHall) {
+      this.world.civic.ensureSteward();
+      this.world.bridge.emit({ type: "openCivic" });
       return;
     }
     if (this.nearDrink) {
