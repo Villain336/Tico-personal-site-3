@@ -93,7 +93,8 @@ export function settleDawnOn(st: SaveData, pop: number, rent: number, enemiesLas
 
   if (st.bank > 0) {
     const rate = st.sin < 50 ? ECONOMY.interestGood : st.sin < 80 ? ECONOMY.interestMid : 0;
-    books.interest = Math.floor(st.bank * rate);
+    books.interest = Math.round(st.bank * rate);
+    if (rate > 0 && st.bank >= 20 && books.interest < 1) books.interest = 1;
     st.bank += books.interest;
   }
 
