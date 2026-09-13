@@ -32,7 +32,13 @@ export class Quests {
 
   accept(id: BigRecruitId) {
     const q = this.entry(id);
-    if (q && q.state === "available") q.state = "active";
+    if (!q || q.state !== "available") return;
+    q.state = "active";
+    if (id === "jesus") {
+      const book = this.scene.state.judgment;
+      const seed = Math.min(BIG_RECRUITS.jesus.objective.count, book.signsSeen + book.mercyGiven);
+      if (seed > 0) this.reportProgress("jesus", seed);
+    }
   }
 
   /** No-op unless the questline is active — hooks can call this unconditionally (KTD6). */
@@ -56,6 +62,10 @@ export class Quests {
       else if (hook.kind === "building") st.unlocks.building = true;
       else if (hook.kind === "ability") st.unlocks.abilities.push(id);
       else if (hook.kind === "blessing") st.unlocks.blessing = true;
+      else if (hook.kind === "judgment") {
+        st.unlocks.judgmentReady = true;
+        st.judgment.verdictNext = true;
+      }
     }
     if (id === "david") {
       const granted = grantGear(st.gear ?? emptyGear(), "davidsBlade");
@@ -68,6 +78,14 @@ export class Quests {
       this.scene.fx.ring(c.x, c.y, 90, 0xffe27a);
       this.scene.fx.burst(c.x, c.y - 10, "px_gold", 14);
       this.scene.toast(`The Holy Ghost's blessing rests on the valley. ${def.rewardText}`, "good");
+    } else if (id === "jesus") {
+      const giver = this.scene.recruitManager.byId(id);
+      this.scene.recruitManager.add(id, true, giver?.x, giver?.y);
+      if (giver && giver.state === "questgiver") giver.state = "idle";
+      const joined = this.scene.recruitManager.byId(id);
+      if (joined) joined.mode = "follow";
+      this.scene.fx.ring(giver?.x ?? this.scene.player.x, (giver?.y ?? this.scene.player.y) - 8, 70, 0xffe27a);
+      this.scene.toast(`${def.name} walks with you. ${def.rewardText}`, "good");
     } else {
       const giver = this.scene.recruitManager.byId(id);
       this.scene.recruitManager.add(id, true, giver?.x, giver?.y);
@@ -121,7 +139,10 @@ export class Quests {
         target: def.objective.count,
         objective: def.objectiveText,
         arrivesDay: def.arrivesDay,
-        arrived: def.arrivesDay === null || day >= def.arrivesDay || q.state === "completed",
+        arrived:
+          q.id === "jesus"
+            ? this.scene.state.unlocks.jesusComing || q.state === "completed"
+            : def.arrivesDay === null || day >= def.arrivesDay || q.state === "completed",
         landmark: def.landmark ? LANDMARKS[def.landmark].name : null,
       };
     });

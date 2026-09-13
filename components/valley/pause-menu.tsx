@@ -11,6 +11,8 @@ const CONTROLS: [string, string][] = [
   ["B / 1–8 / ,", "Build menu / quick-build (sheepfold is ,)"],
   ["K", "Skills"],
   ["I", "Gear — blades, wraps, lamps"],
+  ["L", "Books — ledger and the Book of souls"],
+  ["G", "Civic — law, war, judgment"],
   ["Esc", "Pause"],
 ];
 

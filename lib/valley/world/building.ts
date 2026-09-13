@@ -19,6 +19,7 @@ import {
 import type { CropKind } from "../types";
 import type { LightSource } from "./darkness";
 import { dist } from "./actor";
+import { growScale } from "./judgment";
 
 export type Building = {
   type: BuildingType;
@@ -254,7 +255,7 @@ export class Buildings {
     const t = this.scene.worldTime();
     for (const b of this.list) {
       if (this.isCrop(b.type)) {
-        const grow = CROPS[CROP_BUILDINGS[b.type]].growSeconds;
+        const grow = CROPS[CROP_BUILDINGS[b.type]].growSeconds * growScale(this.scene.state.judgment?.activeSign ?? "none");
         const stage = Math.min(3, Math.floor(((t - b.plantedAt) / grow) * 3));
         if (stage !== b.stage) {
           b.stage = stage;

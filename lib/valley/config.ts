@@ -33,7 +33,7 @@ export const NIGHT_SECONDS = 120;
 export const CYCLE_SECONDS = DAY_SECONDS + NIGHT_SECONDS;
 
 export const SAVE_KEY = "shalom-valley-save";
-export const SAVE_VERSION = 10;
+export const SAVE_VERSION = 11;
 export const AUTOSAVE_MS = 30_000;
 export const OFFLINE_CAP_HOURS = 8;
 export const OFFLINE_RENT_RATE = 0.5;
@@ -113,6 +113,9 @@ export const emptyUnlocks = () => ({
   molochDefeated: false,
   dragonBoss: false,
   dragonDefeated: false,
+  jesusComing: false,
+  judgmentReady: false,
+  judged: false,
   building: false,
   abilities: [] as import("./types").BigRecruitId[],
   blessing: false,

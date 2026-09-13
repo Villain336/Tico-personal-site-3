@@ -36,6 +36,7 @@ export function CivicPanel({
   onWriteLaw,
   onRepealLaw,
   onMuster,
+  onCallJudgment,
   onClose,
 }: {
   hud: HudState;
@@ -48,6 +49,7 @@ export function CivicPanel({
   onWriteLaw: (text: string) => void;
   onRepealLaw: (id: string) => void;
   onMuster: () => void;
+  onCallJudgment: () => void;
   onClose: () => void;
 }) {
   const c = hud.civic;
@@ -163,6 +165,27 @@ export function CivicPanel({
                 </p>
               </div>
             ))}
+          </div>
+        </section>
+
+        <section className="mt-3 rounded-xl border border-white/10 p-3">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold">Judgment</span>
+            <span className="text-white/50">
+              Signs {hud.judgment.signsSeen} · Mercy {hud.judgment.mercyGiven} · Book {hud.judgment.souls.length}
+            </span>
+          </div>
+          <p className="mt-1 text-white/45">{hud.judgment.hint}</p>
+          {hud.judgment.verdictNext && <p className="mt-1 text-amber-200">The valley will be weighed at dawn. God is not a man in the field.</p>}
+          {hud.judgment.verdict !== "none" && (
+            <p className="mt-1 text-brand-lime">
+              Weighed: {hud.judgment.verdict === "blessing" ? "blessing" : hud.judgment.verdict === "exile" ? "the wicked sent out" : "the outer dark torn back"}
+            </p>
+          )}
+          <div className="mt-2">
+            <Mini disabled={!hud.judgment.canCall} onClick={onCallJudgment}>
+              Ask that the valley be weighed
+            </Mini>
           </div>
         </section>
 

@@ -1,6 +1,7 @@
 import type { WorldScene } from "../scenes/WorldScene";
 import { CIVIC } from "../config";
-import { pickVisitName } from "../dialogue";
+import { nameOfSoul, pickVisitName } from "../dialogue";
+import { recordSoul } from "./judgment";
 import type {
   CivicCase,
   CivicState,
@@ -259,7 +260,8 @@ export class Civic {
 
   maybeFileFall(seed: number) {
     if (!hasIntent(this.data, "protectWeak")) return;
-    const name = pickVisitName(seed);
+    const living = this.scene.villagers.list.find((x) => x.seed === seed);
+    const name = living ? nameOfSoul(living) : pickVisitName(seed);
     const filed = this.file("fall", name, `${name} fell in the dark.`, seed);
     if (filed) this.scene.toast(`${name} is on the docket — protect the weak.`, "info");
   }
@@ -267,23 +269,36 @@ export class Civic {
   maybeFileNightSale() {
     if (!hasIntent(this.data, "keepSabbath") || !this.scene.isNight()) return;
     const v = this.scene.villagers.list.find((x) => x.alive);
-    const name = v ? pickVisitName(v.seed) : "a merchant";
+    const name = v ? nameOfSoul(v) : "a merchant";
     const filed = this.file("nightSale", name, "Crops were sold after dusk.", v?.seed);
     if (filed) this.scene.toast("Night sale — the statute is broken. Open Civic (G).", "bad");
   }
 
   judge(id: string, verdict: Verdict) {
     const st = this.scene.state;
+    const filed = this.data.docket.find((c) => c.id === id);
     const wallet = { coins: st.coins, bank: st.bank };
     const moses = st.unlocks.abilities.includes("moses");
     const result = judgeOn(this.data, id, verdict, wallet, moses);
     st.coins = wallet.coins;
     st.bank = wallet.bank;
-    if (result.coinsTaken > 0) {
-      /* already taken from wallet */
+    if (result.ok && filed) {
+      const who = this.scene.villagers.list.find((x) => x.seed === filed.accusedSeed);
+      const name = who ? nameOfSoul(who) : filed.accused;
+      const seed = filed.accusedSeed ?? who?.seed ?? 0;
+      if (verdict === "mercy") {
+        st.judgment.mercyGiven += 1;
+        this.scene.quests.reportProgress("jesus", 1);
+        recordSoul(st.judgment, { name, seed, kind: "mercy", day: st.day, note: `Mercy for ${name}.` });
+      } else if (verdict === "fine") {
+        this.scene.addSin(CIVIC.fineSin);
+        recordSoul(st.judgment, { name, seed, kind: "fine", day: st.day, note: `${name} was fined.` });
+      } else if (verdict === "exile") {
+        this.scene.addSin(CIVIC.exileSin);
+        st.judgment.exileGiven += 1;
+        recordSoul(st.judgment, { name, seed, kind: "exile", day: st.day, note: `${name} was sent out.` });
+      }
     }
-    if (verdict === "fine" && result.ok) this.scene.addSin(CIVIC.fineSin);
-    if (verdict === "exile" && result.ok) this.scene.addSin(CIVIC.exileSin);
     if (result.exiledSeed != null) {
       const v = this.scene.villagers.list.find((x) => x.seed === result.exiledSeed);
       if (v) this.scene.villagers.remove(v);

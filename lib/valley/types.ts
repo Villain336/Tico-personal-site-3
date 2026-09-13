@@ -1,4 +1,5 @@
 import type { NightKind, WarState } from "./world/war";
+import type { DivineVerdict, JudgmentState, SignKind, SoulEntry } from "./world/judgment";
 
 export type Gender = "man" | "woman";
 
@@ -77,9 +78,11 @@ export type SavedVillager = {
   xp: number;
   tx: number;
   ty: number;
+  /** Persistent soul name once the Book is open. Older in-session loads derive one. */
+  name?: string;
 };
 
-export type BigRecruitId = "moses" | "david" | "paul" | "noah" | "holyGhost";
+export type BigRecruitId = "moses" | "david" | "paul" | "noah" | "holyGhost" | "jesus";
 export type ScatteredRecruitId = "deborah" | "gideon" | "ruth";
 export type RecruitId = BigRecruitId | ScatteredRecruitId;
 
@@ -110,6 +113,9 @@ export type Unlocks = {
   molochDefeated: boolean;
   dragonBoss: boolean;
   dragonDefeated: boolean;
+  jesusComing: boolean;
+  judgmentReady: boolean;
+  judged: boolean;
   building: boolean;
   abilities: BigRecruitId[];
   blessing: boolean;
@@ -241,6 +247,7 @@ export type SaveData = {
   tutorialStep: number;
   won: boolean;
   war: WarState;
+  judgment: JudgmentState;
 };
 
 /** What the scene pushes to React ~10×/s. */
@@ -269,6 +276,16 @@ export type HudState = {
     canMuster: boolean;
     hint: string;
     cost: number;
+  };
+  judgment: {
+    sign: SignKind;
+    signsSeen: number;
+    mercyGiven: number;
+    verdict: DivineVerdict;
+    verdictNext: boolean;
+    canCall: boolean;
+    hint: string;
+    souls: SoulEntry[];
   };
   inside: string | null;
   nearEnter: string | null;
@@ -378,6 +395,10 @@ export type DawnReport = {
   loyalty: number;
   casesPending: number;
   casesIgnored: number;
+  sign: SignKind;
+  signLine: string | null;
+  verdict: DivineVerdict;
+  verdictLine: string | null;
 };
 
 export type AwayReport = {
@@ -429,7 +450,8 @@ export type GameCommand =
   | { type: "repealLaw"; id: string }
   | { type: "equip"; id: GearId }
   | { type: "unequip"; slot: GearSlot }
-  | { type: "muster" };
+  | { type: "muster" }
+  | { type: "callJudgment" };
 
 export type GameEvent =
   | { type: "hud"; state: HudState }
