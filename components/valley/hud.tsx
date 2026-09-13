@@ -40,7 +40,7 @@ export function Hud({
   onSkipTutorial: () => void;
 }) {
   const hint = hud.tutorialStep < TUTORIAL.length ? TUTORIAL[hud.tutorialStep] : null;
-  const hasCrops = hud.wheat + hud.grapes > 0;
+  const hasCrops = hud.wheat + hud.grapes + hud.olives + hud.flax > 0;
   const readyQuests = hud.quests.filter((q) => q.state === "ready").length;
 
   return (
@@ -56,10 +56,12 @@ export function Hud({
           <Bar value={hud.phaseProgress} color={hud.isNight ? "bg-indigo-400" : "bg-amber-300"} className="mt-1.5" />
         </Card>
         <Card>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-x-3 gap-y-1">
             <Stat icon="🪙" label="coins" value={hud.coins} />
             <Stat icon="🌾" label="wheat" value={hud.wheat} />
             <Stat icon="🍇" label="grapes" value={hud.grapes} />
+            <Stat icon="🫒" label="olives" value={hud.olives} />
+            <Stat icon="🪻" label="flax" value={hud.flax} />
           </div>
         </Card>
       </div>
@@ -91,6 +93,8 @@ export function Hud({
           <Pill>Hold E to pray · refills prayer, earns XP</Pill>
         ) : hud.nearMarket && hasCrops ? (
           <Pill>Press E to sell your crops</Pill>
+        ) : hud.nearDrink && hud.thirst < 90 ? (
+          <Pill>Press E to drink · or stand in the shallows</Pill>
         ) : hint ? (
           <div className="pointer-events-auto max-w-md rounded-xl border border-brand-lime/40 bg-black/70 px-3 py-2 text-center backdrop-blur">
             <p className="text-white/90">{hint}</p>
@@ -106,6 +110,7 @@ export function Hud({
         <Card>
           <Meter label="Health" value={hud.health} max={hud.maxHealth} color="bg-emerald-400" />
           <Meter label="Hunger" value={hud.hunger} max={100} color={hud.hunger < 20 ? "bg-brand-coral" : "bg-amber-400"} />
+          <Meter label="Thirst" value={hud.thirst} max={100} color={hud.thirst < 18 ? "bg-brand-coral" : "bg-sky-400"} />
           <Meter label="Prayer" value={hud.prayer} max={hud.maxPrayer} color="bg-violet-400" />
           <div className="mt-1.5 flex items-center justify-between">
             <span className="font-semibold">Lvl {hud.level}</span>

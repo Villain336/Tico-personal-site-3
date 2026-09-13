@@ -4,7 +4,7 @@ import type { BuildingType, HudState } from "@/lib/valley/types";
 import { ALTAR, BUILDINGS } from "@/lib/valley/config";
 import { BIG_RECRUITS } from "@/lib/valley/quests/content";
 
-const HOTKEY_ORDER = "1234567890-";
+const HOTKEY_ORDER = "1234567890-[=]";
 const ORDER = (Object.keys(BUILDINGS) as (keyof typeof BUILDINGS)[]).sort(
   (a, b) => HOTKEY_ORDER.indexOf(BUILDINGS[a].hotkey) - HOTKEY_ORDER.indexOf(BUILDINGS[b].hotkey),
 );

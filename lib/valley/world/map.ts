@@ -448,6 +448,14 @@ export class WorldMap {
     return this.groundAt(tx, ty) === "sand";
   }
 
+  isHigh(tx: number, ty: number) {
+    return this.inBounds(tx, ty) && this.high[this.idx(tx, ty)] === 1;
+  }
+
+  isShallow(tx: number, ty: number) {
+    return this.groundAt(tx, ty) === "shallow";
+  }
+
   /** Deep water — blocks walkers, takes a bridge. */
   isWater(tx: number, ty: number) {
     return this.groundAt(tx, ty) === "water";

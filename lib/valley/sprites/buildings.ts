@@ -155,6 +155,77 @@ export const VINEYARD: PixelMap[] = [
   layer(SOIL, TRELLIS, VINES, GRAPES),
 ];
 
+const FLAX_FLOWER: PixelMap = [
+  "..T...T...T...T.",
+  ".T.T.T.T.T.T.T.T",
+  "..T...T...T...T.",
+  "..L...L...L...L.",
+  "..T...T...T...T.",
+  ".T.T.T.T.T.T.T.T",
+  "..T...T...T...T.",
+  "..L...L...L...L.",
+  "..T...T...T...T.",
+  ".T.T.T.T.T.T.T.T",
+  "..T...T...T...T.",
+  "..L...L...L...L.",
+  "..T...T...T...T.",
+  ".T.T.T.T.T.T.T.T",
+  "..T...T...T...T.",
+  "..L...L...L...L.",
+];
+
+export const FLAX: PixelMap[] = [
+  SOIL,
+  layer(SOIL, SPROUT),
+  layer(SOIL, GROWING),
+  layer(SOIL, FLAX_FLOWER),
+];
+
+const OLIVE_TREE: PixelMap = [
+  "....LLLLLLLL....",
+  "...LLlLLLLlLL...",
+  "..LLLLOOLLLLLL..",
+  "..LlLLOOLLlLLL..",
+  "...LLLLLLLLLL...",
+  "....LLLwLLL.....",
+  "......www.......",
+  "......wWw.......",
+  "....LLLLLLLL....",
+  "...LLOOLLOOLL...",
+  "..LLLLOOLLLLLL..",
+  "..LlLLLLLLLlLL..",
+  "...LLLLLLLLLL...",
+  ".....LLwLL......",
+  "......www.......",
+  "......wWw.......",
+];
+
+const OLIVE_FRUIT: PixelMap = [
+  "................",
+  "................",
+  ".....OO..OO.....",
+  "................",
+  "................",
+  "................",
+  "................",
+  "................",
+  "................",
+  "....OO....OO....",
+  "................",
+  "................",
+  "................",
+  "................",
+  "................",
+  "................",
+];
+
+export const GROVE: PixelMap[] = [
+  layer(SOIL, OLIVE_TREE.map((r, i) => (i > 6 ? r : ".".repeat(16)))),
+  layer(SOIL, OLIVE_TREE.map((r, i) => (i < 4 ? ".".repeat(16) : r))),
+  layer(SOIL, OLIVE_TREE),
+  layer(SOIL, OLIVE_TREE, OLIVE_FRUIT),
+];
+
 /** 32×32 mud-brick house, 2×2 tiles, origin bottom. */
 export const HOUSE: PixelMap = [
   "..............KKKK..............",

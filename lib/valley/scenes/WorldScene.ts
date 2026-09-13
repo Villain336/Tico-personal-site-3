@@ -19,11 +19,9 @@ import {
   TILE,
   UNLOCK_FX,
   VICTORY_LIT_RATIO,
-  WORLD_H,
-  WORLD_W,
   XP,
-  ZOOM,
 } from "../config";
+import type { CropKind } from "../types";
 import { line } from "../dialogue";
 import { BIG_RECRUITS, SCATTERED_RECRUITS } from "../quests/content";
 import { worldTime, writeSave } from "../save";
@@ -41,6 +39,8 @@ import { Quests } from "../world/quests";
 import { RecruitManager } from "../world/recruit";
 import { Speech } from "../world/speech";
 import { Villagers } from "../world/villager";
+import { CameraDirector } from "../world/camera";
+import { Sky } from "../world/sky";
 import { Waves } from "../world/waves";
 
 export class WorldScene extends Phaser.Scene {
@@ -61,6 +61,8 @@ export class WorldScene extends Phaser.Scene {
   recruitManager!: RecruitManager;
   quests!: Quests;
   landmarks!: Landmarks;
+  cameraDirector!: CameraDirector;
+  sky!: Sky;
 
   paused = false;
   lightsDirty = true;
@@ -112,12 +114,8 @@ export class WorldScene extends Phaser.Scene {
     this.recruitManager.loadFrom(this.state.recruits);
     this.placeArrivedStrangers();
 
-    const cam = this.cameras.main;
-    cam.setBounds(0, 0, WORLD_W, WORLD_H);
-    cam.setZoom(ZOOM);
-    cam.setRoundPixels(true);
-    cam.startFollow(this.player.sprite, true, 0.12, 0.12);
-    cam.setBackgroundColor("#07060d");
+    this.sky = new Sky(this);
+    this.cameraDirector = new CameraDirector(this);
 
     this.ghost = this.add.sprite(0, 0, "farm_0").setOrigin(0, 1).setAlpha(0).setDepth(1600);
 
@@ -190,6 +188,8 @@ export class WorldScene extends Phaser.Scene {
     }
 
     this.player.update(dt);
+    this.cameraDirector.update(dt);
+    this.sky.update(dt);
     this.darkness.updateLantern(this.player.x, this.player.y - 8);
     this.buildings.update(dt);
     this.villagers.update(dt);
@@ -246,6 +246,7 @@ export class WorldScene extends Phaser.Scene {
     this.duskWarned = false;
     this.jobs.clearForDawn();
     const arrivals = this.arriveStrangers();
+    this.cameraDirector.pulseDawn();
     this.bridge.emit({
       type: "dawn",
       report: {
@@ -317,7 +318,12 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
-  sell(what: "wheat" | "grapes" | "all", quiet = false) {
+  hasCrops() {
+    const st = this.state;
+    return st.wheat + st.grapes + st.olives + st.flax > 0;
+  }
+
+  sell(what: CropKind | "all", quiet = false) {
     const st = this.state;
     if (this.buildings.count("market") === 0) {
       this.toast("Build a market stall first (B → Market).", "bad");
@@ -325,15 +331,18 @@ export class WorldScene extends Phaser.Scene {
     }
     let coins = 0;
     let units = 0;
-    if (what === "wheat" || what === "all") {
-      coins += st.wheat * CROPS.wheat.price;
-      units += st.wheat;
-      st.wheat = 0;
-    }
-    if (what === "grapes" || what === "all") {
-      coins += st.grapes * CROPS.grapes.price;
-      units += st.grapes;
-      st.grapes = 0;
+    const take = (kind: CropKind) => {
+      coins += st[kind] * CROPS[kind].price;
+      units += st[kind];
+      st[kind] = 0;
+    };
+    if (what === "all") {
+      take("wheat");
+      take("grapes");
+      take("olives");
+      take("flax");
+    } else {
+      take(what);
     }
     if (units === 0) return;
     this.addCoins(coins);
@@ -420,6 +429,7 @@ export class WorldScene extends Phaser.Scene {
       this.quests.turnIn(id);
       this.speech.say(giver.sprite, def.lines.turnIn, "good", 0);
     }
+    this.cameraDirector.frameNpc(giver.x, giver.y);
     return true;
   }
 
@@ -453,7 +463,11 @@ export class WorldScene extends Phaser.Scene {
       }
     }
     this.buildMode = type;
-    if (type) this.ghost.setTexture(type === "house" ? "house" : type === "farm" ? "farm_0" : type === "vineyard" ? "vineyard_0" : type);
+    if (type) {
+      const ghostKey =
+        type === "farm" || type === "vineyard" || type === "flax" || type === "grove" ? `${type}_0` : type;
+      this.ghost.setTexture(ghostKey);
+    }
     this.ghost.setAlpha(type ? 0.6 : 0);
     this.emitHud();
   }
@@ -505,7 +519,7 @@ export class WorldScene extends Phaser.Scene {
     if (type === "market") this.advanceTutorial(4);
     if (type === "house") this.advanceTutorial(5);
     // walls, farms, lamps and bridges are placed in runs; everything else exits build mode
-    if (type !== "wall" && type !== "farm" && type !== "lamp" && type !== "bridge") this.setBuildMode(null);
+    if (type !== "wall" && type !== "farm" && type !== "flax" && type !== "lamp" && type !== "bridge") this.setBuildMode(null);
     else if (st.coins < def.cost) this.setBuildMode(null);
   }
 
@@ -622,10 +636,13 @@ export class WorldScene extends Phaser.Scene {
       coins: Math.floor(st.coins),
       wheat: st.wheat,
       grapes: st.grapes,
+      olives: st.olives,
+      flax: st.flax,
       sin: Math.round(st.sin),
       health: Math.round(st.health),
       maxHealth: p.stats.maxHealth,
       hunger: Math.round(st.hunger),
+      thirst: Math.round(st.thirst),
       prayer: Math.round(st.prayer),
       maxPrayer: p.stats.maxPrayer,
       level: st.level,
@@ -642,6 +659,7 @@ export class WorldScene extends Phaser.Scene {
       enemiesAlive: this.enemies.count(),
       nearAltar: p.nearAltar,
       nearMarket: p.nearMarket,
+      nearDrink: p.nearDrink,
       paused: this.paused,
       won: st.won,
       tutorialStep: st.tutorialStep,

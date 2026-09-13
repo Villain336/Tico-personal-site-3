@@ -30,9 +30,12 @@ export function newSave(character: Character): SaveData {
     coins: START_COINS,
     wheat: START_WHEAT,
     grapes: 0,
+    olives: 0,
+    flax: 0,
     sin: 0,
     health: PLAYER.maxHealth,
     hunger: 100,
+    thirst: 100,
     prayer: 40,
     level: 1,
     xp: 0,
@@ -104,9 +107,16 @@ export function applyOfflineProgress(save: SaveData, now = Date.now()): { save: 
   const t = worldTime(save);
   let cropsGrown = 0;
   for (const b of next.buildings) {
-    if (b.type !== "farm" && b.type !== "vineyard") continue;
+    if (b.type !== "farm" && b.type !== "vineyard" && b.type !== "flax" && b.type !== "grove") continue;
     if ((b.stage ?? 0) >= 3) continue;
-    const grow = b.type === "farm" ? CROPS.wheat.growSeconds : CROPS.grapes.growSeconds;
+    const grow =
+      b.type === "farm"
+        ? CROPS.wheat.growSeconds
+        : b.type === "vineyard"
+          ? CROPS.grapes.growSeconds
+          : b.type === "flax"
+            ? CROPS.flax.growSeconds
+            : CROPS.olives.growSeconds;
     const planted = b.plantedAt ?? t;
     const stageAfter = Math.min(3, Math.floor(((t - planted + capped) / grow) * 3));
     if (stageAfter === 3) cropsGrown++;

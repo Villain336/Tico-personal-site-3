@@ -4,6 +4,7 @@ import type { BuildingType, SavedBuilding } from "../types";
 import {
   ALTAR,
   BUILDINGS,
+  CROP_BUILDINGS,
   CROPS,
   HOUSE,
   MAP_H,
@@ -13,7 +14,9 @@ import {
   TOWER_DAMAGE,
   TOWER_RANGE,
   WAVES,
+  type CropBuilding,
 } from "../config";
+import type { CropKind } from "../types";
 import type { LightSource } from "./darkness";
 import { dist } from "./actor";
 
@@ -37,6 +40,10 @@ function textureFor(b: Pick<Building, "type" | "stage" | "level">) {
       return `farm_${Math.min(3, b.stage)}`;
     case "vineyard":
       return `vineyard_${Math.min(3, b.stage)}`;
+    case "flax":
+      return `flax_${Math.min(3, b.stage)}`;
+    case "grove":
+      return `grove_${Math.min(3, b.stage)}`;
     case "altar":
       return `altar_${Math.max(1, Math.min(ALTAR.maxLevel, b.level))}`;
     default:
@@ -109,7 +116,7 @@ export class Buildings {
       sprite: this.scene.add.sprite(tx * TILE, (ty + size) * TILE, "px_white").setOrigin(0, 1),
     };
     b.sprite.setTexture(textureFor(b));
-    const ground = type === "farm" || type === "vineyard" || type === "wall" || type === "bridge";
+    const ground = type === "farm" || type === "vineyard" || type === "flax" || type === "grove" || type === "wall" || type === "bridge";
     b.sprite.setDepth(ground ? -50 : (ty + size) * TILE);
     if (type === "wall") b.sprite.setDepth((ty + size) * TILE - 8);
     if (this.blocks(type)) {
@@ -199,8 +206,12 @@ export class Buildings {
     return best;
   }
 
+  isCrop(type: BuildingType): type is CropBuilding {
+    return type in CROP_BUILDINGS;
+  }
+
   readyCrops() {
-    return this.list.filter((b) => (b.type === "farm" || b.type === "vineyard") && b.stage >= 3);
+    return this.list.filter((b) => this.isCrop(b.type) && b.stage >= 3);
   }
 
   upgradeAltar(): boolean {
@@ -216,11 +227,11 @@ export class Buildings {
   }
 
   /** Harvest a ready crop; returns what was gathered. */
-  harvest(b: Building): { kind: "wheat" | "grapes"; qty: number } | null {
-    if (b.stage < 3) return null;
+  harvest(b: Building): { kind: CropKind; qty: number } | null {
+    if (b.stage < 3 || !this.isCrop(b.type)) return null;
     const steward = 1 + this.scene.state.skills.steward * 0.15;
-    const kind = b.type === "farm" ? "wheat" : "grapes";
-    const base = kind === "wheat" ? CROPS.wheat.yield : CROPS.grapes.yield;
+    const kind = CROP_BUILDINGS[b.type];
+    const base = CROPS[kind].yield;
     const qty = Math.max(1, Math.round(base * steward));
     b.stage = 0;
     b.plantedAt = this.scene.worldTime();
@@ -242,8 +253,8 @@ export class Buildings {
   update(dt: number) {
     const t = this.scene.worldTime();
     for (const b of this.list) {
-      if (b.type === "farm" || b.type === "vineyard") {
-        const grow = b.type === "farm" ? CROPS.wheat.growSeconds : CROPS.grapes.growSeconds;
+      if (this.isCrop(b.type)) {
+        const grow = CROPS[CROP_BUILDINGS[b.type]].growSeconds;
         const stage = Math.min(3, Math.floor(((t - b.plantedAt) / grow) * 3));
         if (stage !== b.stage) {
           b.stage = stage;
