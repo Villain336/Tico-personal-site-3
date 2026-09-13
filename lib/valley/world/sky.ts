@@ -23,12 +23,13 @@ const DAY = 0x6aa6d9;
 const DUSK = 0xe08a4a;
 const NIGHT = 0x12162c;
 const DUSK2 = 0x6d3cf5;
+/** Above the fog so the horizon stays visible in the dark. */
+const Z = 1108;
 
 /**
- * Parallax backdrop. A top-of-view horizon (hills, clouds, sun/moon) stays
- * locked to the camera and slides with scroll so walking changes the sky.
- * The camera clear color matches the hour so overscroll at the map edge
- * reads as the same sky.
+ * Horizon band pinned to the top of the current camera view.
+ * Positions are in world space at `worldView` so zoom and look-ahead
+ * still shift the hills and clouds as the player walks.
  */
 export class Sky {
   private sun: Phaser.GameObjects.Image;
@@ -40,38 +41,29 @@ export class Sky {
 
   constructor(private scene: WorldScene) {
     for (let i = 0; i < 16; i++) {
-      this.stars.push(
-        scene.add.image(30 + ((i * 89) % (VIEW_W - 40)), 10 + ((i * 47) % 36), "sky_star").setScrollFactor(0).setDepth(-90).setAlpha(0),
-      );
+      this.stars.push(scene.add.image(0, 0, "sky_star").setDepth(Z).setAlpha(0));
     }
-
-    this.sun = scene.add.image(0, 0, "sky_sun").setScrollFactor(0).setDepth(-88);
-    this.moon = scene.add.image(0, 0, "sky_moon").setScrollFactor(0).setDepth(-88).setAlpha(0);
-
+    this.sun = scene.add.image(0, 0, "sky_sun").setDepth(Z + 2);
+    this.moon = scene.add.image(0, 0, "sky_moon").setDepth(Z + 2).setAlpha(0);
     for (let i = 0; i < 8; i++) {
-      this.farHills.push(
-        scene.add.image(i * 140, 58, "sky_hill_far").setOrigin(0.5, 1).setScrollFactor(0).setDepth(-86).setAlpha(0.8),
-      );
+      this.farHills.push(scene.add.image(0, 0, "sky_hill_far").setOrigin(0.5, 1).setDepth(Z + 4).setAlpha(0.85));
     }
     for (let i = 0; i < 7; i++) {
-      this.nearHills.push(
-        scene.add.image(i * 170, 70, "sky_hill_near").setOrigin(0.5, 1).setScrollFactor(0).setDepth(-85).setAlpha(0.95),
-      );
+      this.nearHills.push(scene.add.image(0, 0, "sky_hill_near").setOrigin(0.5, 1).setDepth(Z + 5).setAlpha(0.95));
     }
-
     const keys = ["sky_cloud_a", "sky_cloud_b"] as const;
     for (let i = 0; i < 5; i++) {
-      const img = scene.add
-        .image(i * 220, 22 + (i % 3) * 10, keys[i % 2])
-        .setScrollFactor(0)
-        .setDepth(-87)
-        .setAlpha(0.7);
-      this.clouds.push({ img, speed: 6 + i * 2, home: img.x });
+      const img = scene.add.image(0, 0, keys[i % 2]).setDepth(Z + 3).setAlpha(0.7);
+      this.clouds.push({ img, speed: 8 + i * 3, home: i * 200 });
     }
   }
 
   update(dt: number) {
     const cam = this.scene.cameras.main;
+    const v = cam.worldView;
+    const z = cam.zoom;
+    const sx = 1 / z;
+
     const clock = this.scene.state.clock;
     const night = clock >= DAY_SECONDS;
     const dusk = !night && clock >= DAY_SECONDS - 28;
@@ -89,23 +81,31 @@ export class Sky {
     cam.setBackgroundColor(hex(color));
 
     const dayT = night ? (clock - DAY_SECONDS) / (CYCLE_SECONDS - DAY_SECONDS) : clock / DAY_SECONDS;
-    this.sun.setPosition(VIEW_W * (0.14 + dayT * 0.72), 18 + Math.sin(dayT * Math.PI) * 10).setAlpha(night ? 0 : 1);
-    this.moon.setPosition(VIEW_W * (0.14 + dayT * 0.72), 22).setAlpha(night ? 0.95 : 0);
+    const sunX = v.x + (VIEW_W * (0.16 + dayT * 0.68)) * sx;
+    const sunY = v.y + (20 + Math.sin(dayT * Math.PI) * 8) * sx;
+    this.sun.setPosition(sunX, sunY).setScale(sx).setAlpha(night ? 0 : 1);
+    this.moon.setPosition(sunX, sunY + 4 * sx).setScale(sx).setAlpha(night ? 0.95 : 0);
 
     const starA = night ? Math.min(1, (clock - DAY_SECONDS) / 10) : 0;
-    for (const s of this.stars) s.setAlpha(starA * (0.4 + (s.x % 7) * 0.07));
+    this.stars.forEach((s, i) => {
+      s.setPosition(v.x + (24 + ((i * 89) % (VIEW_W - 40))) * sx, v.y + (8 + ((i * 47) % 28)) * sx)
+        .setScale(sx)
+        .setAlpha(starA * (0.4 + (i % 5) * 0.1));
+    });
 
-    const sx = cam.scrollX;
-    const sy = cam.scrollY;
-    const wrap = (v: number, span: number) => ((v % span) + span) % span;
-    this.farHills.forEach((h, i) => h.setPosition(wrap(i * 140 - sx * 0.12, VIEW_W + 140) - 20, 56 - sy * 0.02));
-    this.nearHills.forEach((h, i) => h.setPosition(wrap(i * 170 - sx * 0.22, VIEW_W + 170) - 20, 70 - sy * 0.035));
+    const wrap = (n: number, span: number) => ((n % span) + span) % span;
+    this.farHills.forEach((h, i) => {
+      h.setPosition(v.x + wrap(i * 130 - cam.scrollX * 0.14, VIEW_W + 80) * sx, v.y + 52 * sx).setScale(sx);
+    });
+    this.nearHills.forEach((h, i) => {
+      h.setPosition(v.x + wrap(i * 160 - cam.scrollX * 0.26, VIEW_W + 90) * sx, v.y + 64 * sx).setScale(sx);
+    });
 
     for (const c of this.clouds) {
       c.home += c.speed * dt;
-      if (c.home > VIEW_W + 80) c.home = -80;
-      c.img.x = c.home - sx * 0.06;
-      c.img.setAlpha(night ? 0.16 : dusk ? 0.42 : 0.7);
+      if (c.home > VIEW_W + 90) c.home = -80;
+      c.img.setPosition(v.x + (c.home - cam.scrollX * 0.08) * sx, v.y + 18 * sx).setScale(sx);
+      c.img.setAlpha(night ? 0.16 : dusk ? 0.4 : 0.72);
     }
   }
 }

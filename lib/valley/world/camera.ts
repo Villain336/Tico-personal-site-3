@@ -38,9 +38,14 @@ export class CameraDirector {
     cam.startFollow(this.focus, true, 0.14, 0.14);
     cam.setZoom(ZOOM);
 
-    scene.input.on("wheel", (_p: Phaser.Input.Pointer, _dx: number, dy: number) => {
-      const step = dy > 0 ? 0.92 : 1.08;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const step = e.deltaY > 0 ? 0.9 : 1.1;
       this.userScale = Phaser.Math.Clamp(this.userScale * step, 0.62, 1.6);
+    };
+    scene.game.canvas.addEventListener("wheel", onWheel, { passive: false });
+    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      scene.game.canvas.removeEventListener("wheel", onWheel);
     });
   }
 
