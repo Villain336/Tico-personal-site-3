@@ -128,6 +128,9 @@ export class Player extends Actor {
 
   private onPrayKey() {
     if (this.world.paused) return;
+    // A quest-giver is a rare, fixed encounter — it takes priority over the
+    // market's routine sell action when both happen to be in range.
+    if (this.world.interactWithQuestGiver()) return;
     if (this.nearAltar) {
       this.praying = true;
       return;

@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import type { Bridge } from "../bridge";
-import type { AwayReport, BuildingType, GameCommand, HudState, SaveData } from "../types";
+import type { AwayReport, BigRecruitId, BuildingType, GameCommand, HudState, SaveData } from "../types";
 import {
   ALTAR,
   AUTOSAVE_MS,
@@ -20,8 +20,10 @@ import {
   ZOOM,
 } from "../config";
 import { line } from "../dialogue";
+import { BIG_RECRUITS, SCATTERED_RECRUITS } from "../quests/content";
 import { worldTime, writeSave } from "../save";
 import { registerTextures } from "../textures";
+import { dist } from "../world/actor";
 import { Buildings, type Building } from "../world/building";
 import { Darkness } from "../world/darkness";
 import { Enemies } from "../world/enemy";
@@ -29,6 +31,8 @@ import { Fx } from "../world/fx";
 import { Jobs } from "../world/jobs";
 import { WorldMap } from "../world/map";
 import { Player } from "../world/player";
+import { Quests } from "../world/quests";
+import { RecruitManager } from "../world/recruit";
 import { Speech } from "../world/speech";
 import { Villagers } from "../world/villager";
 import { Waves } from "../world/waves";
@@ -48,6 +52,8 @@ export class WorldScene extends Phaser.Scene {
   waves!: Waves;
   player!: Player;
   jobs!: Jobs;
+  recruitManager!: RecruitManager;
+  quests!: Quests;
 
   paused = false;
   lightsDirty = true;
@@ -80,10 +86,15 @@ export class WorldScene extends Phaser.Scene {
     this.villagers = new Villagers(this);
     this.waves = new Waves(this);
     this.jobs = new Jobs(this);
+    this.recruitManager = new RecruitManager(this);
+    this.quests = new Quests(this);
 
     this.buildings.loadFrom(this.state.buildings);
     this.villagers.loadFrom(this.state.villagers);
     this.player = new Player(this, this.state.player.x, this.state.player.y);
+    this.quests.loadFrom(this.state.quests);
+    this.recruitManager.loadFrom(this.state.recruits);
+    this.spawnQuestGivers();
 
     const cam = this.cameras.main;
     cam.setBounds(0, 0, WORLD_W, WORLD_H);
@@ -165,8 +176,10 @@ export class WorldScene extends Phaser.Scene {
     this.player.update(dt);
     this.buildings.update(dt);
     this.villagers.update(dt);
+    this.recruitManager.update(dt);
     this.enemies.update(dt);
     this.waves.update(dt);
+    this.quests.updateHolyGhost();
 
     this.hudAcc += dt;
     if (this.hudAcc >= 0.1) {
@@ -276,6 +289,7 @@ export class WorldScene extends Phaser.Scene {
     this.fx.burst(c.x, c.y - 4, "px_gold", 4);
     this.advanceTutorial(3);
     if (who === "player") this.jobs.complete("harvest");
+    this.quests.reportProgress("noah", 1);
     if (st.autoSell && this.buildings.count("market") > 0) this.sell(got.kind, true);
     else if (who === "player" && st.tutorialStep <= 3 && this.buildings.count("market") === 0) {
       this.toast(`+${got.qty} ${got.kind}. Eat with F, or build a market to sell.`, "good");
@@ -306,6 +320,55 @@ export class WorldScene extends Phaser.Scene {
     this.advanceTutorial(4);
     if (!quiet) this.toast(`Sold ${units} for ${coins} coins.`, "good");
     this.fx.coins(this.player.x, this.player.y - 12, Math.min(6, units));
+  }
+
+  // -------------------------------------------------------------- recruits
+
+  /** One fixed-spot quest-giver per not-yet-recruited Big Recruit (KTD4). The Holy Ghost has none (R9, KTD5). */
+  private spawnQuestGivers() {
+    const altarC = this.buildings.center(this.buildings.altar);
+    for (const id of Object.keys(BIG_RECRUITS) as BigRecruitId[]) {
+      if (id === "holyGhost" || this.recruitManager.byId(id)) continue;
+      const def = BIG_RECRUITS[id];
+      const spot = this.findWalkableNear(altarC.x + def.spawnOffset.dx * TILE, altarC.y + def.spawnOffset.dy * TILE);
+      const giver = this.recruitManager.add(id, true, spot.x, spot.y);
+      giver.state = "questgiver";
+    }
+  }
+
+  /** Same nearest-walkable-point scan `Enemies.prophetGoal()` uses, generalized for any anchor point. */
+  private findWalkableNear(x: number, y: number) {
+    if (this.map.isWalkablePoint(x, y, false)) return { x, y };
+    for (let i = 0; i < 30; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const r = TILE * (1 + Math.random() * 3);
+      const nx = x + Math.cos(a) * r;
+      const ny = y + Math.sin(a) * r;
+      if (this.map.isWalkablePoint(nx, ny, false)) return { x: nx, y: ny };
+    }
+    return { x, y };
+  }
+
+  /** E near a quest-giver: offer, progress nudge, or turn-in, whichever the questline's state calls for (R2, R3). */
+  interactWithQuestGiver(): boolean {
+    const p = this.player;
+    const giver = this.recruitManager.list.find((r) => r.state === "questgiver" && dist(r.x, r.y, p.x, p.y) < 26);
+    if (!giver) return false;
+    const id = giver.id as BigRecruitId;
+    const def = BIG_RECRUITS[id];
+    const q = this.quests.list.find((x) => x.id === id);
+    if (!q) return false;
+    if (q.state === "available") {
+      this.quests.accept(id);
+      this.speech.say(giver.sprite, def.lines.offer, "good", 0);
+      this.toast(`Quest accepted: ${def.name}.`, "good");
+    } else if (q.state === "active") {
+      this.speech.say(giver.sprite, def.lines.progress, "neutral", 3500);
+    } else if (q.state === "ready") {
+      this.quests.turnIn(id);
+      this.speech.say(giver.sprite, def.lines.turnIn, "good", 0);
+    }
+    return true;
   }
 
   smashIdol(b: Building) {
@@ -441,6 +504,32 @@ export class WorldScene extends Phaser.Scene {
       case "advanceTutorial":
         this.advanceTutorial(st.tutorialStep + 1);
         break;
+      case "acceptQuest":
+        this.quests.accept(c.id);
+        break;
+      case "turnInQuest":
+        this.quests.turnIn(c.id);
+        break;
+      case "setDeployment":
+        this.recruitManager.setMode(c.id, c.mode, c.mode === "station" ? { x: this.player.x, y: this.player.y } : undefined);
+        break;
+      case "recruitScattered": {
+        const def = SCATTERED_RECRUITS[c.id];
+        if (!def) break;
+        if (this.recruitManager.byId(c.id)) break;
+        if (st.level < def.unlockLevel) {
+          this.toast(`${def.name} isn't available until level ${def.unlockLevel}.`, "bad");
+          break;
+        }
+        if (st.coins < def.cost) {
+          this.toast(`${def.name} costs ${def.cost} coins.`, "bad");
+          break;
+        }
+        this.addCoins(-def.cost);
+        this.recruitManager.add(c.id, false, this.player.x + 16, this.player.y);
+        this.toast(`${def.name} joins the roster.`, "good");
+        break;
+      }
     }
     this.emitHud();
   }
@@ -451,6 +540,8 @@ export class WorldScene extends Phaser.Scene {
     const st = this.state;
     st.buildings = this.buildings.serialize();
     st.villagers = this.villagers.serialize();
+    st.recruits = this.recruitManager.serialize();
+    st.quests = this.quests.serialize();
     st.player = { x: Math.round(this.player.x), y: Math.round(this.player.y) };
     return st;
   }
@@ -494,6 +585,28 @@ export class WorldScene extends Phaser.Scene {
       tutorialStep: st.tutorialStep,
       jobs: this.jobs.list,
       ribbonMode: this.jobs.mode,
+      recruits: this.recruitManager.list
+        .filter((r) => r.state !== "questgiver")
+        .map((r) => ({
+          id: r.id,
+          name: r.big ? BIG_RECRUITS[r.id as BigRecruitId].name : SCATTERED_RECRUITS[r.id as keyof typeof SCATTERED_RECRUITS].name,
+          big: r.big,
+          mode: r.mode,
+          role: r.role,
+        })),
+      quests: this.quests.toHud(),
+      scatteredOffers: (Object.keys(SCATTERED_RECRUITS) as (keyof typeof SCATTERED_RECRUITS)[]).map((id) => {
+        const def = SCATTERED_RECRUITS[id];
+        return {
+          id,
+          name: def.name,
+          unlockLevel: def.unlockLevel,
+          cost: def.cost,
+          role: def.role,
+          unlocked: st.level >= def.unlockLevel,
+          recruited: !!this.recruitManager.byId(id),
+        };
+      }),
     };
     this.bridge.emit({ type: "hud", state: hud });
   }
