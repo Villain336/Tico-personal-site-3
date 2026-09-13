@@ -1,7 +1,7 @@
 import type { WorldScene } from "../scenes/WorldScene";
 import { CROP_KINDS, CROPS, ECONOMY } from "../config";
 import type { CropKind, SaveData } from "../types";
-import { civicDawnMods } from "./civic";
+import { civicDawnMods, defaultCivic } from "./civic";
 
 const FOOD_ORDER: CropKind[] = ["wheat", "olives", "grapes", "flax"];
 
@@ -55,7 +55,7 @@ export function unitPrice(st: Pick<SaveData, "prices">, kind: CropKind) {
  * Order: rations → wages → rent in → interest → bank run → prices.
  */
 export function settleDawnOn(st: SaveData, pop: number, rent: number, enemiesLastNight: number): DawnBooks {
-  const mods = civicDawnMods(st.civic);
+  const mods = civicDawnMods(st.civic ?? defaultCivic());
   const books: DawnBooks = {
     wages: 0,
     wagesShort: 0,

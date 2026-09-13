@@ -40,7 +40,7 @@ import { Speech } from "../world/speech";
 import { Villagers } from "../world/villager";
 import { CameraDirector } from "../world/camera";
 import { Ledger } from "../world/ledger";
-import { Civic } from "../world/civic";
+import { Civic, defaultCivic } from "../world/civic";
 import { Sky } from "../world/sky";
 import { Waves } from "../world/waves";
 
@@ -749,13 +749,16 @@ export class WorldScene extends Phaser.Scene {
       hasChanger: this.buildings.count("changer") > 0,
       hasStore: this.buildings.count("store") + this.buildings.count("granary") > 0,
       hasHall: this.civic.hasHall(),
-      civic: {
-        ...st.civic,
-        edicts: { ...st.civic.edicts },
-        statutes: { ...st.civic.statutes },
-        offices: { ...st.civic.offices },
-        docket: st.civic.docket.map((x) => ({ ...x })),
-      },
+      civic: (() => {
+        const civic = st.civic ?? defaultCivic();
+        return {
+          ...civic,
+          edicts: { ...civic.edicts },
+          statutes: { ...civic.statutes },
+          offices: { ...civic.offices },
+          docket: civic.docket.map((x) => ({ ...x })),
+        };
+      })(),
       villagerOffices: this.villagers.list
         .filter((v) => v.alive)
         .map((v) => ({ seed: v.seed, name: pickVisitName(v.seed) })),

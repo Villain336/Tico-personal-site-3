@@ -18,10 +18,15 @@ const ValleyGame = dynamic(() => import("./valley-game").then((m) => m.ValleyGam
 type Mode = { kind: "loading" } | { kind: "creator" } | { kind: "game"; save: SaveData; away: AwayReport | null; key: number };
 
 function resolveInitialMode(): Mode {
-  const existing = loadSave();
-  if (!existing) return { kind: "creator" };
-  const { save, report } = applyOfflineProgress(existing);
-  return { kind: "game", save, away: report, key: Date.now() };
+  try {
+    const existing = loadSave();
+    if (!existing) return { kind: "creator" };
+    const { save, report } = applyOfflineProgress(existing);
+    return { kind: "game", save, away: report, key: Date.now() };
+  } catch (err) {
+    console.error("Shalom Valley save failed to open", err);
+    return { kind: "creator" };
+  }
 }
 
 export function ValleyApp() {
