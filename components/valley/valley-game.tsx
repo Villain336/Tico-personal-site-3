@@ -127,8 +127,9 @@ export function ValleyGame({
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
-      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA")) return;
       const k = e.key.toLowerCase();
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      if (panel && panel !== "build" && k !== "escape") return;
       if (panel === "intro") return; // the prologue owns the keyboard until it's dismissed
       if (k === "escape") {
         e.preventDefault();

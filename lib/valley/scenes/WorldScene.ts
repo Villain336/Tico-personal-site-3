@@ -616,10 +616,12 @@ export class WorldScene extends Phaser.Scene {
       case "pause":
         this.paused = true;
         this.player.praying = false;
+        if (this.input.keyboard) this.input.keyboard.enabled = false;
         this.saveNow();
         break;
       case "resume":
         this.paused = false;
+        if (this.input.keyboard) this.input.keyboard.enabled = true;
         break;
       case "save":
         this.saveNow();

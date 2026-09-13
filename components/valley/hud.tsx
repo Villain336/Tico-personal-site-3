@@ -246,6 +246,7 @@ function Stat({ icon, label, value }: { icon: string; label: string; value: numb
   return (
     <span className="inline-flex items-center gap-1" title={label}>
       <span>{icon}</span>
+      <span className="text-white/55">{label}</span>
       <span className="font-semibold">{value}</span>
     </span>
   );

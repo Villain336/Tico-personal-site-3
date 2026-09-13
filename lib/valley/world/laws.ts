@@ -30,13 +30,18 @@ export const INTENT_COPY: Record<LawIntent, string> = {
   tithe: "Give a tithe",
 };
 
+function pack(s: string) {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
 export function compileLaw(text: string): { intents: LawIntent[]; understood: boolean } {
   const raw = text.trim().replace(/\s+/g, " ");
   if (!raw) return { intents: [], understood: false };
   const hay = raw.toLowerCase();
+  const packed = pack(raw);
   const intents: LawIntent[] = [];
   for (const rule of RULES) {
-    if (rule.words.some((w) => hay.includes(w))) intents.push(rule.intent);
+    if (rule.words.some((w) => hay.includes(w) || packed.includes(pack(w)))) intents.push(rule.intent);
   }
   return { intents, understood: intents.length > 0 };
 }
