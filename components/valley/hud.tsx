@@ -19,6 +19,8 @@ export function Hud({
   topOffset = 12,
   onBuild,
   onSkills,
+  onRoster,
+  onJournal,
   onPause,
   onSell,
   onAutoSell,
@@ -30,6 +32,8 @@ export function Hud({
   topOffset?: number;
   onBuild: () => void;
   onSkills: () => void;
+  onRoster: () => void;
+  onJournal: () => void;
   onPause: () => void;
   onSell: () => void;
   onAutoSell: () => void;
@@ -37,6 +41,7 @@ export function Hud({
 }) {
   const hint = hud.tutorialStep < TUTORIAL.length ? TUTORIAL[hud.tutorialStep] : null;
   const hasCrops = hud.wheat + hud.grapes > 0;
+  const readyQuests = hud.quests.filter((q) => q.state === "ready").length;
 
   return (
     <div className="pointer-events-none absolute inset-0 z-20 font-mono text-[11px] text-white">
@@ -123,6 +128,12 @@ export function Hud({
           </Btn>
           <Btn onClick={onSkills} badge={hud.skillPoints > 0 ? hud.skillPoints : undefined}>
             Skills <Key>K</Key>
+          </Btn>
+          <Btn onClick={onRoster}>
+            Roster <Key>R</Key>
+          </Btn>
+          <Btn onClick={onJournal} badge={readyQuests > 0 ? readyQuests : undefined}>
+            Quests <Key>J</Key>
           </Btn>
           <Btn onClick={onPause}>
             <Key>Esc</Key>

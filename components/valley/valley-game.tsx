@@ -11,6 +11,8 @@ import { DawnSummary } from "./dawn-summary";
 import { PauseMenu } from "./pause-menu";
 import { Modal, ModalButton } from "./modal";
 import { Ribbon } from "./ribbon";
+import { RosterPanel } from "./roster-panel";
+import { QuestJournal } from "./quest-journal";
 
 declare global {
   interface Window {
@@ -18,8 +20,8 @@ declare global {
   }
 }
 
-type Panel = "build" | "skills" | "pause" | "away" | "victory" | null;
-const PAUSING: Panel[] = ["skills", "pause", "away", "victory"];
+type Panel = "build" | "skills" | "roster" | "journal" | "pause" | "away" | "victory" | null;
+const PAUSING: Panel[] = ["skills", "roster", "journal", "pause", "away", "victory"];
 
 const HOTKEYS: Record<string, BuildingType> = Object.fromEntries(
   (Object.keys(BUILDINGS) as (keyof typeof BUILDINGS)[]).map((k) => [BUILDINGS[k].hotkey, k]),
@@ -128,6 +130,10 @@ export function ValleyGame({
         togglePanel("build");
       } else if (k === "k") {
         togglePanel("skills");
+      } else if (k === "r") {
+        togglePanel("roster");
+      } else if (k === "j") {
+        togglePanel("journal");
       } else if (HOTKEYS[e.key]) {
         bridge.send({ type: "setBuildMode", building: HOTKEYS[e.key] });
         setPanel("build");
@@ -157,6 +163,8 @@ export function ValleyGame({
           topOffset={showRibbon ? 46 : 12}
           onBuild={() => togglePanel("build")}
           onSkills={() => togglePanel("skills")}
+          onRoster={() => togglePanel("roster")}
+          onJournal={() => togglePanel("journal")}
           onPause={() => togglePanel("pause")}
           onSell={() => bridge.send({ type: "sell", what: "all" })}
           onAutoSell={() => bridge.send({ type: "toggleAutoSell" })}
@@ -178,6 +186,17 @@ export function ValleyGame({
       {hud && panel === "skills" && (
         <SkillsPanel hud={hud} onSpend={(s) => bridge.send({ type: "spendSkill", skill: s })} onClose={() => setPanel(null)} />
       )}
+
+      {hud && panel === "roster" && (
+        <RosterPanel
+          hud={hud}
+          onSetDeployment={(id, mode) => bridge.send({ type: "setDeployment", id, mode })}
+          onRecruitScattered={(id) => bridge.send({ type: "recruitScattered", id })}
+          onClose={() => setPanel(null)}
+        />
+      )}
+
+      {hud && panel === "journal" && <QuestJournal hud={hud} onClose={() => setPanel(null)} />}
 
       {panel === "pause" && (
         <PauseMenu
