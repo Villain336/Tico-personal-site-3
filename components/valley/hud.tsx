@@ -78,6 +78,10 @@ export function Hud({
             <span>🔥 Altar {hud.altarLevel}</span>
             {hud.isNight && <span className="text-brand-coral">☠ {hud.enemiesAlive}</span>}
           </div>
+          <div className="mt-1 text-white/80" title="Landmarks discovered">
+            📍 {hud.discovered}/{hud.landmarks} places
+          </div>
+          {hud.atLandmark && <div className="truncate text-amber-200">{hud.atLandmark}</div>}
         </Card>
       </div>
 

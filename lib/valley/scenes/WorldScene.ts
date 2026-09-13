@@ -9,10 +9,15 @@ import {
   CYCLE_SECONDS,
   DAY_SECONDS,
   DUSK_WARN_S,
+  GRANARY_BONUS,
+  GRANARY_RADIUS_TILES,
   IDOL_REWARD,
+  MAP_H,
+  MAP_W,
   SIN,
   SKILLS,
   TILE,
+  UNLOCK_FX,
   VICTORY_LIT_RATIO,
   WORLD_H,
   WORLD_W,
@@ -29,6 +34,7 @@ import { Darkness } from "../world/darkness";
 import { Enemies } from "../world/enemy";
 import { Fx } from "../world/fx";
 import { Jobs } from "../world/jobs";
+import { LANDMARKS, Landmarks } from "../world/landmarks";
 import { WorldMap } from "../world/map";
 import { Player } from "../world/player";
 import { Quests } from "../world/quests";
@@ -54,6 +60,7 @@ export class WorldScene extends Phaser.Scene {
   jobs!: Jobs;
   recruitManager!: RecruitManager;
   quests!: Quests;
+  landmarks!: Landmarks;
 
   paused = false;
   lightsDirty = true;
@@ -79,6 +86,10 @@ export class WorldScene extends Phaser.Scene {
 
     this.map = new WorldMap(this);
     this.darkness = new Darkness(this);
+    this.darkness.setTerrain(
+      (tx, ty) => this.map.isLand(tx, ty),
+      (tx, ty) => this.map.isReachable(tx, ty),
+    );
     this.speech = new Speech(this);
     this.fx = new Fx(this);
     this.buildings = new Buildings(this);
@@ -88,13 +99,18 @@ export class WorldScene extends Phaser.Scene {
     this.jobs = new Jobs(this);
     this.recruitManager = new RecruitManager(this);
     this.quests = new Quests(this);
+    this.landmarks = new Landmarks(this);
 
     this.buildings.loadFrom(this.state.buildings);
     this.villagers.loadFrom(this.state.villagers);
     this.player = new Player(this, this.state.player.x, this.state.player.y);
+    if (!this.map.isWalkablePoint(this.player.x, this.player.y - 3, false)) {
+      const ac = this.buildings.center(this.buildings.altar);
+      this.player.setPosition(ac.x, ac.y + TILE * 2.5);
+    }
     this.quests.loadFrom(this.state.quests);
     this.recruitManager.loadFrom(this.state.recruits);
-    this.spawnQuestGivers();
+    this.placeArrivedStrangers();
 
     const cam = this.cameras.main;
     cam.setBounds(0, 0, WORLD_W, WORLD_H);
@@ -131,7 +147,7 @@ export class WorldScene extends Phaser.Scene {
     }
     this.emitHud();
 
-    if (this.state.day === 1 && this.state.clock < 1) {
+    if (this.state.day === 1 && this.state.clock < 1 && this.state.introSeen) {
       this.toast(`Welcome to Shalom Valley, ${this.playerName}. Walk to the altar and hold E to pray.`, "info");
     }
   }
@@ -174,12 +190,14 @@ export class WorldScene extends Phaser.Scene {
     }
 
     this.player.update(dt);
+    this.darkness.updateLantern(this.player.x, this.player.y - 8);
     this.buildings.update(dt);
     this.villagers.update(dt);
     this.recruitManager.update(dt);
     this.enemies.update(dt);
     this.waves.update(dt);
     this.quests.updateHolyGhost();
+    this.landmarks.update(dt);
 
     this.hudAcc += dt;
     if (this.hudAcc >= 0.1) {
@@ -223,10 +241,11 @@ export class WorldScene extends Phaser.Scene {
     const r = this.villagers.onDawn();
     this.addCoins(r.rent);
     const sinBefore = st.sin;
-    this.addSin(SIN.dawnDecay);
+    this.addSin(SIN.dawnDecay * (st.unlocks.blessing ? UNLOCK_FX.blessingDawnDecayMult : 1));
     this.advanceTutorial(6);
     this.duskWarned = false;
     this.jobs.clearForDawn();
+    const arrivals = this.arriveStrangers();
     this.bridge.emit({
       type: "dawn",
       report: {
@@ -236,6 +255,7 @@ export class WorldScene extends Phaser.Scene {
         sinDelta: st.sin - sinBefore,
         fallen: r.fallen,
         saved: r.saved,
+        arrivals,
       },
     });
     this.saveNow();
@@ -283,9 +303,10 @@ export class WorldScene extends Phaser.Scene {
     const got = this.buildings.harvest(b);
     if (!got) return;
     const st = this.state;
+    const c = this.buildings.center(b);
+    if (this.buildings.nearest("granary", c.x, c.y, GRANARY_RADIUS_TILES * TILE)) got.qty += GRANARY_BONUS;
     st[got.kind] += got.qty;
     this.addXp(XP.harvest);
-    const c = this.buildings.center(b);
     this.fx.burst(c.x, c.y - 4, "px_gold", 4);
     this.advanceTutorial(3);
     if (who === "player") this.jobs.complete("harvest");
@@ -324,29 +345,60 @@ export class WorldScene extends Phaser.Scene {
 
   // -------------------------------------------------------------- recruits
 
-  /** One fixed-spot quest-giver per not-yet-recruited Big Recruit (KTD4). The Holy Ghost has none (R9, KTD5). */
-  private spawnQuestGivers() {
-    const altarC = this.buildings.center(this.buildings.altar);
-    for (const id of Object.keys(BIG_RECRUITS) as BigRecruitId[]) {
-      if (id === "holyGhost" || this.recruitManager.byId(id)) continue;
+  /** Big Recruits not yet on the roster, whose arrival day has passed or is today. The Holy Ghost never walks (R9). */
+  private pendingStrangers(): BigRecruitId[] {
+    return (Object.keys(BIG_RECRUITS) as BigRecruitId[]).filter((id) => {
       const def = BIG_RECRUITS[id];
-      const spot = this.findWalkableNear(altarC.x + def.spawnOffset.dx * TILE, altarC.y + def.spawnOffset.dy * TILE);
-      const giver = this.recruitManager.add(id, true, spot.x, spot.y);
-      giver.state = "questgiver";
+      if (def.arrivesDay === null || !def.landmark) return false;
+      if (this.recruitManager.byId(id)) return false;
+      if (this.quests.list.find((q) => q.id === id)?.state === "completed") return false;
+      return this.state.day >= def.arrivesDay;
+    });
+  }
+
+  /** On load: anyone who should already be here stands at their landmark — no replayed walk-in. */
+  private placeArrivedStrangers() {
+    for (const id of this.pendingStrangers()) {
+      this.recruitManager.placeQuestGiver(id, this.landmarks.spot(BIG_RECRUITS[id].landmark!));
     }
   }
 
-  /** Same nearest-walkable-point scan `Enemies.prophetGoal()` uses, generalized for any anchor point. */
-  private findWalkableNear(x: number, y: number) {
-    if (this.map.isWalkablePoint(x, y, false)) return { x, y };
-    for (let i = 0; i < 30; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const r = TILE * (1 + Math.random() * 3);
-      const nx = x + Math.cos(a) * r;
-      const ny = y + Math.sin(a) * r;
-      if (this.map.isWalkablePoint(nx, ny, false)) return { x: nx, y: ny };
+  /** At dawn: today's newcomer walks in from the nearest open map edge toward their landmark. */
+  private arriveStrangers() {
+    const arrivals: { name: string; line: string }[] = [];
+    for (const id of this.pendingStrangers()) {
+      const def = BIG_RECRUITS[id];
+      const to = this.landmarks.spot(def.landmark!);
+      const from = this.nearestOpenEdge(to.x, to.y);
+      this.recruitManager.startArrival(id, from, to);
+      arrivals.push({ name: def.name, line: def.lines.arrival });
+      this.toast(`A stranger has come: ${def.name}, ${def.title}. Look for the "!" — press J for where.`, "info");
     }
-    return { x, y };
+    return arrivals;
+  }
+
+  /** The reachable edge tile closest to a point — where a traveler would enter the valley from. */
+  private nearestOpenEdge(x: number, y: number) {
+    let best = { x: 8, y: 8 };
+    let bd = Infinity;
+    const consider = (tx: number, ty: number) => {
+      if (!this.map.isReachable(tx, ty)) return;
+      const c = WorldMap.center(tx, ty);
+      const d = dist(c.x, c.y, x, y);
+      if (d < bd) {
+        bd = d;
+        best = c;
+      }
+    };
+    for (let tx = 0; tx < MAP_W; tx++) {
+      consider(tx, 0);
+      consider(tx, MAP_H - 1);
+    }
+    for (let ty = 1; ty < MAP_H - 1; ty++) {
+      consider(0, ty);
+      consider(MAP_W - 1, ty);
+    }
+    return best;
   }
 
   /** E near a quest-giver: offer, progress nudge, or turn-in, whichever the questline's state calls for (R2, R3). */
@@ -392,7 +444,10 @@ export class WorldScene extends Phaser.Scene {
   private setBuildMode(type: BuildingType | null) {
     if (type && type !== "altar" && type !== "idol") {
       const def = BUILDINGS[type];
-      if (this.buildings.altarLevel < def.altarLevel) {
+      if (def.requiresQuest && !this.quests.completedIds().includes(def.requiresQuest)) {
+        this.toast(`${def.name} is ${BIG_RECRUITS[def.requiresQuest].name}'s to teach — finish their quest first.`, "bad");
+        type = null;
+      } else if (this.buildings.altarLevel < def.altarLevel) {
         this.toast(`${def.name} unlocks at altar level ${def.altarLevel}.`, "bad");
         type = null;
       }
@@ -439,7 +494,7 @@ export class WorldScene extends Phaser.Scene {
       return;
     }
     if (!this.buildings.canPlace(type, tx, ty)) {
-      this.toast("Can't build there.", "bad");
+      this.toast(def.onWater ? "A bridge needs open water under it." : "Can't build there.", "bad");
       return;
     }
     this.addCoins(-def.cost);
@@ -449,8 +504,8 @@ export class WorldScene extends Phaser.Scene {
     if (type === "farm") this.advanceTutorial(2);
     if (type === "market") this.advanceTutorial(4);
     if (type === "house") this.advanceTutorial(5);
-    // walls and farms are placed in runs; everything else exits build mode
-    if (type !== "wall" && type !== "farm" && type !== "lamp") this.setBuildMode(null);
+    // walls, farms, lamps and bridges are placed in runs; everything else exits build mode
+    if (type !== "wall" && type !== "farm" && type !== "lamp" && type !== "bridge") this.setBuildMode(null);
     else if (st.coins < def.cost) this.setBuildMode(null);
   }
 
@@ -503,6 +558,13 @@ export class WorldScene extends Phaser.Scene {
         break;
       case "advanceTutorial":
         this.advanceTutorial(st.tutorialStep + 1);
+        break;
+      case "introSeen":
+        if (!st.introSeen) {
+          st.introSeen = true;
+          this.toast(`Welcome to Shalom Valley, ${this.playerName}. Walk to the altar and hold E to pray.`, "info");
+          this.saveNow();
+        }
         break;
       case "acceptQuest":
         this.quests.accept(c.id);
@@ -586,7 +648,7 @@ export class WorldScene extends Phaser.Scene {
       jobs: this.jobs.list,
       ribbonMode: this.jobs.mode,
       recruits: this.recruitManager.list
-        .filter((r) => r.state !== "questgiver")
+        .filter((r) => !r.preRecruit)
         .map((r) => ({
           id: r.id,
           name: r.big ? BIG_RECRUITS[r.id as BigRecruitId].name : SCATTERED_RECRUITS[r.id as keyof typeof SCATTERED_RECRUITS].name,
@@ -607,6 +669,13 @@ export class WorldScene extends Phaser.Scene {
           recruited: !!this.recruitManager.byId(id),
         };
       }),
+      discovered: this.landmarks.discoveredCount,
+      landmarks: this.landmarks.total,
+      completedQuests: this.quests.completedIds(),
+      atLandmark: (() => {
+        const id = this.landmarks.at(p.x, p.y);
+        return id ? LANDMARKS[id].name : null;
+      })(),
     };
     this.bridge.emit({ type: "hud", state: hud });
   }

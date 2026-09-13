@@ -1,6 +1,7 @@
 import type { WorldScene } from "../scenes/WorldScene";
 import { BIG_RECRUITS } from "../quests/content";
 import type { BigRecruitId, HudQuest, QuestState, SavedQuest } from "../types";
+import { LANDMARKS } from "./landmarks";
 
 type Entry = { id: BigRecruitId; state: QuestState; progress: number };
 
@@ -59,13 +60,17 @@ export class Quests {
       const c = this.scene.buildings.center(this.scene.buildings.altar);
       this.scene.fx.ring(c.x, c.y, 90, 0xffe27a);
       this.scene.fx.burst(c.x, c.y - 10, "px_gold", 14);
-      this.scene.toast("The Holy Ghost's blessing rests on the valley.", "good");
+      this.scene.toast(`The Holy Ghost's blessing rests on the valley. ${def.rewardText}`, "good");
     } else {
       const giver = this.scene.recruitManager.byId(id);
       this.scene.recruitManager.add(id, true, giver?.x, giver?.y);
       if (giver && giver.state === "questgiver") giver.state = "idle";
-      this.scene.toast(`${def.name} joins you.`, "good");
+      this.scene.toast(`${def.name} joins you. ${def.rewardText}`, "good");
     }
+  }
+
+  completedIds(): BigRecruitId[] {
+    return this.list.filter((q) => q.state === "completed").map((q) => q.id);
   }
 
   /** Holy Ghost delivery: 3 full-prayer cycles at altar level 2+, no walking NPC (KTD5). */
@@ -98,12 +103,20 @@ export class Quests {
   }
 
   toHud(): HudQuest[] {
-    return this.list.map((q) => ({
-      id: q.id,
-      name: BIG_RECRUITS[q.id].name,
-      state: q.state,
-      progress: q.progress,
-      target: BIG_RECRUITS[q.id].objective.count,
-    }));
+    const day = this.scene.state.day;
+    return this.list.map((q) => {
+      const def = BIG_RECRUITS[q.id];
+      return {
+        id: q.id,
+        name: def.name,
+        state: q.state,
+        progress: q.progress,
+        target: def.objective.count,
+        objective: def.objectiveText,
+        arrivesDay: def.arrivesDay,
+        arrived: def.arrivesDay === null || day >= def.arrivesDay || q.state === "completed",
+        landmark: def.landmark ? LANDMARKS[def.landmark].name : null,
+      };
+    });
   }
 }

@@ -23,6 +23,16 @@ export function DawnSummary({ report, onClose }: { report: DawnReport; onClose: 
           <span>Sin</span>
           <span className="text-right">{report.sinDelta > 0 ? `+${report.sinDelta}` : report.sinDelta}</span>
         </div>
+        {report.arrivals?.length > 0 && (
+          <div className="mt-3 rounded-lg border border-amber-300/30 bg-amber-300/10 p-2 text-amber-100">
+            {report.arrivals.map((a) => (
+              <p key={a.name}>
+                <span className="font-semibold text-amber-200">{a.name} has arrived.</span> {a.line}
+              </p>
+            ))}
+            <p className="mt-1 text-amber-200/60">Open the journal (J) for where to find them.</p>
+          </div>
+        )}
         <p className="mt-2 text-white/40">tap to dismiss</p>
       </button>
     </div>

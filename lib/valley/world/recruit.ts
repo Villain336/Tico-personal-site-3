@@ -1,7 +1,8 @@
+import type Phaser from "phaser";
 import type { WorldScene } from "../scenes/WorldScene";
 import { TILE, VILLAGER } from "../config";
 import { SCATTERED_RECRUITS } from "../quests/content";
-import type { DeploymentMode, RecruitId, RecruitRole, SavedRecruit } from "../types";
+import type { BigRecruitId, DeploymentMode, RecruitId, RecruitRole, SavedRecruit } from "../types";
 import { Actor, dist, type Afflictable } from "./actor";
 import type { Enemy } from "./enemy";
 
@@ -9,9 +10,12 @@ import type { Enemy } from "./enemy";
  * A roster member's own movement/affliction state, distinct from `mode`
  * (Follow/Station). "idle" covers both "no mode yet" and "running its mode's
  * behavior normally" — affliction states pre-empt mode behavior exactly like
- * they pre-empt a `Villager`'s regular behavior.
+ * they pre-empt a `Villager`'s regular behavior. "arriving" is a Big Recruit
+ * walking in from the map edge to their landmark on the dawn they appear.
  */
-export type RecruitState = "idle" | "questgiver" | "lured" | "fallen" | "hypno" | "flee";
+export type RecruitState = "idle" | "arriving" | "questgiver" | "lured" | "fallen" | "hypno" | "flee";
+
+const MARKER_TINT = { available: 0xe0b53a, active: 0x8d8d94, ready: 0xd7ff3e } as const;
 
 /**
  * Parallel to `Villager`, not a subtype (see KTD2): a Big Recruit is
@@ -38,6 +42,9 @@ export class Recruit extends Actor implements Afflictable {
   fightTarget: Enemy | null = null;
   attackCd = 0;
   timer = 0;
+  /** Where an arriving Big Recruit is walking to; where a quest-giver waits. */
+  goal: { x: number; y: number } | null = null;
+  marker: Phaser.GameObjects.Image | null = null;
 
   constructor(scene: WorldScene, id: RecruitId, big: boolean, x: number, y: number) {
     super(scene, x, y, `recruit_${id}`);
@@ -50,8 +57,19 @@ export class Recruit extends Actor implements Afflictable {
     return this.state === "fallen" || this.state === "hypno" || this.state === "lured";
   }
 
+  /** Not yet on the roster — still a stranger in the world. */
+  get preRecruit() {
+    return this.state === "questgiver" || this.state === "arriving";
+  }
+
   serialize(): SavedRecruit {
     return { id: this.id, mode: this.mode, station: this.station ?? undefined };
+  }
+
+  destroy() {
+    this.marker?.destroy();
+    this.marker = null;
+    super.destroy();
   }
 }
 
@@ -102,8 +120,9 @@ export class RecruitManager {
     r.station = mode === "station" ? station ?? { x: r.x, y: r.y } : null;
   }
 
+  /** Only joined members persist; strangers are re-derived from day + quest state on load. */
   serialize(): SavedRecruit[] {
-    return this.list.map((r) => r.serialize());
+    return this.list.filter((r) => !r.preRecruit).map((r) => r.serialize());
   }
 
   loadFrom(saved: SavedRecruit[]) {
@@ -113,6 +132,61 @@ export class RecruitManager {
       const r = this.add(s.id, big, spot.x, spot.y);
       r.mode = s.mode;
       r.station = s.station ?? null;
+    }
+  }
+
+  /** A Big Recruit already in the valley on load: stands at their landmark, no walk-in. */
+  placeQuestGiver(id: BigRecruitId, at: { x: number; y: number }) {
+    const r = this.add(id, true, at.x, at.y);
+    r.state = "questgiver";
+    r.goal = at;
+    return r;
+  }
+
+  /** A Big Recruit walking in from the map edge at dawn toward their landmark. */
+  startArrival(id: BigRecruitId, from: { x: number; y: number }, to: { x: number; y: number }) {
+    const r = this.add(id, true, from.x, from.y);
+    r.state = "arriving";
+    r.goal = to;
+    r.timer = 90; // give up walking and just appear if the route is bad
+    return r;
+  }
+
+  private updateArriving(r: Recruit, dt: number) {
+    const g = r.goal!;
+    r.timer -= dt;
+    if (r.moveToward(g.x, g.y, VILLAGER.speed * 1.2, dt, this.scene.map, 4) || r.timer <= 0) {
+      r.setPosition(g.x, g.y);
+      r.state = "questgiver";
+    }
+  }
+
+  /** Bobbing "!" above a stranger's head, colored by what talking to them will do. */
+  private updateMarker(r: Recruit, dt: number) {
+    if (r.state !== "questgiver") {
+      if (r.marker) {
+        r.marker.destroy();
+        r.marker = null;
+      }
+      return;
+    }
+    const q = this.scene.quests.list.find((x) => x.id === r.id);
+    const state = q?.state ?? "available";
+    if (state === "completed") {
+      r.marker?.destroy();
+      r.marker = null;
+      return;
+    }
+    if (!r.marker) r.marker = this.scene.add.image(r.x, r.y, "marker").setOrigin(0.5, 1).setDepth(900);
+    r.timer += dt;
+    r.marker.setPosition(Math.round(r.x), Math.round(r.y - 26 + Math.sin(r.timer * 3) * 2));
+    r.marker.setTint(MARKER_TINT[state]);
+    r.marker.setAlpha(state === "active" ? 0.6 : 1);
+    // Face the player when they're close — a small "I see you" beat.
+    const p = this.scene.player;
+    if (dist(p.x, p.y, r.x, r.y) < 60) {
+      r.facing = p.x >= r.x ? 1 : -1;
+      r.sprite.setFlipX(r.facing < 0);
     }
   }
 
@@ -174,7 +248,12 @@ export class RecruitManager {
       r.attackCd -= dt;
       r.animate();
 
-      if (r.state === "questgiver") continue; // U6 owns pre-recruit behavior
+      if (r.state === "arriving") {
+        this.updateArriving(r, dt);
+        continue;
+      }
+      this.updateMarker(r, dt);
+      if (r.state === "questgiver") continue; // WorldScene.interactWithQuestGiver owns pre-recruit behavior
 
       // --- afflicted states (scattered NPCs only — Big Recruits never enter these)
       if (r.state === "fallen") {
