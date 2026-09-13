@@ -1,7 +1,8 @@
 import type { WorldScene } from "../scenes/WorldScene";
 import type { Gender, SavedVillager } from "../types";
 import { ALTAR, CIVIC, HOUSE, SIN, TILE, VILLAGER, XP } from "../config";
-import { line } from "../dialogue";
+import { line, pickSoulName } from "../dialogue";
+import { recordSoul } from "./judgment";
 import { hasIntent, lawLines } from "./laws";
 import { VILLAGER_VARIANTS } from "../textures";
 import { Actor, dist, type Afflictable } from "./actor";
@@ -22,6 +23,7 @@ export type VillagerState =
 
 export class Villager extends Actor implements Afflictable {
   seed: number;
+  name: string;
   gender: Gender;
   level: number;
   xp: number;
@@ -49,6 +51,7 @@ export class Villager extends Actor implements Afflictable {
     this.world = scene;
     this.variant = variant;
     this.seed = saved.seed;
+    this.name = saved.name || pickSoulName(saved.seed, []);
     this.gender = saved.gender;
     this.level = saved.level;
     this.xp = saved.xp;
@@ -72,6 +75,7 @@ export class Villager extends Actor implements Afflictable {
   serialize(): SavedVillager {
     return {
       seed: this.seed,
+      name: this.name,
       gender: this.gender,
       level: this.level,
       xp: this.xp,
@@ -99,10 +103,20 @@ export class Villagers {
   }
 
   private add(saved: SavedVillager) {
-    const home = this.homeFor(saved.seed);
-    const v = new Villager(this.scene, saved, home);
+    const named = {
+      ...saved,
+      name: saved.name || pickSoulName(saved.seed, this.list.map((x) => x.name)),
+    };
+    const home = this.homeFor(named.seed);
+    const v = new Villager(this.scene, named, home);
     this.list.push(v);
     return v;
+  }
+
+  private writeSoul(v: Villager, kind: "arrived" | "fallen" | "redeemed" | "lost", note: string) {
+    const book = this.scene.state.judgment;
+    if (!book) return;
+    recordSoul(book, { name: v.name, seed: v.seed, kind, day: this.scene.state.day, note });
   }
 
   private homeFor(seed: number) {
@@ -133,9 +147,10 @@ export class Villagers {
       ty: Math.floor(c.y / TILE) + 1,
     });
     v.home = { x: c.x, y: c.y + TILE * 1.5 };
+    this.writeSoul(v, "arrived", `${v.name} moved in.`);
     this.scene.fx.burst(v.x, v.y - 12, "px_lime", 6);
     this.scene.speech.say(v.sprite, line("villager", "greet", this.scene.playerName), "good", 0);
-    this.scene.toast("A new villager moved in.", "good");
+    this.scene.toast(`${v.name} moved in.`, "good");
   }
 
   /** A living neighbor repeats a newly written law so the player sees they heard it. */
@@ -214,8 +229,9 @@ export class Villagers {
     v.sprite.setAlpha(0.75);
     this.scene.addSin(SIN.fall);
     this.fallenToday++;
+    this.writeSoul(v, "fallen", `${v.name} fell to ${reason}.`);
     this.scene.civic.maybeFileFall(v.seed);
-    this.scene.toast(`A villager fell to ${reason}. Sin +${SIN.fall}. Cast out (E) near them to redeem.`, "bad");
+    this.scene.toast(`${v.name} fell to ${reason}. Sin +${SIN.fall}. Cast out (E) near them to redeem.`, "bad");
     this.scene.speech.say(v.sprite, line("villager", "fallen"), "dark", 0);
     this.grieveNear(v, 2);
   }
@@ -243,6 +259,7 @@ export class Villagers {
         this.scene.addXp(XP.redeem);
         this.scene.state.stats.redeemed++;
         this.scene.quests.reportProgress("moses", 1);
+        this.writeSoul(v, "redeemed", `${v.name} was redeemed.`);
         this.savedToday++;
         this.scene.speech.say(v.sprite, line("villager", "thanks", this.scene.playerName), "good", 0);
         this.scene.fx.burst(v.x, v.y - 12, "px_lime", 8);
@@ -286,7 +303,8 @@ export class Villagers {
     e.stun = 5; // freshly turned: dazed before they start preaching
     this.scene.addSin(SIN.converted);
     this.fallenToday++;
-    this.scene.toast(`A villager was deceived and turned. Sin +${SIN.converted}.`, "bad");
+    this.writeSoul(v, "lost", `${v.name} was turned.`);
+    this.scene.toast(`${v.name} was deceived and turned. Sin +${SIN.converted}.`, "bad");
     this.scene.fx.burst(x, y - 12, "px_violet", 10);
   }
 
@@ -371,6 +389,7 @@ export class Villagers {
         v.moveToward(v.target.x, v.target.y, VILLAGER.speed * 0.8, dt, sc.map);
         if (v.timer <= 0 || sc.darkness.isDark(v.x, v.y)) {
           st.stats.fallen++;
+          this.writeSoul(v, "lost", `${v.name} was lost to the dark.`);
           sc.fx.burst(v.x, v.y - 10, "px_violet", 6);
           this.remove(v);
         }

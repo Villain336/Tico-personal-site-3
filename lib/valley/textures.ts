@@ -319,10 +319,10 @@ export const GOLIATH_LOOK = {
 };
 
 /**
- * Distinct, art-free looks for the four walking Big Recruits and the first
+ * Distinct, art-free looks for the walking Big Recruits and the first
  * scattered-NPC batch, built from the same procedural pipeline as villagers
  * and enemies (KTD10). The Holy Ghost has no entry — it never gets a
- * companion sprite (R9).
+ * companion sprite (R9). Jesus walks but does not take a sword.
  */
 export const BIG_RECRUIT_LOOKS: Record<Exclude<BigRecruitId, "holyGhost">, { look: CharLook; roles: Roles }> = {
   moses: {
@@ -375,6 +375,19 @@ export const BIG_RECRUIT_LOOKS: Record<Exclude<BigRecruitId, "holyGhost">, { loo
       T: C.leaf,
       O: OUTFITS[0].primary,
       o: OUTFITS[0].secondary,
+    },
+  },
+  jesus: {
+    look: { gender: "man", body: 1, face: 0, hairStyle: 1, outfitStyle: 3 },
+    roles: {
+      ...BASE_CHAR_ROLES,
+      S: SKIN_TONES[2],
+      s: SKIN_SHADE[2],
+      H: HAIR_COLORS[1],
+      C: C.cloth,
+      T: C.gold,
+      O: OUTFITS[3].primary,
+      o: OUTFITS[3].secondary,
     },
   },
 };

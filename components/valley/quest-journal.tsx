@@ -12,6 +12,7 @@ const STATE_LABEL: Record<HudQuest["state"], string> = {
 
 function hint(q: HudQuest, day: number) {
   if (!q.arrived) {
+    if (q.id === "jesus") return "A sign in the land will call him to the oaks.";
     const days = (q.arrivesDay ?? day) - day;
     return days <= 1 ? "A stranger is expected at tomorrow's dawn." : `A stranger is expected in ${days} dawns.`;
   }
@@ -43,7 +44,7 @@ export function QuestJournal({ hud, onClose }: { hud: HudState; onClose: () => v
                           : "text-white/60"
                   }`}
                 >
-                  {hidden ? `Day ${q.arrivesDay}` : STATE_LABEL[q.state]}
+                  {hidden ? (q.arrivesDay == null ? "A sign" : `Day ${q.arrivesDay}`) : STATE_LABEL[q.state]}
                 </span>
               </div>
               <p className={`mt-1 text-xs ${hidden ? "text-white/40 italic" : "text-white/70"}`}>{hint(q, hud.day)}</p>

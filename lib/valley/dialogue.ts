@@ -174,6 +174,10 @@ export const LINES = {
     anger: ["Heretic!", "You dare strike a prophet?", "You'll regret that!", "Blasphemer!"],
     idolSmashed: ["My idol! NO!", "You'll burn for this!", "Vandal!"],
   },
+  jesus: {
+    greet: ["Peace to this valley.", "The Book is open.", "I am not here to fight."],
+    offer: ["Show mercy.", "Stand through the signs.", "Dawn will weigh what you built."],
+  },
   player: {
     levelUp: ["I feel stronger.", "Strength renewed.", "Skill point earned!"],
     hungry: ["I need to eat...", "So hungry.", "Press F to eat."],
@@ -197,15 +201,30 @@ export function line<S extends Speaker>(speaker: S, mood: Mood<S>, name = "frien
   return pick.replace("{name}", name);
 }
 
-/** First names bound to a living villager for one visit only — never persisted, no memory. */
-const VISIT_NAMES = [
+/** Persistent first names for the Book. Visit letters used to invent these; the Book now keeps them. */
+const SOUL_NAMES = [
   "Miriam", "Boaz", "Talitha", "Ezra", "Naomi", "Asa",
   "Rivka", "Caleb", "Tabitha", "Josiah", "Leah", "Amos",
   "Zilpah", "Reuben", "Hana", "Simeon",
+  "Tamar", "Judah", "Dinah", "Issachar", "Orpah", "Elimelech",
+  "Shiphrah", "Puah", "Bezalel", "Oholiab", "Abigail", "Nabal",
 ];
 
 export function pickVisitName(seed: number): string {
-  return VISIT_NAMES[Math.abs(seed) % VISIT_NAMES.length];
+  return SOUL_NAMES[Math.abs(seed) % SOUL_NAMES.length];
+}
+
+export function pickSoulName(seed: number, taken: string[]): string {
+  const start = Math.abs(seed) % SOUL_NAMES.length;
+  for (let i = 0; i < SOUL_NAMES.length; i++) {
+    const n = SOUL_NAMES[(start + i) % SOUL_NAMES.length];
+    if (!taken.includes(n)) return n;
+  }
+  return `${SOUL_NAMES[start]} ${taken.length + 1}`;
+}
+
+export function nameOfSoul(who: { name?: string; seed: number }): string {
+  return who.name || pickVisitName(who.seed);
 }
 
 /** Dawn-letter copy: a story beat plus a voice line, layered onto the away numbers. */
@@ -234,6 +253,16 @@ export const LETTER = {
     "Shalom. The valley kept watch.",
     "The altar's light never dimmed.",
     "Peace held here while you were gone.",
+  ],
+  storyBook: [
+    "The Book kept {name} while you were gone.",
+    "{name} is still written in the Book.",
+    "The letter quotes the Book: {name} kept the watch.",
+  ],
+  voiceBook: [
+    '"We are written," {name} says.',
+    "The Book sends word: {name} is still here.",
+    "{name} says the Book did not forget you.",
   ],
 } as const;
 

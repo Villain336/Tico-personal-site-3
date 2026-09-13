@@ -68,6 +68,17 @@ export function Hud({
               {hud.nightKind === "siege" ? "Siege night" : "Raid night"}
             </div>
           )}
+          {hud.judgment.sign !== "none" && (
+            <div className={`mt-1 font-semibold ${hud.judgment.sign === "quietDawn" ? "text-amber-200" : "text-brand-coral"}`}>
+              {hud.judgment.sign === "drought" ? "Drought" : hud.judgment.sign === "longNight" ? "Long night" : "Quiet dawn"}
+            </div>
+          )}
+          {hud.judgment.verdictNext && <div className="mt-1 font-semibold text-amber-200">The valley will be weighed</div>}
+          {hud.judgment.verdict !== "none" && (
+            <div className="mt-1 text-brand-lime">
+              {hud.judgment.verdict === "blessing" ? "Weighed: blessing" : hud.judgment.verdict === "exile" ? "Weighed: exile" : "Weighed: the dark tore back"}
+            </div>
+          )}
         </Card>
         <Card>
           <div className="flex flex-wrap gap-x-3 gap-y-1">

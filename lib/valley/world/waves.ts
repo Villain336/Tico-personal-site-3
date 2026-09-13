@@ -2,6 +2,7 @@ import type { WorldScene } from "../scenes/WorldScene";
 import { ENEMIES, NIGHT_SECONDS, SIN, TILE, WAVES, isNamedBoss, type EnemyKind } from "../config";
 import { civicDawnMods } from "./civic";
 import { nextNamedBoss, nightCount, pickNightKind, type NightKind } from "./war";
+import { signSpawnDelta } from "./judgment";
 
 const ORDER: EnemyKind[] = ["robber", "tempter", "deceiver", "spirit", "prophet"];
 const WEIGHTS = [5, 3, 2, 2, 1];
@@ -69,6 +70,7 @@ export class Waves {
     let count = WAVES.baseCount(st.day) + Math.floor(this.scene.villagers.population * WAVES.perPopulation);
     if (st.sin >= SIN.extraEnemiesAt) count += WAVES.sinBonus;
     count += civicDawnMods(st.civic).spawnDelta;
+    count += signSpawnDelta(st.judgment?.activeSign ?? "none");
     count = nightCount(count, this.nightKind);
     this.pending = count;
     this.interval = Math.min(WAVES.spawnIntervalS, (NIGHT_SECONDS - 15) / Math.max(1, count));
@@ -82,8 +84,11 @@ export class Waves {
     } else if (this.nightKind === "raid") {
       this.scene.toast(`A raid from the hills. Banners in the fog — ${count} shadows, and a captain.`, "bad");
     } else {
+      const long = st.judgment?.activeSign === "longNight";
       this.scene.toast(
-        `Night falls. ${count} shadows stir at the edge of the valley${st.sin >= SIN.extraEnemiesAt ? " — sin draws more" : ""}.`,
+        long
+          ? `A long night. ${count} shadows press the valley.`
+          : `Night falls. ${count} shadows stir at the edge of the valley${st.sin >= SIN.extraEnemiesAt ? " — sin draws more" : ""}.`,
         "bad",
       );
     }

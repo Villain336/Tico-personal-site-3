@@ -32,6 +32,9 @@ declare global {
       baal: () => void;
       moloch: () => void;
       dragon: () => void;
+      sign: (kind?: "drought" | "longNight" | "quietDawn") => void;
+      jesus: () => void;
+      verdict: () => void;
     };
   }
 }
@@ -282,6 +285,7 @@ export function ValleyGame({
           onWriteLaw={(text) => bridge.send({ type: "writeLaw", text })}
           onRepealLaw={(id) => bridge.send({ type: "repealLaw", id })}
           onMuster={() => bridge.send({ type: "muster" })}
+          onCallJudgment={() => bridge.send({ type: "callJudgment" })}
           onClose={() => setPanel(null)}
         />
       )}

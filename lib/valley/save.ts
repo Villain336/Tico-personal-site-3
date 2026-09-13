@@ -23,6 +23,7 @@ import {
 import { defaultCivic } from "./world/civic";
 import { emptyGear } from "./world/gear";
 import { emptyWar } from "./world/war";
+import { emptyJudgment, quoteBook } from "./world/judgment";
 import { settleDawnOn } from "./world/ledger";
 import { LETTER, letterLine, pickVisitName } from "./dialogue";
 
@@ -69,6 +70,7 @@ export function newSave(character: Character): SaveData {
     quests: [],
     unlocks: emptyUnlocks(),
     war: emptyWar(),
+    judgment: emptyJudgment(),
     discovered: [],
     introSeen: false,
     player: { x: (ALTAR_TILE.tx + 1) * TILE, y: (ALTAR_TILE.ty + 4) * TILE },
@@ -98,6 +100,7 @@ export function loadSave(): SaveData | null {
     if (!data.gear) data.gear = emptyGear();
     data.skills = { ...emptySkills(), ...data.skills };
     if (!data.war) data.war = emptyWar();
+    if (!data.judgment) data.judgment = emptyJudgment();
     if (data.unlocks) data.unlocks = { ...emptyUnlocks(), ...data.unlocks, abilities: data.unlocks.abilities ?? [] };
     return data;
   } catch {
@@ -169,14 +172,22 @@ export function applyOfflineProgress(save: SaveData, now = Date.now()): { save: 
     rent += books.rentPaid;
   }
 
-  const villagerName = next.villagers.length > 0 ? pickVisitName(next.villagers[0].seed) : null;
+  const quoted = quoteBook(next.judgment?.souls ?? []);
+  const villagerName =
+    quoted?.name ?? (next.villagers.length > 0 ? next.villagers[0].name ?? pickVisitName(next.villagers[0].seed) : null);
   const storyLine =
-    cropsGrown > 0
-      ? letterLine(LETTER.storyCrops)
-      : villagerName
-        ? letterLine(LETTER.storyNamed, villagerName)
-        : letterLine(LETTER.storyQuiet);
-  const voiceLine = villagerName ? letterLine(LETTER.voiceNamed, villagerName) : letterLine(LETTER.voiceValley);
+    quoted
+      ? letterLine(LETTER.storyBook, quoted.name)
+      : cropsGrown > 0
+        ? letterLine(LETTER.storyCrops)
+        : villagerName
+          ? letterLine(LETTER.storyNamed, villagerName)
+          : letterLine(LETTER.storyQuiet);
+  const voiceLine = quoted
+    ? letterLine(LETTER.voiceBook, quoted.name)
+    : villagerName
+      ? letterLine(LETTER.voiceNamed, villagerName)
+      : letterLine(LETTER.voiceValley);
 
   return {
     save: next,

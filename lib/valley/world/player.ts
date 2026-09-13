@@ -4,6 +4,7 @@ import { ALTAR, CIVIC, FLOCK, LANTERN_TILES, PLAYER, TILE, UNLOCK_FX, XP } from 
 import { meleeReaches } from "./combat";
 import { bladeStats, emptyGear, incomingDamage, lanternBonus, wrapArmor } from "./gear";
 import { hasIntent } from "./laws";
+import { thirstScale } from "./judgment";
 import { ENTERABLE } from "./interiors";
 import { line } from "../dialogue";
 import { Actor, dist } from "./actor";
@@ -61,7 +62,7 @@ export class Player extends Actor {
       lanternTiles: LANTERN_TILES + lanternBonus(this.world.state.gear ?? emptyGear()),
       castRadius: PLAYER.castRadius + s.faith * 12 + (hasIntent(this.world.state.civic, "sanctuary") ? CIVIC.sanctuaryCastBonus : 0),
       hungerRate: PLAYER.hungerPerSecond * drain,
-      thirstRate: PLAYER.thirstPerSecond * drain,
+      thirstRate: PLAYER.thirstPerSecond * drain * thirstScale(this.world.state.judgment?.activeSign ?? "none"),
       idleRegen: PLAYER.prayerRegenIdle * (u.blessing ? UNLOCK_FX.blessingIdleRegenMult : 1),
     };
   }

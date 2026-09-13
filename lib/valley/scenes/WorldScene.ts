@@ -27,7 +27,17 @@ import type { CropKind, GearId } from "../types";
 import { emptyGear, equipGear, GEAR, grantGear, unequipSlot } from "../world/gear";
 import { MUSTER_COST, canMuster, emptyWar, payMuster } from "../world/war";
 import { hasIntent } from "../world/laws";
-import { line, pickVisitName } from "../dialogue";
+import { line, nameOfSoul } from "../dialogue";
+import {
+  SIGN_COPY,
+  VERDICT_COPY,
+  applySign,
+  canCallJudgment,
+  emptyJudgment,
+  pickSign,
+  verdictEffects,
+  weighValley,
+} from "../world/judgment";
 import { BIG_RECRUITS, SCATTERED_RECRUITS } from "../quests/content";
 import { worldTime, writeSave } from "../save";
 import { registerTextures, reregisterPlayer } from "../textures";
@@ -48,7 +58,7 @@ import { Speech } from "../world/speech";
 import { Villagers } from "../world/villager";
 import { CameraDirector } from "../world/camera";
 import { Ledger } from "../world/ledger";
-import { Civic, defaultCivic } from "../world/civic";
+import { Civic, clampLoyalty, defaultCivic } from "../world/civic";
 import { Sky } from "../world/sky";
 import { Waves } from "../world/waves";
 import { Interiors } from "../world/interiors";
@@ -105,6 +115,7 @@ export class WorldScene extends Phaser.Scene {
     st0.relics = st0.relics ?? 0;
     st0.unlocks = { ...emptyUnlocks(), ...st0.unlocks, abilities: st0.unlocks.abilities ?? [] };
     st0.war = st0.war ?? emptyWar();
+    st0.judgment = st0.judgment ?? emptyJudgment();
     registerTextures(this, this.state.character);
     this.input.keyboard?.clearCaptures();
 
@@ -294,6 +305,7 @@ export class WorldScene extends Phaser.Scene {
     this.advanceTutorial(6);
     this.duskWarned = false;
     this.jobs.clearForDawn();
+    const judged = this.resolveJudgmentDawn();
     const arrivals = this.arriveStrangers();
     this.cameraDirector.pulseDawn();
     this.bridge.emit({
@@ -316,9 +328,74 @@ export class WorldScene extends Phaser.Scene {
         loyalty: civicDawn.loyalty,
         casesPending: civicDawn.pending,
         casesIgnored: civicDawn.ignored,
+        sign: st.judgment.activeSign,
+        signLine: judged.signLine,
+        verdict: st.judgment.verdict,
+        verdictLine: judged.verdictLine,
       },
     });
     this.saveNow();
+  }
+
+  private resolveJudgmentDawn(): { signLine: string | null; verdictLine: string | null } {
+    const st = this.state;
+    const book = st.judgment;
+    if (book.verdictNext && book.verdict === "none") {
+      const kind = weighValley({
+        sin: st.sin,
+        loyalty: st.civic.loyalty,
+        mercyGiven: book.mercyGiven,
+        exileGiven: book.exileGiven,
+        idols: this.buildings.idols().length,
+        blessing: st.unlocks.blessing,
+        jesus: this.quests.completedIds().includes("jesus"),
+      });
+      const fx = verdictEffects(kind);
+      book.verdict = kind;
+      book.verdictNext = false;
+      book.activeSign = "none";
+      book.lastSign = "none";
+      st.unlocks.judged = true;
+      this.addSin(fx.sin);
+      st.civic.loyalty = clampLoyalty(st.civic.loyalty + fx.loyalty);
+      if (fx.bless) st.unlocks.blessing = true;
+      if (fx.smashIdols) {
+        for (const b of [...this.buildings.idols()]) this.buildings.remove(b);
+      }
+      if (fx.exileFallen) {
+        for (const v of this.villagers.list.filter((x) => x.state === "fallen")) this.villagers.remove(v);
+      }
+      if (fx.clearDark) this.enemies.clearAll();
+      const copy = VERDICT_COPY[kind];
+      this.toast(copy.line, kind === "darkReset" ? "bad" : "good");
+      const c = this.buildings.center(this.buildings.altar);
+      this.fx.ring(c.x, c.y, 110, kind === "darkReset" ? 0x7a3cff : 0xffe27a);
+      return { signLine: null, verdictLine: copy.line };
+    }
+
+    const sign = pickSign({
+      day: st.day,
+      population: this.villagers.population,
+      sin: st.sin,
+      loyalty: st.civic.loyalty,
+      idols: this.buildings.idols().length,
+      mercyGiven: book.mercyGiven,
+      lastSign: book.activeSign,
+      forceSign: book.forceSign,
+      alreadyJudged: book.verdict !== "none",
+      rng: Math.random,
+    });
+    applySign(book, sign);
+    if (sign === "none") return { signLine: null, verdictLine: null };
+    if (sign === "quietDawn") st.civic.loyalty = clampLoyalty(st.civic.loyalty + 4);
+    this.quests.reportProgress("jesus", 1);
+    if (!st.unlocks.jesusComing) {
+      st.unlocks.jesusComing = true;
+      this.toast("A sign called someone to the oaks.", "info");
+    }
+    const copy = SIGN_COPY[sign];
+    this.toast(copy.line, sign === "quietDawn" ? "good" : "bad");
+    return { signLine: copy.line, verdictLine: null };
   }
 
   // ------------------------------------------------------------- economy
@@ -472,9 +549,11 @@ export class WorldScene extends Phaser.Scene {
   private pendingStrangers(): BigRecruitId[] {
     return (Object.keys(BIG_RECRUITS) as BigRecruitId[]).filter((id) => {
       const def = BIG_RECRUITS[id];
-      if (def.arrivesDay === null || !def.landmark) return false;
+      if (!def.landmark) return false;
       if (this.recruitManager.byId(id)) return false;
       if (this.quests.list.find((q) => q.id === id)?.state === "completed") return false;
+      if (id === "jesus") return !!this.state.unlocks.jesusComing;
+      if (def.arrivesDay === null) return false;
       return this.state.day >= def.arrivesDay;
     });
   }
@@ -717,6 +796,10 @@ export class WorldScene extends Phaser.Scene {
         this.quests.turnIn(c.id);
         break;
       case "setDeployment":
+        if (c.id === "jesus") {
+          this.toast("He walks the valley. He does not take a station or a sword.", "info");
+          break;
+        }
         this.recruitManager.setMode(c.id, c.mode, c.mode === "station" ? { x: this.player.x, y: this.player.y } : undefined);
         break;
       case "recruitScattered": {
@@ -844,6 +927,21 @@ export class WorldScene extends Phaser.Scene {
         this.toast(`The host is mustered (${MUSTER_COST} coins). Night will be a siege.`, "good");
         break;
       }
+      case "callJudgment": {
+        const check = canCallJudgment({
+          jesusDone: this.quests.completedIds().includes("jesus"),
+          verdict: st.judgment.verdict,
+          verdictNext: st.judgment.verdictNext,
+        });
+        if (!check.ok) {
+          this.toast(check.reason, "bad");
+          break;
+        }
+        st.judgment.verdictNext = true;
+        st.unlocks.judgmentReady = true;
+        this.toast("The valley will be weighed at dawn. God is not a man in the field.", "info");
+        break;
+      }
     }
     this.emitHud();
   }
@@ -945,7 +1043,27 @@ export class WorldScene extends Phaser.Scene {
       })(),
       villagerOffices: this.villagers.list
         .filter((v) => v.alive)
-        .map((v) => ({ seed: v.seed, name: pickVisitName(v.seed) })),
+        .map((v) => ({ seed: v.seed, name: nameOfSoul(v) })),
+      judgment: (() => {
+        const book = st.judgment;
+        const check = canCallJudgment({
+          jesusDone: this.quests.completedIds().includes("jesus"),
+          verdict: book.verdict,
+          verdictNext: book.verdictNext,
+        });
+        return {
+          sign: book.activeSign,
+          signsSeen: book.signsSeen,
+          mercyGiven: book.mercyGiven,
+          verdict: book.verdict,
+          verdictNext: book.verdictNext,
+          canCall: check.ok,
+          hint: check.ok
+            ? "Ask that the valley be weighed. Dawn will answer. God is never a unit in the field."
+            : check.reason,
+          souls: book.souls.map((s) => ({ ...s })),
+        };
+      })(),
       sin: Math.round(st.sin),
       health: Math.round(st.health),
       maxHealth: p.stats.maxHealth,
@@ -1079,6 +1197,30 @@ export class WorldScene extends Phaser.Scene {
         }
         this.player.setPosition(b.x - 12, b.y);
         this.player.swing();
+        this.emitHud();
+      },
+      sign: (kind: "drought" | "longNight" | "quietDawn" = "drought") => {
+        this.state.judgment.forceSign = kind;
+        applySign(this.state.judgment, kind);
+        if (!this.state.unlocks.jesusComing) this.state.unlocks.jesusComing = true;
+        this.quests.reportProgress("jesus", 1);
+        this.toast(SIGN_COPY[kind].line, kind === "quietDawn" ? "good" : "bad");
+        this.emitHud();
+      },
+      jesus: () => {
+        this.state.unlocks.jesusComing = true;
+        if (!this.recruitManager.byId("jesus")) {
+          this.recruitManager.placeQuestGiver("jesus", this.landmarks.spot("mamre"));
+        }
+        this.toast("Jesus waits at the Oaks of Mamre.", "info");
+        this.emitHud();
+      },
+      verdict: () => {
+        this.state.unlocks.jesusComing = true;
+        this.state.unlocks.judgmentReady = true;
+        this.state.judgment.verdictNext = true;
+        const judged = this.resolveJudgmentDawn();
+        this.toast(judged.verdictLine ?? "The valley was weighed.", "info");
         this.emitHud();
       },
     };

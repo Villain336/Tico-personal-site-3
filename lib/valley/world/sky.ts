@@ -84,12 +84,17 @@ export class Sky {
     const dusk = !night && clock >= DAY_SECONDS - 28;
     const dawn = night && clock > DAY_SECONDS + 110;
 
+    const sign = this.scene.state.judgment?.activeSign ?? "none";
+    const weigh = this.scene.state.judgment?.verdictNext;
     let color = DAY;
+    if (sign === "drought" && !night) color = 0xc48a3a;
+    else if (sign === "quietDawn" && !night) color = 0x8ec4e8;
+    else if (weigh && !night) color = 0xd4b45a;
     if (dusk) {
       const t = (clock - (DAY_SECONDS - 28)) / 28;
       color = lerpColor(DAY, t < 0.55 ? DUSK : DUSK2, t < 0.55 ? t / 0.55 : (t - 0.55) / 0.45);
     } else if (night && !dawn) {
-      color = lerpColor(DUSK2, NIGHT, Math.min(1, (clock - DAY_SECONDS) / 14));
+      color = lerpColor(DUSK2, sign === "longNight" ? 0x0a0618 : NIGHT, Math.min(1, (clock - DAY_SECONDS) / 14));
     } else if (dawn) {
       color = lerpColor(NIGHT, DAY, Math.min(1, (clock - (DAY_SECONDS + 110)) / 10));
     }

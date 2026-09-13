@@ -35,8 +35,28 @@ export function BooksPanel({
           </button>
         </div>
         <p className="mt-1 text-white/55">
-          Purse is what you carry. The changer holds the rest and pays at dawn. Stores feed the village when Share is on.
+          Purse is what you carry. The changer holds the rest and pays at dawn. The Book keeps named souls. Letters quote it.
         </p>
+
+        <section className="mt-3 max-h-36 overflow-y-auto rounded-xl border border-amber-300/25 p-3">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold text-amber-200">The Book</span>
+            <span className="text-white/50">{hud.judgment.souls.length} written</span>
+          </div>
+          {hud.judgment.souls.length === 0 ? (
+            <p className="mt-1.5 text-white/40">No names yet. Villagers who arrive, fall, or are judged are written here.</p>
+          ) : (
+            <ul className="mt-1.5 space-y-1 text-white/75">
+              {[...hud.judgment.souls].reverse().slice(0, 8).map((s, i) => (
+                <li key={`${s.seed}-${s.kind}-${s.day}-${i}`}>
+                  <span className="text-amber-200">{s.name}</span>
+                  <span className="text-white/40"> · day {s.day} · {s.kind}</span>
+                  <span className="text-white/55"> — {s.note}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
         <section className="mt-3 rounded-xl border border-white/10 p-3">
           <div className="flex items-center justify-between">

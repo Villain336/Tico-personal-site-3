@@ -5,14 +5,16 @@ export type QuestObjective =
   | { kind: "killCount"; enemyKind: "robber" | "deceiver"; count: number }
   | { kind: "harvestCount"; count: number }
   | { kind: "redeemCount"; count: number }
-  | { kind: "altarPrayerCycles"; count: number };
+  | { kind: "altarPrayerCycles"; count: number }
+  | { kind: "judgmentCount"; count: number };
 
 export type UnlockHook =
   | { kind: "weapon" }
   | { kind: "boss"; boss: "goliath" }
   | { kind: "building" }
   | { kind: "ability" }
-  | { kind: "blessing" };
+  | { kind: "blessing" }
+  | { kind: "judgment" };
 
 export type BigRecruitDef = {
   name: string;
@@ -115,6 +117,22 @@ export const BIG_RECRUITS: Record<BigRecruitId, BigRecruitDef> = {
       offer: "",
       progress: "",
       turnIn: "",
+    },
+  },
+  jesus: {
+    name: "Jesus",
+    title: "a carpenter from Nazareth",
+    arrivesDay: null,
+    landmark: "mamre",
+    objective: { kind: "judgmentCount", count: 2 },
+    objectiveText: "Show mercy in court, or live through a sign — twice",
+    unlock: [{ kind: "judgment" }],
+    rewardText: "He does not take a sword. The valley will be weighed at dawn.",
+    lines: {
+      arrival: "A carpenter sat down under the oaks at dawn. He is not here to fight.",
+      offer: "The Book is open. Show mercy, or stand through the signs — twice — and the valley will be weighed.",
+      progress: "The valley is still being written. Mercy. Another sign.",
+      turnIn: "It is enough. I walk with you. I will not take a sword. Dawn will weigh what you built.",
     },
   },
 };

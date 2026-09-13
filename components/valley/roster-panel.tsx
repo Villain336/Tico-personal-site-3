@@ -37,14 +37,18 @@ export function RosterPanel({
                     {r.big ? "Permanent · exempt from harm" : "Vulnerable · like any villager"}
                   </p>
                 </div>
-                <div className="flex gap-1.5">
-                  <ModeButton active={r.mode === "follow"} onClick={() => onSetDeployment(r.id, "follow")}>
-                    Follow
-                  </ModeButton>
-                  <ModeButton active={r.mode === "station"} onClick={() => onSetDeployment(r.id, "station")}>
-                    Station
-                  </ModeButton>
-                </div>
+                {r.id === "jesus" ? (
+                  <p className="max-w-[140px] text-right text-[10px] text-amber-200">He walks. He does not take a sword.</p>
+                ) : (
+                  <div className="flex gap-1.5">
+                    <ModeButton active={r.mode === "follow"} onClick={() => onSetDeployment(r.id, "follow")}>
+                      Follow
+                    </ModeButton>
+                    <ModeButton active={r.mode === "station"} onClick={() => onSetDeployment(r.id, "station")}>
+                      Station
+                    </ModeButton>
+                  </div>
+                )}
               </div>
             </li>
           ))}

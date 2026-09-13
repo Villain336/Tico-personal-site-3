@@ -75,6 +75,12 @@ export function DawnSummary({ report, onClose }: { report: DawnReport; onClose: 
             </>
           )}
         </div>
+        {report.signLine && (
+          <p className="mt-3 rounded-lg border border-brand-coral/40 bg-brand-coral/10 p-2 text-amber-100">{report.signLine}</p>
+        )}
+        {report.verdictLine && (
+          <p className="mt-3 rounded-lg border border-amber-300/40 bg-amber-300/10 p-2 text-amber-100">{report.verdictLine}</p>
+        )}
         {report.arrivals?.length > 0 && (
           <div className="mt-3 rounded-lg border border-amber-300/30 bg-amber-300/10 p-2 text-amber-100">
             {report.arrivals.map((a) => (
