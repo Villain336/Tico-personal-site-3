@@ -52,6 +52,18 @@ export const CLOUD_B: PixelMap = [
   ".KKKKKKKKKKKKKKKKKK...",
 ];
 
+export const CLOUD_C: PixelMap = [
+  "................KKKKKKKK................",
+  "..............KKccccccccKK..............",
+  "..........KKKKccccccccccccKKKK..........",
+  "........KKccccccccccccccccccccKK........",
+  "......KKccccccccccccccccccccccccKK......",
+  "....KKccccccccccccccccccccccccccccKK....",
+  "...KccccccccccccccccccccccccccccccccK...",
+  "..KKccccccccccccccccccccccccccccccccKK..",
+  "...KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK...",
+];
+
 export const HILL_FAR: PixelMap = [
   "......................KK......................",
   "....................KKhhKK....................",

@@ -3,7 +3,7 @@ import type { WorldScene } from "../scenes/WorldScene";
 import { TILE, WORLD_W } from "../config";
 import type { BuildingType } from "../types";
 
-export const ENTERABLE: BuildingType[] = ["hall", "house", "store", "changer", "granary", "fold"];
+export const ENTERABLE: BuildingType[] = ["hall", "house", "store", "changer", "granary", "fold", "temple", "loom"];
 
 const ROOM = { w: 12, h: 8 };
 const ORIGIN = { x: WORLD_W + 40, y: 40 };
@@ -15,6 +15,8 @@ const TITLE: Partial<Record<BuildingType, string>> = {
   changer: "the money changer",
   granary: "Noah's granary",
   fold: "the sheepfold",
+  temple: "the temple",
+  loom: "the loom",
 };
 
 /**
@@ -89,7 +91,7 @@ export class Interiors {
   }
 
   private buildRoom(kind: BuildingType) {
-    const floor = kind === "fold" ? "dirt" : kind === "hall" ? "sand" : "dirt";
+    const floor = kind === "fold" ? "dirt" : kind === "hall" || kind === "temple" ? "sand" : "dirt";
     for (let ty = 0; ty < ROOM.h; ty++) {
       for (let tx = 0; tx < ROOM.w; tx++) {
         const x = ORIGIN.x + tx * TILE;
@@ -111,6 +113,10 @@ export class Interiors {
       this.sprites.push(this.scene.add.image(midX, midY, "store").setOrigin(0.5, 1).setDepth(midY).setScale(0.7));
     } else if (kind === "fold") {
       this.sprites.push(this.scene.add.image(midX, midY, "beast_sheep").setOrigin(0.5, 1).setDepth(midY));
+    } else if (kind === "temple") {
+      this.sprites.push(this.scene.add.image(midX, midY, "altar_1").setOrigin(0.5, 1).setDepth(midY));
+    } else if (kind === "loom") {
+      this.sprites.push(this.scene.add.image(midX, midY, "loom").setOrigin(0.5, 1).setDepth(midY).setScale(0.7));
     }
   }
 }

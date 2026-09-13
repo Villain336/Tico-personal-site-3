@@ -8,6 +8,8 @@ import {
   CHANGER,
   HALL,
   FOLD,
+  TEMPLE,
+  LOOM,
   FARM,
   FLAX,
   GROVE,
@@ -20,7 +22,7 @@ import {
   WALL,
   WELL,
 } from "./sprites/buildings";
-import { CLOUD_A, CLOUD_B, HILL_FAR, HILL_NEAR, MOON, STAR, SUN } from "./sprites/sky";
+import { CLOUD_A, CLOUD_B, CLOUD_C, HILL_FAR, HILL_NEAR, MOON, STAR, SUN } from "./sprites/sky";
 import { DIRT, GRASS, SAND, WATER } from "./sprites/tiles";
 import {
   BEACON,
@@ -365,6 +367,11 @@ function solid(w: number, h: number, color: string) {
 }
 
 /** Generate every texture the world needs. Called once from the scene's create(). */
+export function reregisterPlayer(scene: Phaser.Scene, character: Character) {
+  if (scene.textures.exists("player")) scene.textures.remove("player");
+  addCanvas(scene, "player", renderMap(buildCharacter(characterLook(character)), characterRoles(character)));
+}
+
 export function registerTextures(scene: Phaser.Scene, character: Character) {
   addCanvas(scene, "player", renderMap(buildCharacter(characterLook(character)), characterRoles(character)));
 
@@ -402,6 +409,8 @@ export function registerTextures(scene: Phaser.Scene, character: Character) {
   addCanvas(scene, "changer", renderMap(CHANGER, BUILDING_ROLES));
   addCanvas(scene, "hall", renderMap(HALL, BUILDING_ROLES));
   addCanvas(scene, "fold", renderMap(FOLD, BUILDING_ROLES));
+  addCanvas(scene, "temple", renderMap(TEMPLE, BUILDING_ROLES));
+  addCanvas(scene, "loom", renderMap(LOOM, BUILDING_ROLES));
 
   GRASS.forEach((m, i) => addCanvas(scene, `grass_${i}`, renderMap(m, TILE_ROLES)));
   addCanvas(scene, "sand", renderMap(SAND, TILE_ROLES));
@@ -461,6 +470,7 @@ export function registerTextures(scene: Phaser.Scene, character: Character) {
   addCanvas(scene, "sky_moon", renderMap(MOON, SKY_ROLES));
   addCanvas(scene, "sky_cloud_a", renderMap(CLOUD_A, SKY_ROLES));
   addCanvas(scene, "sky_cloud_b", renderMap(CLOUD_B, SKY_ROLES));
+  addCanvas(scene, "sky_cloud_c", renderMap(CLOUD_C, SKY_ROLES));
   addCanvas(scene, "sky_hill_far", renderMap(HILL_FAR, SKY_ROLES));
   addCanvas(scene, "sky_hill_near", renderMap(HILL_NEAR, { ...SKY_ROLES, h: C.hillNear }));
   addCanvas(scene, "sky_star", renderMap(STAR, SKY_ROLES));

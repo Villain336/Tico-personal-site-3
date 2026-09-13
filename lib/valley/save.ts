@@ -38,6 +38,8 @@ export function newSave(character: Character): SaveData {
     flax: 0,
     meat: 0,
     wool: 0,
+    cloth: 0,
+    templeOffersToday: 0,
     beasts: [],
     bank: 0,
     stores: emptyStores(),
@@ -82,6 +84,8 @@ export function loadSave(): SaveData | null {
     if (!data.civic.nextLawId) data.civic.nextLawId = 1;
     if (data.meat == null) data.meat = 0;
     if (data.wool == null) data.wool = 0;
+    if (data.cloth == null) data.cloth = 0;
+    if (data.templeOffersToday == null) data.templeOffersToday = 0;
     if (!data.beasts) data.beasts = [];
     return data;
   } catch {

@@ -8,12 +8,14 @@ export const HAIR_NAMES = ["Black", "Brown", "Golden", "Silver"];
 export const HAIR_STYLE_NAMES = ["Short", "Long", "Wrapped"];
 export const FACE_NAMES = ["Calm", "Bright", "Stern"];
 export const BODY_NAMES = ["Slim", "Average", "Broad"];
-export const OUTFIT_NAMES = ["Shepherd tunic", "Merchant robe", "Warrior leather"];
+export const OUTFIT_NAMES = ["Shepherd tunic", "Merchant robe", "Warrior leather", "Linen tunic"];
 
 export const OUTFITS: { primary: string; secondary: string; trim: string }[] = [
   { primary: "#c9b48a", secondary: "#8a6d43", trim: "#6d3cf5" }, // shepherd
   { primary: "#6d3cf5", secondary: "#3f2390", trim: "#d7ff3e" }, // merchant
   { primary: "#6b4a2e", secondary: "#3d2a19", trim: "#b8b8c0" }, // warrior
+  { primary: "#e8d9b0", secondary: "#c4b07a", trim: "#6d3cf5" }, // linen
+  { primary: "#7a9e6a", secondary: "#4f6d3e", trim: "#d7ff3e" }, // extra villager green
 ];
 
 export const C = {

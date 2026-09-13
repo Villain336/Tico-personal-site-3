@@ -124,7 +124,7 @@ export function CharacterCreator({ onCreate }: { onCreate: (c: Character) => voi
         </Field>
 
         <Field label="Outfit">
-          <Segmented options={OUTFIT_NAMES} value={c.outfit} onChange={(i) => set("outfit", i)} />
+          <Segmented options={OUTFIT_NAMES.slice(0, 3)} value={c.outfit} onChange={(i) => set("outfit", i)} />
         </Field>
 
         <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">

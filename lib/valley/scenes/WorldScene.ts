@@ -25,7 +25,9 @@ import type { CropKind } from "../types";
 import { line, pickVisitName } from "../dialogue";
 import { BIG_RECRUITS, SCATTERED_RECRUITS } from "../quests/content";
 import { worldTime, writeSave } from "../save";
-import { registerTextures } from "../textures";
+import { registerTextures, reregisterPlayer } from "../textures";
+import { applyOffer } from "../world/worship";
+import { canWeave, wearTunic, weave } from "../world/craft";
 import { dist } from "../world/actor";
 import { Buildings, type Building } from "../world/building";
 import { Darkness } from "../world/darkness";
@@ -264,6 +266,7 @@ export class WorldScene extends Phaser.Scene {
     if (wool > 0) this.toast(`The flock gave ${wool} wool.`, "good");
     const books = this.ledger.settleDawn(this.villagers.population, r.rent, this.waves.spawnedTonight);
     this.waves.spawnedTonight = 0;
+    st.templeOffersToday = 0;
     this.addSin(SIN.dawnDecay * (st.unlocks.blessing ? UNLOCK_FX.blessingDawnDecayMult : 1));
     this.advanceTutorial(6);
     this.duskWarned = false;
@@ -311,6 +314,46 @@ export class WorldScene extends Phaser.Scene {
 
   addSin(n: number) {
     this.state.sin = Math.max(0, Math.min(100, this.state.sin + n));
+  }
+
+  offerGift() {
+    const st = this.state;
+    const r = applyOffer({
+      sin: st.sin,
+      coins: st.coins,
+      wheat: st.wheat,
+      meat: st.meat ?? 0,
+      wool: st.wool ?? 0,
+      templeOffersToday: st.templeOffersToday ?? 0,
+    });
+    st.sin = r.bag.sin;
+    st.coins = r.bag.coins;
+    st.wheat = r.bag.wheat;
+    st.meat = r.bag.meat;
+    st.wool = r.bag.wool;
+    st.templeOffersToday = r.bag.templeOffersToday;
+    this.toast(r.toast, r.ok ? "good" : "bad");
+  }
+
+  useLoom() {
+    const st = this.state;
+    const bag = { wool: st.wool ?? 0, flax: st.flax, cloth: st.cloth ?? 0 };
+    if (canWeave(bag)) {
+      const r = weave(bag);
+      st.wool = r.bag.wool;
+      st.flax = r.bag.flax;
+      st.cloth = r.bag.cloth;
+      this.toast(r.toast, r.ok ? "good" : "bad");
+      return;
+    }
+    const worn = wearTunic(bag, st.character.outfit);
+    st.cloth = worn.bag.cloth;
+    if (worn.ok) {
+      st.character.outfit = worn.outfit;
+      reregisterPlayer(this, st.character);
+      this.player.sprite.setTexture("player");
+    }
+    this.toast(worn.toast, worn.ok ? "good" : "bad");
   }
 
   addXp(n: number) {
@@ -574,6 +617,12 @@ export class WorldScene extends Phaser.Scene {
       this.beasts.ensureFlock();
       this.toast("A flock gathers at the fold. Wool at dawn. Hunt with the sword.", "good");
     }
+    if (type === "temple") {
+      this.toast("The temple stands. Enter and hold E to offer a gift.", "good");
+    }
+    if (type === "loom") {
+      this.toast("The loom is ready. Enter and press E to weave or wear.", "good");
+    }
     // walls, farms, lamps and bridges are placed in runs; everything else exits build mode
     if (type !== "wall" && type !== "farm" && type !== "flax" && type !== "lamp" && type !== "bridge") this.setBuildMode(null);
     else if (st.coins < def.cost) this.setBuildMode(null);
@@ -771,6 +820,7 @@ export class WorldScene extends Phaser.Scene {
       flax: st.flax,
       meat: st.meat ?? 0,
       wool: st.wool ?? 0,
+      cloth: st.cloth ?? 0,
       inside: this.interiors?.label ?? null,
       nearEnter: p.nearEnter,
       bank: Math.floor(st.bank),
