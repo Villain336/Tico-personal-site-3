@@ -5,12 +5,14 @@ import { paint, size, type PixelMap, type Roles } from "./sprites/pixel";
 import { buildCharacter, IDOL, SPIRIT, type CharLook } from "./sprites/chars";
 import {
   ALTAR,
+  CHANGER,
   FARM,
   FLAX,
   GROVE,
   HOUSE,
   LAMP,
   MARKET,
+  STORE,
   TOWER,
   VINEYARD,
   WALL,
@@ -393,6 +395,8 @@ export function registerTextures(scene: Phaser.Scene, character: Character) {
   addCanvas(scene, "tower", renderMap(TOWER, BUILDING_ROLES));
   addCanvas(scene, "market", renderMap(MARKET, BUILDING_ROLES));
   addCanvas(scene, "lamp", renderMap(LAMP, BUILDING_ROLES));
+  addCanvas(scene, "store", renderMap(STORE, BUILDING_ROLES));
+  addCanvas(scene, "changer", renderMap(CHANGER, BUILDING_ROLES));
 
   GRASS.forEach((m, i) => addCanvas(scene, `grass_${i}`, renderMap(m, TILE_ROLES)));
   addCanvas(scene, "sand", renderMap(SAND, TILE_ROLES));

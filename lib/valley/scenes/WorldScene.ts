@@ -5,7 +5,6 @@ import {
   ALTAR,
   AUTOSAVE_MS,
   BUILDINGS,
-  CROPS,
   CYCLE_SECONDS,
   DAY_SECONDS,
   DUSK_WARN_S,
@@ -40,6 +39,7 @@ import { RecruitManager } from "../world/recruit";
 import { Speech } from "../world/speech";
 import { Villagers } from "../world/villager";
 import { CameraDirector } from "../world/camera";
+import { Ledger } from "../world/ledger";
 import { Sky } from "../world/sky";
 import { Waves } from "../world/waves";
 
@@ -63,6 +63,7 @@ export class WorldScene extends Phaser.Scene {
   landmarks!: Landmarks;
   cameraDirector!: CameraDirector;
   sky!: Sky;
+  ledger!: Ledger;
 
   paused = false;
   lightsDirty = true;
@@ -102,6 +103,7 @@ export class WorldScene extends Phaser.Scene {
     this.recruitManager = new RecruitManager(this);
     this.quests = new Quests(this);
     this.landmarks = new Landmarks(this);
+    this.ledger = new Ledger(this);
 
     this.buildings.loadFrom(this.state.buildings);
     this.villagers.loadFrom(this.state.villagers);
@@ -239,8 +241,9 @@ export class WorldScene extends Phaser.Scene {
     this.enemies.clearAll();
     this.waves.endNight();
     const r = this.villagers.onDawn();
-    this.addCoins(r.rent);
     const sinBefore = st.sin;
+    const books = this.ledger.settleDawn(this.villagers.population, r.rent, this.waves.spawnedTonight);
+    this.waves.spawnedTonight = 0;
     this.addSin(SIN.dawnDecay * (st.unlocks.blessing ? UNLOCK_FX.blessingDawnDecayMult : 1));
     this.advanceTutorial(6);
     this.duskWarned = false;
@@ -251,12 +254,19 @@ export class WorldScene extends Phaser.Scene {
       type: "dawn",
       report: {
         day: st.day,
-        rent: r.rent,
+        rent: books.rentPaid,
         leveledUp: r.leveled,
         sinDelta: st.sin - sinBefore,
         fallen: r.fallen,
         saved: r.saved,
         arrivals,
+        wages: books.wages,
+        wagesShort: books.wagesShort,
+        titheHeld: books.titheHeld,
+        interest: books.interest,
+        bankRun: books.bankRun,
+        rationsFed: books.rationsFed,
+        rationsShort: books.rationsShort,
       },
     });
     this.saveNow();
@@ -332,8 +342,11 @@ export class WorldScene extends Phaser.Scene {
     let coins = 0;
     let units = 0;
     const take = (kind: CropKind) => {
-      coins += st[kind] * CROPS[kind].price;
-      units += st[kind];
+      const n = st[kind];
+      if (n <= 0) return;
+      coins += n * this.ledger.price(kind);
+      units += n;
+      this.ledger.recordSale(kind, n);
       st[kind] = 0;
     };
     if (what === "all") {
@@ -345,10 +358,16 @@ export class WorldScene extends Phaser.Scene {
       take(what);
     }
     if (units === 0) return;
-    this.addCoins(coins);
+    const tithe = this.ledger.takeTithe(coins);
+    this.addCoins(coins - tithe);
     this.addXp(XP.sale * units);
     this.advanceTutorial(4);
-    if (!quiet) this.toast(`Sold ${units} for ${coins} coins.`, "good");
+    if (!quiet) {
+      this.toast(
+        tithe > 0 ? `Sold ${units} for ${coins - tithe} coins (${tithe} tithe).` : `Sold ${units} for ${coins} coins.`,
+        "good",
+      );
+    }
     this.fx.coins(this.player.x, this.player.y - 12, Math.min(6, units));
   }
 
@@ -606,6 +625,40 @@ export class WorldScene extends Phaser.Scene {
         this.toast(`${def.name} joins the roster.`, "good");
         break;
       }
+      case "bank": {
+        if (this.buildings.count("changer") === 0) {
+          this.toast("Build a money changer first (B → ]).", "bad");
+          break;
+        }
+        const n = c.op === "deposit" ? this.ledger.depositCoins(c.amount) : this.ledger.withdrawCoins(c.amount);
+        if (n > 0) this.toast(c.op === "deposit" ? `Deposited ${n} coins.` : `Withdrew ${n} coins.`, "good");
+        break;
+      }
+      case "store": {
+        if (this.buildings.count("store") + this.buildings.count("granary") === 0) {
+          this.toast("Build a storehouse first (B → ;).", "bad");
+          break;
+        }
+        let n = 0;
+        if (c.kind === "all") {
+          n = c.op === "deposit" ? this.ledger.depositAllCrops() : 0;
+          if (c.op === "withdraw") {
+            for (const k of ["wheat", "grapes", "olives", "flax"] as const) n += this.ledger.withdrawCrop(k, st.stores[k]);
+          }
+        } else {
+          n = c.op === "deposit" ? this.ledger.depositCrop(c.kind, c.amount ?? st[c.kind]) : this.ledger.withdrawCrop(c.kind, c.amount ?? st.stores[c.kind]);
+        }
+        if (n > 0) this.toast(c.op === "deposit" ? `Stored ${n} crops.` : `Took ${n} crops from the store.`, "good");
+        break;
+      }
+      case "toggleTithe":
+        st.titheOn = !st.titheOn;
+        this.toast(st.titheOn ? "Tithe on: a tenth of sales goes to the altar." : "Tithe off. The altar will remember.", "info");
+        break;
+      case "toggleShare":
+        st.shareOn = !st.shareOn;
+        this.toast(st.shareOn ? "Share the bread: the village eats from stores at dawn." : "The barns stay shut at dawn.", "info");
+        break;
     }
     this.emitHud();
   }
@@ -638,6 +691,20 @@ export class WorldScene extends Phaser.Scene {
       grapes: st.grapes,
       olives: st.olives,
       flax: st.flax,
+      bank: Math.floor(st.bank),
+      stores: { ...st.stores },
+      prices: {
+        wheat: this.ledger.price("wheat"),
+        grapes: this.ledger.price("grapes"),
+        olives: this.ledger.price("olives"),
+        flax: this.ledger.price("flax"),
+      },
+      titheOn: st.titheOn,
+      shareOn: st.shareOn,
+      nearChanger: p.nearChanger,
+      nearStore: p.nearStore,
+      hasChanger: this.buildings.count("changer") > 0,
+      hasStore: this.buildings.count("store") + this.buildings.count("granary") > 0,
       sin: Math.round(st.sin),
       health: Math.round(st.health),
       maxHealth: p.stats.maxHealth,

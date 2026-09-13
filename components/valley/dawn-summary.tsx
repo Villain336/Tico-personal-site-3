@@ -22,6 +22,44 @@ export function DawnSummary({ report, onClose }: { report: DawnReport; onClose: 
           <span className={`text-right ${report.fallen > 0 ? "text-brand-coral" : ""}`}>{report.fallen}</span>
           <span>Sin</span>
           <span className="text-right">{report.sinDelta > 0 ? `+${report.sinDelta}` : report.sinDelta}</span>
+          {report.wages > 0 && (
+            <>
+              <span>Wages</span>
+              <span className="text-right text-brand-coral">−{report.wages}</span>
+            </>
+          )}
+          {report.wagesShort > 0 && (
+            <>
+              <span>Wages unpaid</span>
+              <span className="text-right text-brand-coral">{report.wagesShort}</span>
+            </>
+          )}
+          {report.interest > 0 && (
+            <>
+              <span>Changer interest</span>
+              <span className="text-right text-brand-lime">+{report.interest}</span>
+            </>
+          )}
+          {report.bankRun > 0 && (
+            <>
+              <span>Run on the changer</span>
+              <span className="text-right text-brand-coral">−{report.bankRun}</span>
+            </>
+          )}
+          {report.titheHeld > 0 && (
+            <>
+              <span>Tithe yesterday</span>
+              <span className="text-right">{report.titheHeld}</span>
+            </>
+          )}
+          {(report.rationsFed > 0 || report.rationsShort > 0) && (
+            <>
+              <span>Bread shared</span>
+              <span className={`text-right ${report.rationsShort > 0 ? "text-brand-coral" : ""}`}>
+                {report.rationsFed} fed{report.rationsShort > 0 ? ` · ${report.rationsShort} hungry` : ""}
+              </span>
+            </>
+          )}
         </div>
         {report.arrivals?.length > 0 && (
           <div className="mt-3 rounded-lg border border-amber-300/30 bg-amber-300/10 p-2 text-amber-100">

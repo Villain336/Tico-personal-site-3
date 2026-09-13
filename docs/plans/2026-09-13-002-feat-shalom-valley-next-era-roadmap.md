@@ -38,7 +38,7 @@ Existing plans already named these areas. This roadmap does not replace them; it
 | --- | --- | --- | --- |
 | 0. Cast & map | Recruits, quests, terrain, landmarks, prologue | Characters & Story; World & Arrival | done |
 | 1. Feel + Survival | Camera, sky, thirst, more crops | Daily Bread listed "Feel" as independent | **this PR** |
-| 2. Village Economy | Coin ledger, tithe, storehouse, bank, wages | Phase 1 coins + market + rent | later |
+| 2. Village Economy | Coin ledger, tithe, storehouse, bank, wages | Phase 1 coins + market + rent | **this PR** |
 | 3. Society & Law | Town hall, edicts, courts, offices | Sin meter is the seed | later |
 | 4. Combat & Wars | Gear, drops, Goliath, raids, banners | Enemy roster + unlock hooks | later |
 | 5. Divine Judgment | The Judge, signs, verdicts, Exodus | Sin, blessing, Holy Ghost | later |

@@ -3,12 +3,12 @@ export const valleyCopy = {
   heading: "Build. Multiply. Push back the dark.",
   sub: "A top-down pixel world set in biblical times. Grow crops, house villagers, pray at the altar, and defend your valley from robbers, tempters, deceivers, spirits and false prophets — one night at a time. Your valley keeps growing while you're away.",
   instructions:
-    "WASD to move · Space or click to swing · E to pray / cast out / sell / drink · F to eat · scroll to zoom · B to build · K for skills · Esc to pause. Saves in this browser.",
+    "WASD to move · Space or click to swing · E to pray / cast out / sell / drink / bank · F to eat · L for the books · scroll to zoom · B to build · K for skills · Esc to pause. Saves in this browser.",
   howHeading: "How the valley works",
   how: [
     {
       title: "Earn by day",
-      body: "Plant wheat, flax, vineyards and olive groves. Harvest by walking over ripe plots, sell at the market, drink at wells or the river. Houses bring villagers who pay rent at every dawn.",
+      body: "Plant wheat, flax, vineyards and olive groves. Sell at the market (a tithe goes to the altar). Bank coins at the money changer, keep grain in the storehouse, and share bread at dawn or watch rent and sin move.",
     },
     {
       title: "Defend by night",

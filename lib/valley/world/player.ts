@@ -15,6 +15,8 @@ export class Player extends Actor {
   nearAltar = false;
   nearMarket = false;
   nearDrink = false;
+  nearChanger = false;
+  nearStore = false;
   lastDir = { x: 1, y: 0 };
   private hungryLineT = 0;
   private prayLineT = 0;
@@ -87,6 +89,11 @@ export class Player extends Actor {
     if (this.nearAltar) this.world.jobs.complete("altar");
     const market = this.world.buildings.nearest("market", this.x, this.y, TILE * 2.2);
     this.nearMarket = !!market;
+    this.nearChanger = !!this.world.buildings.nearest("changer", this.x, this.y, TILE * 2.2);
+    this.nearStore = !!(
+      this.world.buildings.nearest("store", this.x, this.y, TILE * 2.4) ||
+      this.world.buildings.nearest("granary", this.x, this.y, TILE * 2.4)
+    );
 
     if (this.world.darkness.isDark(this.x, this.y)) this.world.jobs.complete("darkEdge");
 
@@ -157,6 +164,16 @@ export class Player extends Actor {
     }
     if (this.nearMarket && this.world.hasCrops()) {
       this.world.sell("all");
+      return;
+    }
+    if (this.nearChanger && this.world.state.coins >= 1) {
+      const n = this.world.ledger.depositCoins(this.world.state.coins);
+      if (n > 0) this.world.toast(`Deposited ${n} coins with the changer. Press L for the books.`, "good");
+      return;
+    }
+    if (this.nearStore && this.world.hasCrops()) {
+      const n = this.world.ledger.depositAllCrops();
+      if (n > 0) this.world.toast(`Stored ${n} crops. Press L for the books.`, "good");
       return;
     }
     if (this.nearDrink) {
