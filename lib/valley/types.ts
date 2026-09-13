@@ -24,7 +24,11 @@ export type BuildingType =
   | "bridge"
   | "beacon"
   | "granary"
+  | "flax"
+  | "grove"
   | "idol";
+
+export type CropKind = "wheat" | "grapes" | "olives" | "flax";
 
 export type SkillId = "sword" | "fleet" | "faith" | "fortitude" | "steward";
 
@@ -95,9 +99,12 @@ export type SaveData = {
   coins: number;
   wheat: number;
   grapes: number;
+  olives: number;
+  flax: number;
   sin: number;
   health: number;
   hunger: number;
+  thirst: number;
   prayer: number;
   level: number;
   xp: number;
@@ -128,10 +135,13 @@ export type HudState = {
   coins: number;
   wheat: number;
   grapes: number;
+  olives: number;
+  flax: number;
   sin: number;
   health: number;
   maxHealth: number;
   hunger: number;
+  thirst: number;
   prayer: number;
   maxPrayer: number;
   level: number;
@@ -148,6 +158,7 @@ export type HudState = {
   enemiesAlive: number;
   nearAltar: boolean;
   nearMarket: boolean;
+  nearDrink: boolean;
   paused: boolean;
   won: boolean;
   tutorialStep: number;
@@ -235,7 +246,7 @@ export type GameCommand =
   | { type: "setBuildMode"; building: BuildingType | null }
   | { type: "upgradeAltar" }
   | { type: "spendSkill"; skill: SkillId }
-  | { type: "sell"; what: "wheat" | "grapes" | "all" }
+  | { type: "sell"; what: CropKind | "all" }
   | { type: "toggleAutoSell" }
   | { type: "pause" }
   | { type: "resume" }

@@ -12,14 +12,28 @@ export const WORLD_H = MAP_H * TILE;
 
 export const VIEW_W = 960;
 export const VIEW_H = 600;
-export const ZOOM = 2;
+export const ZOOM = 2.15;
+/** Cinematic zoom targets. Wheel multiplies these, then we clamp. */
+export const ZOOM_MODES = {
+  explore: 2.15,
+  highland: 1.95,
+  landmark: 2.55,
+  pray: 2.7,
+  talk: 2.6,
+  dusk: 1.9,
+  night: 1.75,
+  dawn: 1.85,
+} as const;
+export const ZOOM_WHEEL_MIN = 1.45;
+export const ZOOM_WHEEL_MAX = 3.1;
+export const LOOK_AHEAD = 38;
 
 export const DAY_SECONDS = 240;
 export const NIGHT_SECONDS = 120;
 export const CYCLE_SECONDS = DAY_SECONDS + NIGHT_SECONDS;
 
 export const SAVE_KEY = "shalom-valley-save";
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 export const AUTOSAVE_MS = 30_000;
 export const OFFLINE_CAP_HOURS = 8;
 export const OFFLINE_RENT_RATE = 0.5;
@@ -34,6 +48,10 @@ export const PLAYER = {
   maxPrayer: 100,
   hungerPerSecond: 100 / 720, // empty after ~12 minutes without eating
   hungerWeakBelow: 20,
+  thirstPerSecond: 100 / 600, // empty after ~10 minutes without drinking
+  thirstWeakBelow: 18,
+  drinkRestore: 38,
+  shallowDrinkPerSecond: 14,
   prayerRegenAtAltar: 22, // per second while holding E near the altar
   prayerRegenIdle: 0.6,
   castCost: 30,
@@ -64,7 +82,7 @@ export const SKILLS: Record<
   sword: { name: "Swordsmanship", blurb: "+35% sword damage per rank", max: 3 },
   fleet: { name: "Fleetfoot", blurb: "+12% move speed per rank", max: 3 },
   faith: { name: "Faith", blurb: "+30 max prayer, +12 cast radius per rank", max: 3 },
-  fortitude: { name: "Fortitude", blurb: "+30 max health, hunger 20% slower per rank", max: 3 },
+  fortitude: { name: "Fortitude", blurb: "+30 max health, hunger and thirst 20% slower per rank", max: 3 },
   steward: { name: "Stewardship", blurb: "+15% crop yield and rent per rank", max: 3 },
 };
 
@@ -105,6 +123,8 @@ export const BUILDINGS: Record<Exclude<BuildingType, "altar" | "idol">, Building
     hotkey: "-",
     requiresQuest: "noah",
   },
+  flax: { name: "Flax plot", cost: 14, altarLevel: 1, light: 0, blocks: false, size: 1, blurb: "Flax. Blue flowers, sells well.", hotkey: "[" },
+  grove: { name: "Olive grove", cost: 28, altarLevel: 2, light: 0, blocks: false, size: 1, blurb: "Olives. Slow. Eating also drinks.", hotkey: "=" },
 };
 
 export const GRANARY_RADIUS_TILES = 5;
@@ -131,7 +151,18 @@ export const ALTAR = {
 export const CROPS = {
   wheat: { growSeconds: 75, yield: 3, price: 4 },
   grapes: { growSeconds: 140, yield: 2, price: 11 },
+  flax: { growSeconds: 95, yield: 3, price: 6 },
+  olives: { growSeconds: 160, yield: 2, price: 13 },
 };
+
+export const CROP_BUILDINGS = {
+  farm: "wheat",
+  vineyard: "grapes",
+  flax: "flax",
+  grove: "olives",
+} as const;
+
+export type CropBuilding = keyof typeof CROP_BUILDINGS;
 
 export const HOUSE = { capacity: 2, rentPerVillagerLevel: 6, spawnDelayS: 12 };
 

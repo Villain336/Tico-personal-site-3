@@ -14,6 +14,7 @@ export class Player extends Actor {
   praying = false;
   nearAltar = false;
   nearMarket = false;
+  nearDrink = false;
   lastDir = { x: 1, y: 0 };
   private hungryLineT = 0;
   private prayLineT = 0;
@@ -35,7 +36,8 @@ export class Player extends Actor {
   get stats() {
     const s = this.world.state.skills;
     const u = this.world.state.unlocks;
-    const weak = this.world.state.hunger < PLAYER.hungerWeakBelow;
+    const weak = this.world.state.hunger < PLAYER.hungerWeakBelow || this.world.state.thirst < PLAYER.thirstWeakBelow;
+    const drain = 1 - s.fortitude * 0.2;
     return {
       speed: PLAYER.speed * (1 + s.fleet * 0.12) * (weak ? 0.6 : 1),
       maxHealth: PLAYER.maxHealth + s.fortitude * 30,
@@ -43,7 +45,8 @@ export class Player extends Actor {
       swordDamage: PLAYER.swordDamage * (1 + s.sword * 0.35) * (u.weapon ? UNLOCK_FX.weaponDamageMult : 1),
       swordRange: PLAYER.swordRange + (u.weapon ? UNLOCK_FX.weaponRangeBonus : 0),
       castRadius: PLAYER.castRadius + s.faith * 12,
-      hungerRate: PLAYER.hungerPerSecond * (1 - s.fortitude * 0.2),
+      hungerRate: PLAYER.hungerPerSecond * drain,
+      thirstRate: PLAYER.thirstPerSecond * drain,
       idleRegen: PLAYER.prayerRegenIdle * (u.blessing ? UNLOCK_FX.blessingIdleRegenMult : 1),
     };
   }
@@ -87,16 +90,26 @@ export class Player extends Actor {
 
     if (this.world.darkness.isDark(this.x, this.y)) this.world.jobs.complete("darkEdge");
 
-    // hunger + regen
+    // hunger, thirst, regen
     st.hunger = Math.max(0, st.hunger - this.stats.hungerRate * dt);
-    if (st.hunger > 50 && this.sinceHurt > 3 && st.health < this.stats.maxHealth) {
+    st.thirst = Math.max(0, st.thirst - this.stats.thirstRate * dt);
+    const well = this.world.buildings.nearest("well", this.x, this.y, TILE * 2.2);
+    const { tx, ty } = this.world.tileAt(this.x, this.y);
+    const inShallow = this.world.map.isShallow(tx, ty);
+    const atCistern = this.world.landmarks.at(this.x, this.y) === "cistern";
+    this.nearDrink = !!well || inShallow || atCistern;
+    if (inShallow && st.thirst < 100) {
+      st.thirst = Math.min(100, st.thirst + PLAYER.shallowDrinkPerSecond * dt);
+    }
+    if (st.hunger > 50 && st.thirst > 40 && this.sinceHurt > 3 && st.health < this.stats.maxHealth) {
       st.health = Math.min(this.stats.maxHealth, st.health + 1.5 * dt);
     }
-    if (st.hunger < PLAYER.hungerWeakBelow) {
+    if (st.thirst <= 0) st.health = Math.max(0, st.health - 2.2 * dt);
+    if (st.hunger < PLAYER.hungerWeakBelow || st.thirst < PLAYER.thirstWeakBelow) {
       this.hungryLineT -= dt;
       if (this.hungryLineT <= 0) {
         this.hungryLineT = 12;
-        this.world.speech.say(this.sprite, line("player", "hungry"), "bad");
+        this.world.speech.say(this.sprite, line("player", st.thirst < st.hunger ? "hungry" : "hungry"), "bad");
       }
     }
 
@@ -142,11 +155,22 @@ export class Player extends Actor {
       this.praying = true;
       return;
     }
-    if (this.nearMarket && (this.world.state.wheat > 0 || this.world.state.grapes > 0)) {
+    if (this.nearMarket && this.world.hasCrops()) {
       this.world.sell("all");
       return;
     }
+    if (this.nearDrink) {
+      this.drink();
+      return;
+    }
     this.cast();
+  }
+
+  drink() {
+    const st = this.world.state;
+    if (st.thirst >= 100) return;
+    st.thirst = Math.min(100, st.thirst + PLAYER.drinkRestore);
+    this.world.fx.burst(this.x, this.y - 16, "px_violet", 4);
   }
 
   /**
@@ -228,9 +252,17 @@ export class Player extends Actor {
     if (st.wheat > 0) {
       st.wheat--;
       st.hunger = Math.min(100, st.hunger + PLAYER.eatRestore);
+    } else if (st.olives > 0) {
+      st.olives--;
+      st.hunger = Math.min(100, st.hunger + PLAYER.eatRestore * 0.7);
+      st.thirst = Math.min(100, st.thirst + 18);
     } else if (st.grapes > 0) {
       st.grapes--;
       st.hunger = Math.min(100, st.hunger + PLAYER.eatRestore * 0.75);
+      st.thirst = Math.min(100, st.thirst + 8);
+    } else if (st.flax > 0) {
+      st.flax--;
+      st.hunger = Math.min(100, st.hunger + PLAYER.eatRestore * 0.35);
     } else {
       this.world.speech.say(this.sprite, line("player", "noFood"), "bad", 1500);
       return;
@@ -257,6 +289,7 @@ export class Player extends Actor {
     st.coins -= lost;
     st.health = Math.floor(this.stats.maxHealth * 0.6);
     st.hunger = Math.max(st.hunger, 40);
+    st.thirst = Math.max(st.thirst, 40);
     const ac = this.world.buildings.center(this.world.buildings.altar);
     this.setPosition(ac.x, ac.y + TILE * 2.5);
     this.invuln = 3000;

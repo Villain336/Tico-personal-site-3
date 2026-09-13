@@ -8,7 +8,7 @@ export type LandmarkDef = {
   /** One-line flavor shown on discovery. */
   flavor: string;
   /** One-time cache found on discovery. */
-  reward: { coins?: number; wheat?: number; grapes?: number };
+  reward: { coins?: number; wheat?: number; grapes?: number; olives?: number; flax?: number };
 };
 
 export const LANDMARKS: Record<LandmarkId, LandmarkDef> = {
@@ -40,7 +40,7 @@ export const LANDMARKS: Record<LandmarkId, LandmarkDef> = {
   ancientOlive: {
     name: "Ancient Olive",
     flavor: "One vast tree in a clearing, still bearing fruit. Its roots hold the hill together.",
-    reward: { grapes: 3, coins: 10 },
+    reward: { olives: 5, coins: 10 },
   },
   cistern: {
     name: "Broken Cistern",
@@ -98,8 +98,16 @@ export class Landmarks {
     if (r.coins) this.scene.addCoins(r.coins);
     if (r.wheat) st.wheat += r.wheat;
     if (r.grapes) st.grapes += r.grapes;
+    if (r.olives) st.olives += r.olives;
+    if (r.flax) st.flax += r.flax;
     this.scene.addXp(DISCOVER_XP);
-    const found = [r.coins ? `+${r.coins} coins` : "", r.wheat ? `+${r.wheat} wheat` : "", r.grapes ? `+${r.grapes} grapes` : ""]
+    const found = [
+      r.coins ? `+${r.coins} coins` : "",
+      r.wheat ? `+${r.wheat} wheat` : "",
+      r.grapes ? `+${r.grapes} grapes` : "",
+      r.olives ? `+${r.olives} olives` : "",
+      r.flax ? `+${r.flax} flax` : "",
+    ]
       .filter(Boolean)
       .join(", ");
     const p = this.scene.player;
