@@ -1,5 +1,6 @@
 import type { WorldScene } from "../scenes/WorldScene";
 import { CIVIC, ENEMIES, SIN, TILE, UNLOCK_FX, WAVES, XP, type EnemyDef, type EnemyKind } from "../config";
+import { applyDrop, bountyCoins, emptyGear, GEAR, rollEnemyDrop } from "./gear";
 import { hasIntent } from "./laws";
 import { line } from "../dialogue";
 import { Actor, dist, type Afflictable } from "./actor";
@@ -35,6 +36,10 @@ export class Enemy extends Actor {
       this.ghost = true;
       this.sprite.setAlpha(0.6);
     }
+    if (kind === "goliath") {
+      this.sprite.setScale(1.85);
+      this.sprite.setTint(0xd4b483);
+    }
   }
 }
 
@@ -56,6 +61,10 @@ export class Enemies {
       e.goal = this.prophetGoal();
       e.timer = WAVES.idolSpawnEveryS - 8;
       this.scene.toast("A false prophet approaches the valley!", "bad");
+    }
+    if (kind === "goliath") {
+      this.scene.toast("Goliath has come down to the valley. Stand with David.", "bad");
+      this.scene.speech.say(e.sprite, line("goliath", "arrive"), "dark", 0);
     }
     if (kind === "robber" && Math.random() < 0.5) {
       this.scene.speech.say(e.sprite, line("robber", "taunt"), "dark", 0);
@@ -161,12 +170,15 @@ export class Enemies {
     e.hp -= amount;
     e.sprite.setTintFill(0xffffff);
     this.scene.time.delayedCall(70, () => {
-      if (e.alive) e.sprite.clearTint();
+      if (!e.alive) return;
+      e.sprite.clearTint();
+      if (e.kind === "goliath") e.sprite.setTint(0xd4b483);
     });
     if (e.kind === "robber") this.scene.speech.say(e.sprite, line("robber", "hit"), "dark", 2500);
     else if (e.kind === "tempter") this.scene.speech.say(e.sprite, line("tempter", "hit"), "dark", 2500);
     else if (e.kind === "deceiver") this.scene.speech.say(e.sprite, line("deceiver", "hit"), "dark", 2500);
     else if (e.kind === "prophet") this.scene.speech.say(e.sprite, line("prophet", "anger"), "dark", 2500);
+    else if (e.kind === "goliath") this.scene.speech.say(e.sprite, line("goliath", "hit"), "dark", 2500);
     if (e.kind === "deceiver") e.revealed = true;
     if (e.hp <= 0) this.kill(e, true);
   }
@@ -176,17 +188,33 @@ export class Enemies {
     const { x, y } = e;
     if (bounty) {
       const st = this.scene.state;
-      let coins = e.def.bounty;
+      const hunter = st.skills.hunter ?? 0;
+      let coins = bountyCoins(e.def.bounty, hunter);
       const protectedSomeone = this.scene.villagers.anyWithin(x, y, WAVES.protectionRadius);
       if (protectedSomeone) {
-        coins += e.def.bounty;
+        coins += bountyCoins(e.def.bounty, hunter);
         this.scene.toast(`Protection bounty +${e.def.bounty}`, "good");
       }
       this.scene.addCoins(coins);
-      this.scene.addXp(e.kind === "prophet" ? XP.prophet : XP.kill);
+      this.scene.addXp(e.kind === "goliath" ? XP.goliath : e.kind === "prophet" ? XP.prophet : XP.kill);
       st.stats.kills++;
       if (e.kind === "robber") this.scene.quests.reportProgress("david", 1);
       else if (e.kind === "deceiver") this.scene.quests.reportProgress("paul", 1);
+      const roll = rollEnemyDrop(e.kind, hunter, Math.random);
+      const dropped = applyDrop(st.gear ?? emptyGear(), roll);
+      st.gear = dropped.gear;
+      if (roll.relic) st.relics = (st.relics ?? 0) + 1;
+      if (roll.scraps > 0) this.scene.toast(`Scraps +${roll.scraps}.`, "info");
+      if (dropped.gained) {
+        const def = GEAR[dropped.gained];
+        this.scene.toast(dropped.gear[def.slot] === dropped.gained ? `${def.name} is yours.` : `${def.name} goes in the bag. Press I.`, "good");
+      } else if (dropped.extraScraps > 0) {
+        this.scene.toast(`Already owned — scraps +${dropped.extraScraps}.`, "info");
+      }
+      if (e.kind === "goliath") {
+        st.unlocks.goliathDefeated = true;
+        this.scene.toast("Goliath falls. His mail is yours.", "good");
+      }
       this.scene.fx.coins(x, y - 10, Math.min(6, Math.ceil(coins / 5)));
     }
     this.scene.fx.burst(x, y - 10, e.kind === "spirit" ? "px_violet" : "px_coral", 8);
@@ -230,12 +258,17 @@ export class Enemies {
     }
   }
 
-  /** Dawn: everything retreats without bounty. */
+  /** Dawn: night shadows retreat without bounty. Goliath stays. */
   clearAll() {
     for (const e of [...this.list]) {
+      if (e.kind === "goliath") continue;
       this.scene.fx.burst(e.x, e.y - 10, "px_violet", 4);
       this.remove(e);
     }
+  }
+
+  livingBoss(): Enemy | null {
+    return this.list.find((e) => e.alive && e.kind === "goliath") ?? null;
   }
 
   update(dt: number) {
@@ -422,6 +455,43 @@ export class Enemies {
             player.hurt(e.def.damage);
           }
           if (Math.random() < dt * 0.12) sc.speech.say(e.sprite, line("spirit", "whisper"), "dark", 6000);
+          break;
+        }
+
+        case "goliath": {
+          const dp = dist(e.x, e.y, player.x, player.y);
+          if (e.state === "windup") {
+            e.timer -= dt;
+            e.sprite.setTintFill(e.timer * 8 % 2 < 1 ? 0xffe27a : 0xc45c3e);
+            if (e.timer <= 0) {
+              e.sprite.clearTint();
+              e.sprite.setTint(0xd4b483);
+              this.scene.fx.ring(e.x, e.y - 12, 44, 0xc45c3e);
+              this.scene.cameras.main.shake(140, 0.006);
+              this.scene.speech.say(e.sprite, line("goliath", "slam"), "dark", 0);
+              if (dp < 44) player.hurt(e.def.damage);
+              for (const v of sc.villagers.list) {
+                if (v.alive && dist(e.x, e.y, v.x, v.y) < 44) sc.villagers.damage(v, e.def.damage, e);
+              }
+              e.state = "recover";
+              e.timer = 1.1;
+              e.attackCd = 2.2;
+            }
+            break;
+          }
+          if (e.state === "recover") {
+            e.timer -= dt;
+            e.moveToward(player.x, player.y, e.def.speed * 0.35, dt, sc.map, 18);
+            if (e.timer <= 0) e.state = "hunt";
+            break;
+          }
+          if (e.moveToward(player.x, player.y, e.def.speed, dt, sc.map, 20) && e.attackCd <= 0) {
+            e.state = "windup";
+            e.timer = 0.85;
+            this.scene.speech.say(e.sprite, line("goliath", "windup"), "dark", 2000);
+          } else if (Math.random() < dt * 0.08 && dp < 120) {
+            this.scene.speech.say(e.sprite, line("goliath", "taunt"), "dark", 6000);
+          }
           break;
         }
 

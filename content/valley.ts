@@ -3,7 +3,7 @@ export const valleyCopy = {
   heading: "Build. Multiply. Push back the dark.",
   sub: "A top-down pixel world set in biblical times. Grow crops, house villagers, pray at the altar, and defend your valley from robbers, tempters, deceivers, spirits and false prophets — one night at a time. Your valley keeps growing while you're away.",
   instructions:
-    "WASD to move · Space or click to swing · E to pray / cast out / sell / drink / bank · F to eat · L for the books · scroll to zoom · B to build · K for skills · Esc to pause. Saves in this browser.",
+    "WASD to move · Space or click to swing · E to pray / cast out / sell / drink / bank · F to eat · L for the books · scroll to zoom · B to build · K for skills · I for gear · Esc to pause. Saves in this browser.",
   howHeading: "How the valley works",
   how: [
     {
@@ -12,7 +12,7 @@ export const valleyCopy = {
     },
     {
       title: "Defend by night",
-      body: "Enemies spawn at the fog's edge. Swing your sword at robbers and tempters; only prayer casts out spirits. Protect low-level villagers or sin rises.",
+      body: "Enemies spawn at the fog's edge. Swing your sword at robbers and tempters; only prayer casts out spirits. Robbers drop scraps and gear. After David's quest, Goliath walks the valley. Press I for your blade and wrap.",
     },
     {
       title: "Pray to grow",
@@ -29,7 +29,8 @@ export const valleyCopy = {
     { name: "Tempter", body: "No weapon, very fast. Lures the weakest villager toward the fog. Fragile if you can catch one." },
     { name: "Deceiver", body: "No weapon. Looks like a villager until your light reveals them. Hypnotizes and converts villagers — cast out to break the trance." },
     { name: "Spirit", body: "Passes through walls, drains villager faith. Immune to steel; only prayer banishes it." },
-    { name: "False prophet", body: "Slow, loud, plants golden idols that spawn tempters. Smash the idol, then the prophet." },
+    { name: "False prophet", body: "Slow, loud, plants golden idols that spawn tempters. Smash the idol, then the prophet. Sometimes drops a lamp." },
+    { name: "Goliath", body: "A real giant after David's quest. One slam pattern, one drop: his mail. He does not flee at dawn." },
   ],
   faq: [
     {

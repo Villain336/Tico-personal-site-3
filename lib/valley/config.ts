@@ -33,7 +33,7 @@ export const NIGHT_SECONDS = 120;
 export const CYCLE_SECONDS = DAY_SECONDS + NIGHT_SECONDS;
 
 export const SAVE_KEY = "shalom-valley-save";
-export const SAVE_VERSION = 8;
+export const SAVE_VERSION = 9;
 export const AUTOSAVE_MS = 30_000;
 export const OFFLINE_CAP_HOURS = 8;
 export const OFFLINE_RENT_RATE = 0.5;
@@ -73,18 +73,31 @@ export const XP = {
   redeem: 20,
   idol: 40,
   prophet: 60,
+  goliath: 140,
 };
 
 export const SKILLS: Record<
   SkillId,
   { name: string; blurb: string; max: number }
 > = {
-  sword: { name: "Swordsmanship", blurb: "+35% sword damage per rank", max: 3 },
-  fleet: { name: "Fleetfoot", blurb: "+12% move speed per rank", max: 3 },
-  faith: { name: "Faith", blurb: "+30 max prayer, +12 cast radius per rank", max: 3 },
-  fortitude: { name: "Fortitude", blurb: "+30 max health, hunger and thirst 20% slower per rank", max: 3 },
-  steward: { name: "Stewardship", blurb: "+15% crop yield and rent per rank", max: 3 },
+  sword: { name: "Swordsmanship", blurb: "+35% sword damage per rank", max: 5 },
+  fleet: { name: "Fleetfoot", blurb: "+12% move speed per rank", max: 5 },
+  faith: { name: "Faith", blurb: "+30 max prayer, +12 cast radius per rank", max: 5 },
+  fortitude: { name: "Fortitude", blurb: "+30 max health, hunger and thirst 12% slower per rank", max: 5 },
+  steward: { name: "Stewardship", blurb: "+15% crop yield and rent per rank", max: 5 },
+  ward: { name: "Ward", blurb: "8% less damage taken per rank, capped with armor", max: 5 },
+  hunter: { name: "Hunter", blurb: "Richer bounties and a better chance at gear drops", max: 5 },
 };
+
+export const emptySkills = (): Record<SkillId, number> => ({
+  sword: 0,
+  fleet: 0,
+  faith: 0,
+  fortitude: 0,
+  steward: 0,
+  ward: 0,
+  hunter: 0,
+});
 
 export type BuildingDef = {
   name: string;
@@ -266,7 +279,7 @@ export const SIN = {
   extraEnemiesAt: 50,
 };
 
-export type EnemyKind = "robber" | "tempter" | "deceiver" | "spirit" | "prophet";
+export type EnemyKind = "robber" | "tempter" | "deceiver" | "spirit" | "prophet" | "goliath";
 
 export type EnemyDef = {
   name: string;
@@ -287,6 +300,7 @@ export const ENEMIES: Record<EnemyKind, EnemyDef> = {
   deceiver: { name: "Deceiver", minDay: 4, minLevel: 3, minAltar: 1, speed: 34, hp: 36, damage: 0, bounty: 14, swordImmune: false, ghost: false },
   spirit: { name: "Spirit", minDay: 6, minLevel: 4, minAltar: 2, speed: 58, hp: 1, damage: 6, bounty: 18, swordImmune: true, ghost: true },
   prophet: { name: "False Prophet", minDay: 8, minLevel: 5, minAltar: 3, speed: 30, hp: 90, damage: 4, bounty: 60, swordImmune: false, ghost: false },
+  goliath: { name: "Goliath", minDay: 99, minLevel: 99, minAltar: 99, speed: 26, hp: 220, damage: 16, bounty: 80, swordImmune: false, ghost: false },
 };
 
 export const WAVES = {

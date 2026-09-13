@@ -248,6 +248,20 @@ export const ENEMY_LOOKS: Record<string, { look: CharLook; roles: Roles }> = {
   },
 };
 
+export const GOLIATH_LOOK = {
+  look: { gender: "man" as const, body: 2, face: 2, hairStyle: 0, beard: true, outfitStyle: 2 },
+  roles: {
+    ...BASE_CHAR_ROLES,
+    S: SKIN_TONES[3],
+    s: SKIN_SHADE[3],
+    H: "#3a2a18",
+    C: C.gold,
+    T: C.goldDark,
+    O: "#8a6a32",
+    o: "#4a3518",
+  },
+};
+
 /**
  * Distinct, art-free looks for the four walking Big Recruits and the first
  * scattered-NPC batch, built from the same procedural pipeline as villagers
@@ -385,6 +399,7 @@ export function registerTextures(scene: Phaser.Scene, character: Character) {
     addCanvas(scene, key, renderMap(buildCharacter(look), roles));
   }
   addCanvas(scene, "spirit", renderMap(SPIRIT, SPIRIT_ROLES));
+  addCanvas(scene, "goliath", renderMap(buildCharacter(GOLIATH_LOOK.look), GOLIATH_LOOK.roles, 2));
   addCanvas(scene, "idol", renderMap(IDOL, IDOL_ROLES));
 
   for (const [id, { look, roles }] of Object.entries(BIG_RECRUIT_LOOKS)) {

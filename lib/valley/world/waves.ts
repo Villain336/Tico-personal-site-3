@@ -60,6 +60,15 @@ export class Waves {
       `Night falls. ${count} shadows stir at the edge of the valley${st.sin >= SIN.extraEnemiesAt ? " — sin draws more" : ""}.`,
       "bad",
     );
+    this.trySpawnGoliath();
+  }
+
+  trySpawnGoliath() {
+    const st = this.scene.state;
+    if (!st.unlocks.goliathBoss || st.unlocks.goliathDefeated) return;
+    if (this.scene.enemies.livingBoss()) return;
+    const pos = this.scene.darkness.randomEdgeSpawn();
+    this.scene.enemies.spawn("goliath", pos.x, pos.y);
   }
 
   endNight() {

@@ -1,6 +1,7 @@
 "use client";
 
 import type { HudState } from "@/lib/valley/types";
+import { GEAR } from "@/lib/valley/world/gear";
 import { INTERIOR_TITLE } from "@/lib/valley/world/interiors";
 
 export type Toast = { id: number; text: string; tone: "info" | "good" | "bad" };
@@ -24,6 +25,7 @@ export function Hud({
   onJournal,
   onBooks,
   onCivic,
+  onGear,
   onPause,
   onSell,
   onAutoSell,
@@ -39,6 +41,7 @@ export function Hud({
   onJournal: () => void;
   onBooks: () => void;
   onCivic: () => void;
+  onGear: () => void;
   onPause: () => void;
   onSell: () => void;
   onAutoSell: () => void;
@@ -72,9 +75,11 @@ export function Hud({
             <Stat icon="🍖" label="meat" value={hud.meat} />
             <Stat icon="🧶" label="wool" value={hud.wool} />
             <Stat icon="👕" label="cloth" value={hud.cloth} />
+            <Stat icon="🔩" label="scraps" value={hud.scraps} />
+            <Stat icon="✦" label="relics" value={hud.relics} />
           </div>
           <div className="mt-1 text-white/75">
-            Meat {hud.meat} · Wool {hud.wool} · Cloth {hud.cloth}
+            {equippedLine(hud)}
           </div>
         </Card>
       </div>
@@ -103,7 +108,16 @@ export function Hud({
       </div>
 
       {/* top-center: hint / prompt */}
-      <div className="absolute inset-x-0 flex justify-center px-[210px]" style={{ top: topOffset }}>
+      {hud.boss && (
+        <div className="absolute inset-x-0 flex justify-center px-[210px]" style={{ top: topOffset }}>
+          <div className="w-full max-w-sm rounded-xl border border-brand-coral/50 bg-black/75 px-3 py-2 backdrop-blur">
+            <Row label={hud.boss.name} value={`${hud.boss.hp}/${hud.boss.maxHp}`} />
+            <Bar value={hud.boss.hp / hud.boss.maxHp} color="bg-brand-coral" className="mt-1" />
+          </div>
+        </div>
+      )}
+
+      <div className="absolute inset-x-0 flex justify-center px-[210px]" style={{ top: hud.boss ? topOffset + 52 : topOffset }}>
         {hud.inside ? (
           <Pill>
             Inside {hud.inside} · E at the door to leave
@@ -178,6 +192,9 @@ export function Hud({
           <Btn onClick={onBooks}>
             Books <Key>L</Key>
           </Btn>
+          <Btn onClick={onGear} badge={hud.gear.bag.length > 0 ? hud.gear.bag.length : undefined}>
+            Gear <Key>I</Key>
+          </Btn>
           <Btn onClick={onCivic} badge={hud.civic.docket.length > 0 ? hud.civic.docket.length : undefined}>
             Civic <Key>G</Key>
           </Btn>
@@ -206,6 +223,12 @@ export function Hud({
       </div>
     </div>
   );
+}
+
+function equippedLine(hud: HudState) {
+  const names = [hud.gear.blade, hud.gear.wrap, hud.gear.lamp].map((id) => (id ? GEAR[id].name : null)).filter(Boolean);
+  if (names.length === 0) return `Staff in hand · ${hud.scraps} scraps`;
+  return `${names.join(" · ")} · ${hud.scraps} scraps`;
 }
 
 function Card({ children }: { children: React.ReactNode }) {
