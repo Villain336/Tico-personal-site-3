@@ -1,5 +1,5 @@
 import type { WorldScene } from "../scenes/WorldScene";
-import { ENEMIES, SIN, TILE, WAVES, XP, type EnemyDef, type EnemyKind } from "../config";
+import { ENEMIES, SIN, TILE, UNLOCK_FX, WAVES, XP, type EnemyDef, type EnemyKind } from "../config";
 import { line } from "../dialogue";
 import { Actor, dist, type Afflictable } from "./actor";
 import { Recruit } from "./recruit";
@@ -385,7 +385,7 @@ export class Enemies {
             v.hypnoBy = e;
             if (v.state !== "hypno") v.state = "hypno";
             // the lie works slower once the light has exposed the liar
-            v.hypnoT += dt * (e.revealed ? 0.5 : 1);
+            v.hypnoT += dt * (e.revealed ? 0.5 : 1) * (player.hasAbility("paul") ? UNLOCK_FX.clearSightHypnoMult : 1);
             sc.speech.say(e.sprite, line("deceiver", "deceive"), "dark", 3000);
             if (Math.random() < dt * 2) sc.fx.burst(v.x, v.y - 20, "px_violet", 1);
           }

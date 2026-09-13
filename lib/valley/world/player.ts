@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import type { WorldScene } from "../scenes/WorldScene";
-import { ALTAR, PLAYER, TILE, XP } from "../config";
+import { ALTAR, PLAYER, TILE, UNLOCK_FX, XP } from "../config";
 import { line } from "../dialogue";
 import { Actor, dist } from "./actor";
 
@@ -34,15 +34,22 @@ export class Player extends Actor {
 
   get stats() {
     const s = this.world.state.skills;
+    const u = this.world.state.unlocks;
     const weak = this.world.state.hunger < PLAYER.hungerWeakBelow;
     return {
       speed: PLAYER.speed * (1 + s.fleet * 0.12) * (weak ? 0.6 : 1),
       maxHealth: PLAYER.maxHealth + s.fortitude * 30,
       maxPrayer: PLAYER.maxPrayer + s.faith * 30,
-      swordDamage: PLAYER.swordDamage * (1 + s.sword * 0.35),
+      swordDamage: PLAYER.swordDamage * (1 + s.sword * 0.35) * (u.weapon ? UNLOCK_FX.weaponDamageMult : 1),
+      swordRange: PLAYER.swordRange + (u.weapon ? UNLOCK_FX.weaponRangeBonus : 0),
       castRadius: PLAYER.castRadius + s.faith * 12,
       hungerRate: PLAYER.hungerPerSecond * (1 - s.fortitude * 0.2),
+      idleRegen: PLAYER.prayerRegenIdle * (u.blessing ? UNLOCK_FX.blessingIdleRegenMult : 1),
     };
+  }
+
+  hasAbility(id: "moses" | "paul") {
+    return this.world.state.unlocks.abilities.includes(id);
   }
 
   update(dt: number) {
@@ -112,7 +119,7 @@ export class Player extends Actor {
       this.world.advanceTutorial(1);
     } else {
       this.praying = false;
-      st.prayer = Math.min(this.stats.maxPrayer, st.prayer + PLAYER.prayerRegenIdle * dt);
+      st.prayer = Math.min(this.stats.maxPrayer, st.prayer + this.stats.idleRegen * dt);
     }
 
     // auto-harvest ready crops underfoot
@@ -151,14 +158,14 @@ export class Player extends Actor {
     this.swordCd = PLAYER.swordCooldownMs;
     const aimed = dirX !== undefined && dirY !== undefined;
     const ang = aimed ? Math.atan2(dirY, dirX) : Math.atan2(this.lastDir.y, this.lastDir.x);
+    const range = this.stats.swordRange;
     if (aimed) this.world.fx.slash(this.x, this.y - 10, ang);
-    else this.world.fx.ring(this.x, this.y - 10, PLAYER.swordRange + 6, 0xffffff);
+    else this.world.fx.ring(this.x, this.y - 10, range + 6, 0xffffff);
     if (aimed) {
       this.lastDir = { x: Math.cos(ang), y: Math.sin(ang) };
       this.facing = Math.cos(ang) >= 0 ? 1 : -1;
       this.sprite.setFlipX(this.facing < 0);
     }
-    const range = PLAYER.swordRange;
     let hit = false;
     for (const e of this.world.enemies.list) {
       if (!e.alive) continue;
@@ -196,6 +203,23 @@ export class Player extends Actor {
     const banished = this.world.enemies.castAround(this.x, this.y - 10, r);
     const redeemed = this.world.villagers.redeemAround(this.x, this.y - 10, r);
     if (banished + redeemed === 0) this.world.villagers.breakHypnoAround(this.x, this.y - 10, r);
+    if (this.hasAbility("moses")) {
+      // Staff of Moses: the ring itself strikes every enemy standing in it.
+      this.world.fx.ring(this.x, this.y - 10, r * 0.7, 0xe0b53a);
+      for (const e of this.world.enemies.list) {
+        if (e.alive && dist(this.x, this.y - 10, e.x, e.y - 8) <= r) this.world.enemies.damage(e, UNLOCK_FX.staffCastDamage, "staff");
+      }
+    }
+    if (this.hasAbility("paul")) {
+      // Clear Sight: deceivers can't hide anywhere near the ring.
+      const rr = r * UNLOCK_FX.clearSightRadiusMult;
+      for (const e of this.world.enemies.list) {
+        if (e.alive && e.kind === "deceiver" && !e.revealed && dist(this.x, this.y, e.x, e.y) <= rr) {
+          e.revealed = true;
+          this.world.speech.say(e.sprite, line("deceiver", "revealed"), "dark", 0);
+        }
+      }
+    }
   }
 
   eat() {

@@ -80,12 +80,13 @@ export class Buildings {
 
   canPlace(type: BuildingType, tx: number, ty: number) {
     const size = this.sizeOf(type);
+    const onWater = type !== "altar" && type !== "idol" && !!BUILDINGS[type].onWater;
     for (let dy = 0; dy < size; dy++) {
       for (let dx = 0; dx < size; dx++) {
         const x = tx + dx;
         const y = ty + dy;
         if (x < 1 || y < 1 || x >= MAP_W - 1 || y >= MAP_H - 1) return false;
-        if (this.scene.map.isWater(x, y)) return false;
+        if (onWater ? !this.scene.map.isWater(x, y) : !this.scene.map.isBuildable(x, y)) return false;
         // the sand around the altar is sacred ground — keeps a walkable ring
         if (type !== "altar" && this.scene.map.isSand(x, y)) return false;
         if (this.occupant(x, y)) return false;
@@ -108,11 +109,14 @@ export class Buildings {
       sprite: this.scene.add.sprite(tx * TILE, (ty + size) * TILE, "px_white").setOrigin(0, 1),
     };
     b.sprite.setTexture(textureFor(b));
-    const ground = type === "farm" || type === "vineyard" || type === "wall";
+    const ground = type === "farm" || type === "vineyard" || type === "wall" || type === "bridge";
     b.sprite.setDepth(ground ? -50 : (ty + size) * TILE);
     if (type === "wall") b.sprite.setDepth((ty + size) * TILE - 8);
     if (this.blocks(type)) {
       for (let dy = 0; dy < size; dy++) for (let dx = 0; dx < size; dx++) this.scene.map.setBlocked(tx + dx, ty + dy, true);
+    } else if (type === "bridge") {
+      // a bridge turns the water under it into a crossing
+      for (let dy = 0; dy < size; dy++) for (let dx = 0; dx < size; dx++) this.scene.map.setBlocked(tx + dx, ty + dy, false);
     }
     this.list.push(b);
     this.scene.lightsDirty = true;

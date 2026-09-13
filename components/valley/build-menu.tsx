@@ -2,9 +2,11 @@
 
 import type { BuildingType, HudState } from "@/lib/valley/types";
 import { ALTAR, BUILDINGS } from "@/lib/valley/config";
+import { BIG_RECRUITS } from "@/lib/valley/quests/content";
 
+const HOTKEY_ORDER = "1234567890-";
 const ORDER = (Object.keys(BUILDINGS) as (keyof typeof BUILDINGS)[]).sort(
-  (a, b) => Number(BUILDINGS[a].hotkey) - Number(BUILDINGS[b].hotkey),
+  (a, b) => HOTKEY_ORDER.indexOf(BUILDINGS[a].hotkey) - HOTKEY_ORDER.indexOf(BUILDINGS[b].hotkey),
 );
 
 /** Compact strip so most of the canvas stays clickable while placing. */
@@ -28,7 +30,9 @@ export function BuildMenu({
         <div className="flex flex-wrap items-center gap-1.5">
           {ORDER.map((key) => {
             const d = BUILDINGS[key];
-            const locked = hud.altarLevel < d.altarLevel;
+            const questLocked = !!d.requiresQuest && !hud.completedQuests.includes(d.requiresQuest);
+            const locked = questLocked || hud.altarLevel < d.altarLevel;
+            const lockLabel = questLocked ? `${BIG_RECRUITS[d.requiresQuest!].name}'s quest` : `altar ${d.altarLevel}`;
             const poor = hud.coins < d.cost;
             const active = hud.buildMode === key;
             return (
@@ -36,7 +40,7 @@ export function BuildMenu({
                 key={key}
                 type="button"
                 disabled={locked}
-                title={locked ? `${d.name} — unlocks at altar level ${d.altarLevel}` : `${d.name} — ${d.blurb}`}
+                title={locked ? `${d.name} — unlocks after ${lockLabel}. ${d.blurb}` : `${d.name} — ${d.blurb}`}
                 onClick={() => onPick(key)}
                 className={`inline-flex items-center gap-1.5 rounded-lg border px-2 py-1.5 transition ${
                   active
@@ -51,7 +55,7 @@ export function BuildMenu({
                 </kbd>
                 <span className="font-semibold">{d.name}</span>
                 <span className={active ? "text-[#12121a]/80" : locked ? "" : poor ? "text-brand-coral" : "text-brand-lime"}>
-                  {locked ? `🔒 altar ${d.altarLevel}` : `${d.cost}c`}
+                  {locked ? `🔒 ${lockLabel}` : `${d.cost}c`}
                 </span>
               </button>
             );
