@@ -21,6 +21,9 @@ export type BuildingType =
   | "tower"
   | "market"
   | "lamp"
+  | "bridge"
+  | "beacon"
+  | "granary"
   | "idol";
 
 export type SkillId = "sword" | "fleet" | "faith" | "fortitude" | "steward";
@@ -73,6 +76,15 @@ export type Unlocks = {
   blessing: boolean;
 };
 
+export type LandmarkId =
+  | "shepherdCamp"
+  | "boatyard"
+  | "standingStones"
+  | "milestone"
+  | "cave"
+  | "ancientOlive"
+  | "cistern";
+
 export type SaveData = {
   version: number;
   savedAt: number;
@@ -97,6 +109,10 @@ export type SaveData = {
   recruits: SavedRecruit[];
   quests: SavedQuest[];
   unlocks: Unlocks;
+  /** Landmarks the player has walked up to at least once. */
+  discovered: LandmarkId[];
+  /** The prologue has been shown once for this valley. */
+  introSeen: boolean;
   player: { x: number; y: number };
   stats: { kills: number; redeemed: number; fallen: number; idolsSmashed: number };
   tutorialStep: number;
@@ -141,6 +157,13 @@ export type HudState = {
   recruits: HudRecruit[];
   quests: HudQuest[];
   scatteredOffers: ScatteredRecruitOffer[];
+  /** Landmarks found so far, out of the total on the map. */
+  discovered: number;
+  landmarks: number;
+  /** Which questlines are done — the build menu reads this for quest-gated buildings. */
+  completedQuests: BigRecruitId[];
+  /** Name of a landmark the player is standing at, if any. */
+  atLandmark: string | null;
 };
 
 export type HudRecruit = {
@@ -157,6 +180,14 @@ export type HudQuest = {
   state: QuestState;
   progress: number;
   target: number;
+  /** What the player has to do, in words. */
+  objective: string;
+  /** Dawn of the day this recruit walks into the valley; the Holy Ghost has none. */
+  arrivesDay: number | null;
+  /** True once the quest-giver is somewhere in the world (or has joined). */
+  arrived: boolean;
+  /** Where to find the quest-giver, in words. */
+  landmark: string | null;
 };
 
 export type ScatteredRecruitOffer = {
@@ -176,6 +207,8 @@ export type DawnReport = {
   sinDelta: number;
   fallen: number;
   saved: number;
+  /** Strangers who walked into the valley this dawn — their arrival lines. */
+  arrivals: { name: string; line: string }[];
 };
 
 export type AwayReport = {
@@ -211,7 +244,8 @@ export type GameCommand =
   | { type: "acceptQuest"; id: BigRecruitId }
   | { type: "turnInQuest"; id: BigRecruitId }
   | { type: "setDeployment"; id: RecruitId; mode: DeploymentMode }
-  | { type: "recruitScattered"; id: ScatteredRecruitId };
+  | { type: "recruitScattered"; id: ScatteredRecruitId }
+  | { type: "introSeen" };
 
 export type GameEvent =
   | { type: "hud"; state: HudState }

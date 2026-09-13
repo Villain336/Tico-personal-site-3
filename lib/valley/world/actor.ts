@@ -35,6 +35,9 @@ export class Actor {
   bob = 0;
   facing = 1; // 1 right, -1 left
   ghost = false;
+  /** Which way to slide when a wall blocks the straight line; kept so the slide is coherent across frames. */
+  private slideSide = 1;
+  private slideT = 0;
 
   constructor(scene: Phaser.Scene, x: number, y: number, texture: string) {
     this.sprite = scene.add.sprite(x, y, texture).setOrigin(0.5, 1);
@@ -96,9 +99,19 @@ export class Actor {
     const step = Math.min(d, speed * dt);
     const moved = this.move(dx, dy, step / dt, dt, map);
     if (!moved) {
-      // Nudge sideways when blocked so walkers slide around walls instead of freezing.
-      const side = Math.random() < 0.5 ? 1 : -1;
-      this.move(-dy * side, dx * side, speed, dt, map);
+      // Slide along the wall in one consistent direction; flip if that's blocked too,
+      // and re-roll the side now and then so long cliff lines don't trap anyone.
+      this.slideT -= dt;
+      if (this.slideT <= 0) {
+        this.slideT = 1.5 + Math.random() * 1.5;
+        this.slideSide = Math.random() < 0.5 ? 1 : -1;
+      }
+      if (!this.move(-dy * this.slideSide, dx * this.slideSide, speed, dt, map)) {
+        this.slideSide = -this.slideSide;
+        this.move(-dy * this.slideSide, dx * this.slideSide, speed, dt, map);
+      }
+    } else {
+      this.slideT = 0;
     }
     return false;
   }

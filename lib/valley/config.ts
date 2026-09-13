@@ -3,8 +3,10 @@ import type { BuildingType, SkillId } from "./types";
 /** Every balance number lives here so tuning never means hunting through scenes. */
 
 export const TILE = 16;
-export const MAP_W = 48;
-export const MAP_H = 36;
+export const MAP_W = 64;
+export const MAP_H = 48;
+/** Fixed seed so every save sees the same valley — only buildings are persisted, not terrain. */
+export const MAP_SEED = 7331;
 export const WORLD_W = MAP_W * TILE;
 export const WORLD_H = MAP_H * TILE;
 
@@ -17,7 +19,7 @@ export const NIGHT_SECONDS = 120;
 export const CYCLE_SECONDS = DAY_SECONDS + NIGHT_SECONDS;
 
 export const SAVE_KEY = "shalom-valley-save";
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 export const AUTOSAVE_MS = 30_000;
 export const OFFLINE_CAP_HOURS = 8;
 export const OFFLINE_RENT_RATE = 0.5;
@@ -75,6 +77,10 @@ export type BuildingDef = {
   size: 1 | 2;
   blurb: string;
   hotkey: string;
+  /** Questline that must be completed before this shows as buildable. */
+  requiresQuest?: "noah";
+  /** Only placeable on water tiles (and makes them walkable). */
+  onWater?: boolean;
 };
 
 export const BUILDINGS: Record<Exclude<BuildingType, "altar" | "idol">, BuildingDef> = {
@@ -86,11 +92,29 @@ export const BUILDINGS: Record<Exclude<BuildingType, "altar" | "idol">, Building
   well: { name: "Well", cost: 40, altarLevel: 2, light: 3, blocks: true, size: 1, blurb: "Villagers recover. Small light.", hotkey: "6" },
   tower: { name: "Watchtower", cost: 70, altarLevel: 2, light: 3, blocks: true, size: 1, blurb: "Shoots arrows at enemies.", hotkey: "7" },
   lamp: { name: "Lamp post", cost: 18, altarLevel: 3, light: 4, blocks: false, size: 1, blurb: "Light only. Pushes the dark.", hotkey: "8" },
+  bridge: { name: "Bridge", cost: 20, altarLevel: 2, light: 0, blocks: false, size: 1, blurb: "Crosses the river. Place on water.", hotkey: "9", onWater: true },
+  beacon: { name: "Beacon", cost: 110, altarLevel: 3, light: 7, blocks: true, size: 1, blurb: "A great fire. Lights far ground.", hotkey: "0" },
+  granary: {
+    name: "Granary",
+    cost: 60,
+    altarLevel: 2,
+    light: 1,
+    blocks: true,
+    size: 2,
+    blurb: "Noah's storehouse. Nearby harvests +1.",
+    hotkey: "-",
+    requiresQuest: "noah",
+  },
 };
 
-/** A tile counts as "lit" above this light value; victory when this share of tiles is lit. */
+export const GRANARY_RADIUS_TILES = 5;
+export const GRANARY_BONUS = 1;
+
+/** A tile counts as "lit" above this light value; victory when this share of land tiles is lit. */
 export const LIT_THRESHOLD = 0.2;
-export const VICTORY_LIT_RATIO = 0.85;
+export const VICTORY_LIT_RATIO = 0.75;
+/** Radius (tiles) of the player's own lantern glow — visual only, never counts as lit ground. */
+export const LANTERN_TILES = 3.5;
 
 export const TOWER_RANGE = 96;
 export const TOWER_DAMAGE = 6;
@@ -174,3 +198,22 @@ export const WAVES = {
 export const IDOL_REWARD = 35;
 export const START_COINS = 60;
 export const START_WHEAT = 3;
+
+/** What each Big Recruit's unlock actually does once earned. */
+export const UNLOCK_FX = {
+  /** David — a real blade: damage and reach. */
+  weaponDamageMult: 1.5,
+  weaponRangeBonus: 8,
+  /** Moses — casting also strikes the wicked in the ring. */
+  staffCastDamage: 14,
+  /** Paul — casting reveals hidden deceivers this far out; hypnosis takes twice as long. */
+  clearSightRadiusMult: 2,
+  clearSightHypnoMult: 0.5,
+  /** Holy Ghost — spirit refills away from the altar; dawn washes more sin. */
+  blessingIdleRegenMult: 4,
+  blessingDawnDecayMult: 2,
+};
+
+/** Discovering a landmark for the first time. */
+export const DISCOVER_XP = 25;
+export const DISCOVER_RADIUS_TILES = 2.2;

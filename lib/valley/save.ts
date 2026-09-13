@@ -44,6 +44,8 @@ export function newSave(character: Character): SaveData {
     recruits: [],
     quests: [],
     unlocks: { weapon: false, goliathBoss: false, building: false, abilities: [], blessing: false },
+    discovered: [],
+    introSeen: false,
     player: { x: (ALTAR_TILE.tx + 1) * TILE, y: (ALTAR_TILE.ty + 4) * TILE },
     stats: { kills: 0, redeemed: 0, fallen: 0, idolsSmashed: 0 },
     tutorialStep: 0,

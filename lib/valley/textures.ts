@@ -15,6 +15,26 @@ import {
   WELL,
 } from "./sprites/buildings";
 import { DIRT, GRASS, SAND, WATER } from "./sprites/tiles";
+import {
+  BEACON,
+  BRIDGE,
+  CAVE,
+  CISTERN,
+  CLIFF_FACE,
+  CLIFF_RIM,
+  GRANARY,
+  GRASS_HI,
+  MARKER,
+  MILESTONE,
+  OLIVE,
+  RAMP,
+  ROCK,
+  SHALLOW,
+  STONES,
+  TENT,
+  TIMBER,
+  TREES,
+} from "./sprites/terrain";
 
 /** Draw a pixel map to a fresh canvas at `scale` px per pixel. */
 export function renderMap(map: PixelMap, roles: Roles, scale = 1): HTMLCanvasElement {
@@ -131,6 +151,32 @@ export const TILE_ROLES: Roles = {
   d: C.dirt2,
   B: C.water1,
   b: C.water2,
+};
+
+export const TERRAIN_ROLES: Roles = {
+  ...TILE_ROLES,
+  E: C.grassHi,
+  e: C.grassHiDark,
+  R: C.rock,
+  r: C.rockDark,
+  x: C.rockLight,
+  k: C.rockOutline,
+  S: C.shallow,
+  s: C.foam,
+  W: C.wood,
+  w: C.woodDark,
+  T: C.trunk,
+  L: C.leaf,
+  l: C.leafDark,
+  C: C.canvas,
+  c: C.canvasShade,
+  N: C.stone,
+  n: C.stoneDark,
+  F: C.fire,
+  f: C.fireBright,
+  V: C.violet,
+  Y: C.wheat1,
+  K: C.outline,
 };
 
 const SPIRIT_ROLES: Roles = { K: C.spiritDark, P: C.spirit, D: C.spiritDark, E: C.outline };
@@ -346,6 +392,25 @@ export function registerTextures(scene: Phaser.Scene, character: Character) {
   addCanvas(scene, "sand", renderMap(SAND, TILE_ROLES));
   addCanvas(scene, "dirt", renderMap(DIRT, TILE_ROLES));
   addCanvas(scene, "water", renderMap(WATER, TILE_ROLES));
+
+  GRASS_HI.forEach((m, i) => addCanvas(scene, `grass_hi_${i}`, renderMap(m, TERRAIN_ROLES)));
+  addCanvas(scene, "cliff_face", renderMap(CLIFF_FACE, TERRAIN_ROLES));
+  addCanvas(scene, "cliff_rim", renderMap(CLIFF_RIM, TERRAIN_ROLES));
+  addCanvas(scene, "ramp", renderMap(RAMP, TERRAIN_ROLES));
+  addCanvas(scene, "shallow", renderMap(SHALLOW, TERRAIN_ROLES));
+  addCanvas(scene, "bridge", renderMap(BRIDGE, TERRAIN_ROLES));
+  TREES.forEach((m, i) => addCanvas(scene, `tree_${i}`, renderMap(m, TERRAIN_ROLES)));
+  addCanvas(scene, "rock", renderMap(ROCK, TERRAIN_ROLES));
+  addCanvas(scene, "lm_shepherdCamp", renderMap(TENT, TERRAIN_ROLES));
+  addCanvas(scene, "lm_boatyard", renderMap(TIMBER, TERRAIN_ROLES));
+  addCanvas(scene, "lm_standingStones", renderMap(STONES, TERRAIN_ROLES));
+  addCanvas(scene, "lm_milestone", renderMap(MILESTONE, TERRAIN_ROLES));
+  addCanvas(scene, "lm_cave", renderMap(CAVE, TERRAIN_ROLES));
+  addCanvas(scene, "lm_ancientOlive", renderMap(OLIVE, TERRAIN_ROLES));
+  addCanvas(scene, "lm_cistern", renderMap(CISTERN, TERRAIN_ROLES));
+  addCanvas(scene, "granary", renderMap(GRANARY, TERRAIN_ROLES));
+  addCanvas(scene, "beacon", renderMap(BEACON, TERRAIN_ROLES));
+  addCanvas(scene, "marker", renderMap(MARKER, { K: C.outline, G: "#ffffff" }));
 
   addCanvas(scene, "px_white", solid(2, 2, "#ffffff"));
   addCanvas(scene, "px_lime", solid(3, 3, C.lime));
