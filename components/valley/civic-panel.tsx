@@ -7,6 +7,15 @@ import { EDICT_COPY, EDICT_IDS, OFFICE_COPY, OFFICE_IDS, STATUTE_COPY, STATUTE_I
 import { compileLaw, INTENT_COPY } from "@/lib/valley/world/laws";
 import { BIG_RECRUITS, SCATTERED_RECRUITS } from "@/lib/valley/quests/content";
 
+const LAW_STARTERS = [
+  "Do not hunt.",
+  "Stay home after dusk.",
+  "Share the bread.",
+  "Stay in the light.",
+  "No idols.",
+  "Welcome the stranger.",
+];
+
 const CASE_LABEL: Record<string, string> = {
   fall: "A fall",
   nightSale: "Night sale",
@@ -108,6 +117,17 @@ export function CivicPanel({
             placeholder='e.g. "Do not hunt. Stay home after dusk. Share the bread."'
             className="mt-2 w-full resize-none rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 text-white placeholder:text-white/30 focus:border-amber-200/50 focus:outline-none disabled:text-white/30"
           />
+          <div className="mt-1.5 flex flex-wrap gap-1">
+            {LAW_STARTERS.map((line) => (
+              <Mini
+                key={line}
+                disabled={locked}
+                onClick={() => setDraft((cur) => (cur ? `${cur.replace(/\s+$/, "")} ${line}` : line).slice(0, 140))}
+              >
+                {line}
+              </Mini>
+            ))}
+          </div>
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             <Mini
               disabled={locked || !draft.trim()}

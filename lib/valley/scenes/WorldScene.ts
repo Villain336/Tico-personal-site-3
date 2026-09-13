@@ -93,6 +93,7 @@ export class WorldScene extends Phaser.Scene {
 
   create() {
     registerTextures(this, this.state.character);
+    this.input.keyboard?.clearCaptures();
 
     this.map = new WorldMap(this);
     this.darkness = new Darkness(this);

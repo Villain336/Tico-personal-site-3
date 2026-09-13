@@ -72,6 +72,9 @@ export function Hud({
             <Stat icon="🍖" label="meat" value={hud.meat} />
             <Stat icon="🧶" label="wool" value={hud.wool} />
           </div>
+          <div className="mt-1 text-white/75">
+            Meat {hud.meat} · Wool {hud.wool}
+          </div>
         </Card>
       </div>
 
