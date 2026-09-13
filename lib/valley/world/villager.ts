@@ -138,6 +138,16 @@ export class Villagers {
     this.scene.toast("A new villager moved in.", "good");
   }
 
+  /** A living neighbor repeats a newly written law so the player sees they heard it. */
+  hearLaw(text: string) {
+    const p = this.scene.player;
+    const v =
+      this.nearest(p.x, p.y, TILE * 14, (x) => x.state !== "fallen" && x.state !== "flee") ??
+      this.list.find((x) => x.alive && x.state !== "fallen");
+    if (!v) return;
+    this.scene.speech.say(v.sprite, `The law says: "${text}"`, "good", 0);
+  }
+
   nearest(x: number, y: number, maxD = Infinity, filter?: (v: Villager) => boolean): Villager | null {
     let best: Villager | null = null;
     let bd = maxD;
@@ -533,7 +543,7 @@ export class Villagers {
       // greet the player as they pass (daytime, relaxed)
       if (!isNight && v.state !== "flee" && v.state !== "fight" && dist(v.x, v.y, player.x, player.y) < 26) {
         const laws = lawLines(sc.state.civic);
-        const quote = laws.length > 0 && Math.random() < 0.45 ? `The law says: "${laws[v.seed % laws.length]}"` : null;
+        const quote = laws.length > 0 && Math.random() < 0.75 ? `The law says: "${laws[v.seed % laws.length]}"` : null;
         sc.speech.say(v.sprite, quote ?? line("villager", "greet", sc.playerName), "neutral", VILLAGER.greetCooldownMs);
       }
     }

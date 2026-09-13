@@ -234,6 +234,7 @@ export class Civic {
     if (law.intents.includes("tithe") && this.data.titheRate === 0) this.setTitheRate(10);
     if (law.intents.includes("openHand")) this.scene.state.shareOn = true;
     const { understood } = compileLaw(law.text);
+    this.scene.villagers.hearLaw(law.text);
     return {
       ok: true,
       toast: understood

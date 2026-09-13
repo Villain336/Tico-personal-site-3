@@ -1,18 +1,18 @@
 import type { CivicState, LawIntent, WrittenLaw } from "../types";
 
 const RULES: { intent: LawIntent; words: string[] }[] = [
-  { intent: "curfew", words: ["curfew", "stay home", "stay indoors", "after dusk", "after dark", "indoors at night", "no wandering at night"] },
-  { intent: "openGates", words: ["open gate", "open the gate", "welcome stranger", "welcome the stranger", "let travelers in"] },
-  { intent: "sanctuary", words: ["sanctuary", "refuge", "asylum", "holy ground", "sacred ground"] },
-  { intent: "conscription", words: ["conscript", "militia", "must fight", "take up arms", "every man fight"] },
-  { intent: "noIdols", words: ["no idol", "no idols", "no graven", "no image", "no baal", "no asherah", "smash idol"] },
-  { intent: "protectWeak", words: ["protect the weak", "protect the fallen", "defend the weak", "no one left behind", "keep the weak"] },
-  { intent: "keepSabbath", words: ["sabbath", "no sell at night", "no selling at night", "no night sale", "rest at night", "keep the night", "no trade after dark"] },
-  { intent: "openHand", words: ["share the bread", "share bread", "open hand", "feed the hungry", "do not hoard", "don't hoard", "no hoarding"] },
-  { intent: "noHunt", words: ["no hunt", "do not hunt", "don't hunt", "no hunting", "spare the wild", "let the wild live"] },
-  { intent: "kindToBeasts", words: ["kind to beast", "kind to the flock", "tend the flock", "no harm sheep", "spare the flock", "shepherd the"] },
-  { intent: "stayLit", words: ["stay in the light", "do not wander dark", "don't wander the dark", "keep to the light", "stay near the light"] },
-  { intent: "tithe", words: ["tithe", "a tenth", "tenth to the altar", "give to the altar"] },
+  { intent: "curfew", words: ["curfew", "stay home", "stay indoors", "after dusk", "after dark", "indoors at night", "no wandering at night", "none shall wander at night", "home by night", "in by nightfall"] },
+  { intent: "openGates", words: ["open gate", "open the gate", "welcome stranger", "welcome the stranger", "let travelers in", "love the stranger", "receive the sojourner", "let the stranger in"] },
+  { intent: "sanctuary", words: ["sanctuary", "refuge", "asylum", "holy ground", "sacred ground", "cities of refuge", "this ground is holy"] },
+  { intent: "conscription", words: ["conscript", "militia", "must fight", "take up arms", "every man fight", "all shall fight", "raise a host"] },
+  { intent: "noIdols", words: ["no idol", "no idols", "no graven", "no image", "no baal", "no asherah", "smash idol", "no other gods", "no carved image"] },
+  { intent: "protectWeak", words: ["protect the weak", "protect the fallen", "defend the weak", "no one left behind", "keep the weak", "care for the widow", "defend the orphan", "do not leave the fallen"] },
+  { intent: "keepSabbath", words: ["sabbath", "no sell at night", "no selling at night", "no night sale", "rest at night", "keep the night", "no trade after dark", "keep the sabbath", "rest on the seventh"] },
+  { intent: "openHand", words: ["share the bread", "share bread", "open hand", "feed the hungry", "do not hoard", "don't hoard", "no hoarding", "leave the gleanings", "open thy hand"] },
+  { intent: "noHunt", words: ["no hunt", "do not hunt", "don't hunt", "no hunting", "spare the wild", "let the wild live", "thou shalt not hunt", "you shall not hunt", "no one hunts"] },
+  { intent: "kindToBeasts", words: ["kind to beast", "kind to the flock", "tend the flock", "no harm sheep", "spare the flock", "shepherd the", "do not kill the flock", "be kind to the animals"] },
+  { intent: "stayLit", words: ["stay in the light", "do not wander dark", "don't wander the dark", "keep to the light", "stay near the light", "keep the lamps", "do not walk in darkness"] },
+  { intent: "tithe", words: ["tithe", "a tenth", "tenth to the altar", "give to the altar", "give a tenth", "first fruits"] },
 ];
 
 export const INTENT_COPY: Record<LawIntent, string> = {
