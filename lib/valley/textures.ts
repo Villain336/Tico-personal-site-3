@@ -1,5 +1,5 @@
 import type Phaser from "phaser";
-import type { Character } from "./types";
+import type { BigRecruitId, Character, ScatteredRecruitId } from "./types";
 import { C, HAIR_COLORS, OUTFITS, SKIN_SHADE, SKIN_TONES } from "./palette";
 import { paint, size, type PixelMap, type Roles } from "./sprites/pixel";
 import { buildCharacter, IDOL, SPIRIT, type CharLook } from "./sprites/chars";
@@ -191,6 +191,109 @@ export const ENEMY_LOOKS: Record<string, { look: CharLook; roles: Roles }> = {
   },
 };
 
+/**
+ * Distinct, art-free looks for the four walking Big Recruits and the first
+ * scattered-NPC batch, built from the same procedural pipeline as villagers
+ * and enemies (KTD10). The Holy Ghost has no entry — it never gets a
+ * companion sprite (R9).
+ */
+export const BIG_RECRUIT_LOOKS: Record<Exclude<BigRecruitId, "holyGhost">, { look: CharLook; roles: Roles }> = {
+  moses: {
+    look: { gender: "man", body: 2, face: 0, hairStyle: 2, beard: true, staff: true, outfitStyle: 0 },
+    roles: {
+      ...BASE_CHAR_ROLES,
+      S: SKIN_TONES[3],
+      s: SKIN_SHADE[3],
+      H: HAIR_COLORS[3],
+      C: C.cloth,
+      T: OUTFITS[0].trim,
+      O: OUTFITS[0].primary,
+      o: OUTFITS[0].secondary,
+    },
+  },
+  david: {
+    look: { gender: "man", body: 1, face: 1, hairStyle: 0, outfitStyle: 2 },
+    roles: {
+      ...BASE_CHAR_ROLES,
+      S: SKIN_TONES[2],
+      s: SKIN_SHADE[2],
+      H: HAIR_COLORS[1],
+      C: C.cloth,
+      T: C.gold,
+      O: OUTFITS[2].primary,
+      o: OUTFITS[2].secondary,
+    },
+  },
+  paul: {
+    look: { gender: "man", body: 1, face: 2, hairStyle: 0, outfitStyle: 1 },
+    roles: {
+      ...BASE_CHAR_ROLES,
+      S: SKIN_TONES[1],
+      s: SKIN_SHADE[1],
+      H: HAIR_COLORS[0],
+      C: C.cloth,
+      T: OUTFITS[1].trim,
+      O: OUTFITS[1].primary,
+      o: OUTFITS[1].secondary,
+    },
+  },
+  noah: {
+    look: { gender: "man", body: 2, face: 0, hairStyle: 1, beard: true, outfitStyle: 0 },
+    roles: {
+      ...BASE_CHAR_ROLES,
+      S: SKIN_TONES[2],
+      s: SKIN_SHADE[2],
+      H: HAIR_COLORS[3],
+      C: C.cloth,
+      T: C.leaf,
+      O: OUTFITS[0].primary,
+      o: OUTFITS[0].secondary,
+    },
+  },
+};
+
+export const SCATTERED_RECRUIT_LOOKS: Record<ScatteredRecruitId, { look: CharLook; roles: Roles }> = {
+  deborah: {
+    look: { gender: "woman", body: 0, face: 1, hairStyle: 1, outfitStyle: 0 },
+    roles: {
+      ...BASE_CHAR_ROLES,
+      S: SKIN_TONES[1],
+      s: SKIN_SHADE[1],
+      H: HAIR_COLORS[1],
+      C: C.cloth,
+      T: C.leaf,
+      O: OUTFITS[0].primary,
+      o: OUTFITS[0].secondary,
+    },
+  },
+  gideon: {
+    look: { gender: "man", body: 2, face: 2, hairStyle: 0, outfitStyle: 2 },
+    roles: {
+      ...BASE_CHAR_ROLES,
+      S: SKIN_TONES[2],
+      s: SKIN_SHADE[2],
+      H: HAIR_COLORS[0],
+      C: C.cloth,
+      T: C.stone,
+      O: OUTFITS[2].primary,
+      o: OUTFITS[2].secondary,
+    },
+  },
+  ruth: {
+    look: { gender: "woman", body: 0, face: 0, hairStyle: 1, outfitStyle: 0 },
+    roles: {
+      ...BASE_CHAR_ROLES,
+      S: SKIN_TONES[0],
+      s: SKIN_SHADE[0],
+      H: HAIR_COLORS[2],
+      C: C.cloth,
+      T: C.gold,
+      O: OUTFITS[0].primary,
+      o: OUTFITS[0].secondary,
+    },
+  },
+};
+
 function addCanvas(scene: Phaser.Scene, key: string, canvas: HTMLCanvasElement) {
   if (scene.textures.exists(key)) scene.textures.remove(key);
   scene.textures.addCanvas(key, canvas);
@@ -221,6 +324,13 @@ export function registerTextures(scene: Phaser.Scene, character: Character) {
   }
   addCanvas(scene, "spirit", renderMap(SPIRIT, SPIRIT_ROLES));
   addCanvas(scene, "idol", renderMap(IDOL, IDOL_ROLES));
+
+  for (const [id, { look, roles }] of Object.entries(BIG_RECRUIT_LOOKS)) {
+    addCanvas(scene, `recruit_${id}`, renderMap(buildCharacter(look), roles));
+  }
+  for (const [id, { look, roles }] of Object.entries(SCATTERED_RECRUIT_LOOKS)) {
+    addCanvas(scene, `recruit_${id}`, renderMap(buildCharacter(look), roles));
+  }
 
   FARM.forEach((m, i) => addCanvas(scene, `farm_${i}`, renderMap(m, BUILDING_ROLES)));
   VINEYARD.forEach((m, i) => addCanvas(scene, `vineyard_${i}`, renderMap(m, BUILDING_ROLES)));
