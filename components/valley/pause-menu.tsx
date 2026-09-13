@@ -10,6 +10,7 @@ const CONTROLS: [string, string][] = [
   ["F", "Eat wheat, meat, olives or grapes"],
   ["B / 1–8 / ,", "Build menu / quick-build (sheepfold is ,)"],
   ["K", "Skills"],
+  ["I", "Gear — blades, wraps, lamps"],
   ["Esc", "Pause"],
 ];
 

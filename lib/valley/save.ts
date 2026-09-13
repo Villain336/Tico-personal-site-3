@@ -15,10 +15,12 @@ import {
   START_COINS,
   START_WHEAT,
   TILE,
+  emptySkills,
   emptyStores,
   evenPrices,
 } from "./config";
 import { defaultCivic } from "./world/civic";
+import { emptyGear } from "./world/gear";
 import { settleDawnOn } from "./world/ledger";
 import { LETTER, letterLine, pickVisitName } from "./dialogue";
 
@@ -39,7 +41,9 @@ export function newSave(character: Character): SaveData {
     meat: 0,
     wool: 0,
     cloth: 0,
+    relics: 0,
     templeOffersToday: 0,
+    gear: emptyGear(),
     beasts: [],
     bank: 0,
     stores: emptyStores(),
@@ -55,13 +59,13 @@ export function newSave(character: Character): SaveData {
     level: 1,
     xp: 0,
     skillPoints: 0,
-    skills: { sword: 0, fleet: 0, faith: 0, fortitude: 0, steward: 0 },
+    skills: emptySkills(),
     autoSell: true,
     buildings: [{ type: "altar", tx: ALTAR_TILE.tx, ty: ALTAR_TILE.ty, level: 1 }],
     villagers: [],
     recruits: [],
     quests: [],
-    unlocks: { weapon: false, goliathBoss: false, building: false, abilities: [], blessing: false },
+    unlocks: { weapon: false, goliathBoss: false, goliathDefeated: false, building: false, abilities: [], blessing: false },
     discovered: [],
     introSeen: false,
     player: { x: (ALTAR_TILE.tx + 1) * TILE, y: (ALTAR_TILE.ty + 4) * TILE },
@@ -85,8 +89,12 @@ export function loadSave(): SaveData | null {
     if (data.meat == null) data.meat = 0;
     if (data.wool == null) data.wool = 0;
     if (data.cloth == null) data.cloth = 0;
+    if (data.relics == null) data.relics = 0;
     if (data.templeOffersToday == null) data.templeOffersToday = 0;
     if (!data.beasts) data.beasts = [];
+    if (!data.gear) data.gear = emptyGear();
+    data.skills = { ...emptySkills(), ...data.skills };
+    if (data.unlocks && data.unlocks.goliathDefeated == null) data.unlocks.goliathDefeated = false;
     return data;
   } catch {
     return null;

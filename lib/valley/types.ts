@@ -36,7 +36,18 @@ export type BuildingType =
 
 export type CropKind = "wheat" | "grapes" | "olives" | "flax";
 
-export type SkillId = "sword" | "fleet" | "faith" | "fortitude" | "steward";
+export type SkillId = "sword" | "fleet" | "faith" | "fortitude" | "steward" | "ward" | "hunter";
+
+export type GearSlot = "blade" | "wrap" | "lamp";
+export type GearId = "davidsBlade" | "scrapBlade" | "hideWrap" | "goliathMail" | "prophetLamp";
+
+export type GearState = {
+  blade: GearId | null;
+  wrap: GearId | null;
+  lamp: GearId | null;
+  scraps: number;
+  bag: GearId[];
+};
 
 export type SavedBuilding = {
   type: BuildingType;
@@ -81,6 +92,7 @@ export type SavedQuest = {
 export type Unlocks = {
   weapon: boolean;
   goliathBoss: boolean;
+  goliathDefeated: boolean;
   building: boolean;
   abilities: BigRecruitId[];
   blessing: boolean;
@@ -175,7 +187,9 @@ export type SaveData = {
   meat: number;
   wool: number;
   cloth: number;
+  relics: number;
   templeOffersToday: number;
+  gear: GearState;
   beasts: SavedBeast[];
   /** Coins held by the money changer. */
   bank: number;
@@ -225,6 +239,10 @@ export type HudState = {
   meat: number;
   wool: number;
   cloth: number;
+  scraps: number;
+  relics: number;
+  gear: GearState;
+  boss: { name: string; hp: number; maxHp: number } | null;
   inside: string | null;
   nearEnter: string | null;
   bank: number;
@@ -381,7 +399,9 @@ export type GameCommand =
   | { type: "setOffice"; office: OfficeId; seed: number | null }
   | { type: "judge"; id: string; verdict: Verdict }
   | { type: "writeLaw"; text: string }
-  | { type: "repealLaw"; id: string };
+  | { type: "repealLaw"; id: string }
+  | { type: "equip"; id: GearId }
+  | { type: "unequip"; slot: GearSlot };
 
 export type GameEvent =
   | { type: "hud"; state: HudState }

@@ -1,5 +1,5 @@
 import type { WorldScene } from "../scenes/WorldScene";
-import { ENEMIES, NIGHT_SECONDS, SIN, WAVES, type EnemyKind } from "../config";
+import { ENEMIES, NIGHT_SECONDS, SIN, TILE, WAVES, type EnemyKind } from "../config";
 import { civicDawnMods } from "./civic";
 
 const ORDER: EnemyKind[] = ["robber", "tempter", "deceiver", "spirit", "prophet"];
@@ -60,6 +60,26 @@ export class Waves {
       `Night falls. ${count} shadows stir at the edge of the valley${st.sin >= SIN.extraEnemiesAt ? " — sin draws more" : ""}.`,
       "bad",
     );
+    this.trySpawnGoliath();
+  }
+
+  trySpawnGoliath() {
+    const st = this.scene.state;
+    if (!st.unlocks.goliathBoss || st.unlocks.goliathDefeated) return;
+    if (this.scene.enemies.livingBoss()) return;
+    const c = this.scene.buildings.center(this.scene.buildings.altar);
+    let pos = { x: c.x, y: c.y + TILE * 8 };
+    for (let i = 0; i < 24; i++) {
+      const a = Math.PI * 0.5 + (Math.random() - 0.5);
+      const r = TILE * (7 + Math.random() * 3);
+      const x = c.x + Math.cos(a) * r;
+      const y = c.y + Math.sin(a) * r;
+      if (this.scene.map.isWalkablePoint(x, y, false)) {
+        pos = { x, y };
+        break;
+      }
+    }
+    this.scene.enemies.spawn("goliath", pos.x, pos.y);
   }
 
   endNight() {

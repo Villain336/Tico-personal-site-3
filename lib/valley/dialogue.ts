@@ -126,6 +126,13 @@ export const LINES = {
     immune: ["...steel cannot touch me...", "...swing again, little one...", "...heh..."],
     banished: ["NOOO—", "...the light...", "...burns..."],
   },
+  goliath: {
+    arrive: ["A champion of Gath stands in the valley.", "Send me a man, that we may fight.", "Your light is a child's lamp."],
+    taunt: ["Am I a dog?", "Come closer, shepherd.", "Your village will kneel.", "Where is your giant?"],
+    windup: ["I will strike you down!", "The earth will shake!"],
+    slam: ["Fall!", "Dust!"],
+    hit: ["Hnh.", "That sting...", "Again!"],
+  },
   prophet: {
     preach: [
       "Bow to the golden calf!",

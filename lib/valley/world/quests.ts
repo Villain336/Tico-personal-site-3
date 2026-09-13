@@ -1,6 +1,7 @@
 import type { WorldScene } from "../scenes/WorldScene";
 import { BIG_RECRUITS } from "../quests/content";
 import type { BigRecruitId, HudQuest, QuestState, SavedQuest } from "../types";
+import { emptyGear, grantGear } from "./gear";
 import { LANDMARKS } from "./landmarks";
 
 type Entry = { id: BigRecruitId; state: QuestState; progress: number };
@@ -55,6 +56,12 @@ export class Quests {
       else if (hook.kind === "building") st.unlocks.building = true;
       else if (hook.kind === "ability") st.unlocks.abilities.push(id);
       else if (hook.kind === "blessing") st.unlocks.blessing = true;
+    }
+    if (id === "david") {
+      const granted = grantGear(st.gear ?? emptyGear(), "davidsBlade");
+      st.gear = granted.gear;
+      this.scene.toast(granted.equipped ? "You take David's blade in hand." : "David's blade goes in the bag. Press I.", "good");
+      if (this.scene.isNight()) this.scene.waves.trySpawnGoliath();
     }
     if (id === "holyGhost") {
       const c = this.scene.buildings.center(this.scene.buildings.altar);

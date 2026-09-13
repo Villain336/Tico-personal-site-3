@@ -45,7 +45,7 @@ export const BIG_RECRUITS: Record<BigRecruitId, BigRecruitDef> = {
     objective: { kind: "killCount", enemyKind: "robber", count: 8 },
     objectiveText: "Drive off 8 robbers",
     unlock: [{ kind: "weapon" }, { kind: "boss", boss: "goliath" }],
-    rewardText: "David's blade: sword damage +50%, longer reach. A giant now waits in your future.",
+    rewardText: "David's blade is in your hand. Goliath will come when night falls.",
     lines: {
       arrival: "A shepherd boy walked in from the south woods at dawn, a sling at his belt. He's waiting in the Field of the Shepherds.",
       offer: "I kept my father's sheep from wolves and robbers. Drive off 8 robbers, and I'll stand with you against worse than wolves.",

@@ -20,6 +20,7 @@ export class Darkness {
   private canSpawn: (tx: number, ty: number) => boolean = () => true;
   /** The player's lantern — purely visual, never counted as "lit". */
   private lantern = { x: -9999, y: -9999 };
+  private lanternTiles = LANTERN_TILES;
   litRatio = 0;
 
   constructor(scene: Phaser.Scene) {
@@ -67,9 +68,10 @@ export class Darkness {
   }
 
   /** Follow the player with a dim lantern so unlit ground can still be explored. Redraws only on real movement. */
-  updateLantern(x: number, y: number) {
-    if (Math.abs(x - this.lantern.x) < 3 && Math.abs(y - this.lantern.y) < 3) return;
+  updateLantern(x: number, y: number, tiles = LANTERN_TILES) {
+    if (Math.abs(x - this.lantern.x) < 3 && Math.abs(y - this.lantern.y) < 3 && tiles === this.lanternTiles) return;
     this.lantern = { x, y };
+    this.lanternTiles = tiles;
     this.draw();
   }
 
@@ -83,7 +85,7 @@ export class Darkness {
       this.brush.setDisplaySize(d, d);
       this.fog.erase(this.brush, (s.tx + 0.5) * TILE, (s.ty + 0.5) * TILE);
     }
-    const d = LANTERN_TILES * TILE * 2;
+    const d = this.lanternTiles * TILE * 2;
     this.brush.setDisplaySize(d, d).setAlpha(0.75);
     this.fog.erase(this.brush, this.lantern.x, this.lantern.y);
     this.brush.setAlpha(1);

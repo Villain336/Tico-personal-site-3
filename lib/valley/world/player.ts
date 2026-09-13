@@ -1,6 +1,8 @@
 import Phaser from "phaser";
 import type { WorldScene } from "../scenes/WorldScene";
-import { ALTAR, CIVIC, FLOCK, PLAYER, TILE, UNLOCK_FX, XP } from "../config";
+import { ALTAR, CIVIC, FLOCK, LANTERN_TILES, PLAYER, TILE, UNLOCK_FX, XP } from "../config";
+import { meleeReaches } from "./combat";
+import { bladeStats, emptyGear, incomingDamage, lanternBonus, wrapArmor } from "./gear";
 import { hasIntent } from "./laws";
 import { ENTERABLE } from "./interiors";
 import { line } from "../dialogue";
@@ -44,7 +46,8 @@ export class Player extends Actor {
     const s = this.world.state.skills;
     const u = this.world.state.unlocks;
     const weak = this.world.state.hunger < PLAYER.hungerWeakBelow || this.world.state.thirst < PLAYER.thirstWeakBelow;
-    const drain = 1 - s.fortitude * 0.2;
+    const drain = 1 - s.fortitude * 0.12;
+    const blade = bladeStats(this.world.state.gear ?? emptyGear());
     return {
       speed: PLAYER.speed * (1 + s.fleet * 0.12) * (weak ? 0.6 : 1),
       maxHealth: PLAYER.maxHealth + s.fortitude * 30,
@@ -52,9 +55,10 @@ export class Player extends Actor {
       swordDamage:
         PLAYER.swordDamage *
         (1 + s.sword * 0.35) *
-        (u.weapon ? UNLOCK_FX.weaponDamageMult : 1) *
+        blade.damageMult *
         (hasIntent(this.world.state.civic, "conscription") ? CIVIC.conscriptionDamage : 1),
-      swordRange: PLAYER.swordRange + (u.weapon ? UNLOCK_FX.weaponRangeBonus : 0),
+      swordRange: PLAYER.swordRange + blade.rangeBonus,
+      lanternTiles: LANTERN_TILES + lanternBonus(this.world.state.gear ?? emptyGear()),
       castRadius: PLAYER.castRadius + s.faith * 12 + (hasIntent(this.world.state.civic, "sanctuary") ? CIVIC.sanctuaryCastBonus : 0),
       hungerRate: PLAYER.hungerPerSecond * drain,
       thirstRate: PLAYER.thirstPerSecond * drain,
@@ -259,7 +263,7 @@ export class Player extends Actor {
     for (const e of this.world.enemies.list) {
       if (!e.alive) continue;
       const d = dist(this.x, this.y - 8, e.x, e.y - 8);
-      if (d > range + 10) continue;
+      if (!meleeReaches(range, e.def.hitRadius ?? 10, d)) continue;
       if (aimed) {
         const a = Math.atan2(e.y - 8 - (this.y - 8), e.x - this.x);
         let diff = Math.abs(a - ang);
@@ -342,7 +346,8 @@ export class Player extends Actor {
   hurt(amount: number) {
     if (this.invuln > 0) return false;
     const st = this.world.state;
-    st.health = Math.max(0, st.health - amount);
+    const taken = incomingDamage(amount, wrapArmor(st.gear ?? emptyGear()), st.skills.ward ?? 0);
+    st.health = Math.max(0, st.health - taken);
     this.invuln = PLAYER.invulnMs;
     this.sinceHurt = 0;
     this.sprite.setTintFill(0xff5b4a);

@@ -20,8 +20,10 @@ import {
   UNLOCK_FX,
   VICTORY_LIT_RATIO,
   XP,
+  emptySkills,
 } from "../config";
-import type { CropKind } from "../types";
+import type { CropKind, GearId } from "../types";
+import { emptyGear, equipGear, GEAR, grantGear, unequipSlot } from "../world/gear";
 import { line, pickVisitName } from "../dialogue";
 import { BIG_RECRUITS, SCATTERED_RECRUITS } from "../quests/content";
 import { worldTime, writeSave } from "../save";
@@ -94,6 +96,11 @@ export class WorldScene extends Phaser.Scene {
   }
 
   create() {
+    const st0 = this.state;
+    st0.skills = { ...emptySkills(), ...st0.skills };
+    st0.gear = st0.gear ?? emptyGear();
+    st0.relics = st0.relics ?? 0;
+    if (st0.unlocks.goliathDefeated == null) st0.unlocks.goliathDefeated = false;
     registerTextures(this, this.state.character);
     this.input.keyboard?.clearCaptures();
 
@@ -164,6 +171,7 @@ export class WorldScene extends Phaser.Scene {
       }
     }
     this.emitHud();
+    this.exposeDebug();
 
     if (this.state.day === 1 && this.state.clock < 1 && this.state.introSeen) {
       this.toast(`Welcome to Shalom Valley, ${this.playerName}. Walk to the altar and hold E to pray.`, "info");
@@ -210,7 +218,7 @@ export class WorldScene extends Phaser.Scene {
     this.player.update(dt);
     this.cameraDirector.update(dt);
     this.sky.update(dt);
-    this.darkness.updateLantern(this.player.x, this.player.y - 8);
+    this.darkness.updateLantern(this.player.x, this.player.y - 8, this.player.stats.lanternTiles);
     this.buildings.update(dt);
     this.villagers.update(dt);
     this.recruitManager.update(dt);
@@ -259,6 +267,7 @@ export class WorldScene extends Phaser.Scene {
     st.day++;
     this.enemies.clearAll();
     this.waves.endNight();
+    if (this.enemies.livingBoss()) this.toast("Goliath did not flee with the dawn.", "bad");
     const r = this.villagers.onDawn();
     const sinBefore = st.sin;
     const civicDawn = this.civic.settleDawn();
@@ -784,6 +793,20 @@ export class WorldScene extends Phaser.Scene {
       case "repealLaw":
         if (this.civic.repealLaw(c.id)) this.toast("The words are struck from the tablet.", "info");
         break;
+      case "equip": {
+        const next = equipGear(st.gear ?? emptyGear(), c.id);
+        if (!next) this.toast("That isn't in your bag.", "bad");
+        else {
+          st.gear = next;
+          this.toast(`Equipped ${GEAR[c.id].name}.`, "good");
+        }
+        break;
+      }
+      case "unequip": {
+        st.gear = unequipSlot(st.gear ?? emptyGear(), c.slot);
+        this.toast("Unequipped. Press I to swap gear.", "info");
+        break;
+      }
     }
     this.emitHud();
   }
@@ -821,6 +844,16 @@ export class WorldScene extends Phaser.Scene {
       meat: st.meat ?? 0,
       wool: st.wool ?? 0,
       cloth: st.cloth ?? 0,
+      scraps: st.gear?.scraps ?? 0,
+      relics: st.relics ?? 0,
+      gear: (() => {
+        const g = st.gear ?? emptyGear();
+        return { ...g, bag: [...g.bag] };
+      })(),
+      boss: (() => {
+        const b = this.enemies.livingBoss();
+        return b ? { name: b.def.name, hp: Math.max(0, Math.round(b.hp)), maxHp: b.def.hp } : null;
+      })(),
       inside: this.interiors?.label ?? null,
       nearEnter: p.nearEnter,
       bank: Math.floor(st.bank),
@@ -911,5 +944,46 @@ export class WorldScene extends Phaser.Scene {
       })(),
     };
     this.bridge.emit({ type: "hud", state: hud });
+  }
+
+  private exposeDebug() {
+    if (typeof window === "undefined" || !window.location.search.includes("dev")) return;
+    window.__valleyDebug = {
+      grant: (id: GearId) => {
+        const granted = grantGear(this.state.gear ?? emptyGear(), id);
+        this.state.gear = granted.gear;
+        this.toast(`${GEAR[id].name} ${granted.equipped ? "equipped" : "bagged"}.`, "good");
+        this.emitHud();
+      },
+      goliath: () => {
+        this.state.unlocks.goliathBoss = true;
+        this.waves.trySpawnGoliath();
+        this.emitHud();
+      },
+      david: () => {
+        this.state.unlocks.weapon = true;
+        this.state.unlocks.goliathBoss = true;
+        const granted = grantGear(this.state.gear ?? emptyGear(), "davidsBlade");
+        this.state.gear = granted.gear;
+        this.toast("David's blade granted. Night will bring Goliath.", "good");
+        if (this.isNight()) this.waves.trySpawnGoliath();
+        this.emitHud();
+      },
+      points: (n = 5) => {
+        this.state.skillPoints += n;
+        this.toast(`Skill points +${n}.`, "info");
+        this.emitHud();
+      },
+      swingNear: () => {
+        const b = this.enemies.livingBoss();
+        if (!b) {
+          this.toast("No Goliath to swing at.", "bad");
+          return;
+        }
+        this.player.setPosition(b.x - 12, b.y);
+        this.player.swing();
+        this.emitHud();
+      },
+    };
   }
 }

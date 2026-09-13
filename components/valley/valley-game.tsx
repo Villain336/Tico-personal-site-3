@@ -15,16 +15,24 @@ import { RosterPanel } from "./roster-panel";
 import { QuestJournal } from "./quest-journal";
 import { BooksPanel } from "./books-panel";
 import { CivicPanel } from "./civic-panel";
+import { GearPanel } from "./gear-panel";
 import { Prologue } from "./prologue";
 
 declare global {
   interface Window {
     __valley?: import("phaser").Game;
+    __valleyDebug?: {
+      grant: (id: import("@/lib/valley/types").GearId) => void;
+      goliath: () => void;
+      david: () => void;
+      points: (n?: number) => void;
+      swingNear: () => void;
+    };
   }
 }
 
-type Panel = "intro" | "build" | "skills" | "roster" | "journal" | "books" | "civic" | "pause" | "away" | "victory" | null;
-const PAUSING: Panel[] = ["intro", "skills", "roster", "journal", "books", "civic", "pause", "away", "victory"];
+type Panel = "intro" | "build" | "skills" | "roster" | "journal" | "books" | "civic" | "gear" | "pause" | "away" | "victory" | null;
+const PAUSING: Panel[] = ["intro", "skills", "roster", "journal", "books", "civic", "gear", "pause", "away", "victory"];
 
 const HOTKEYS: Record<string, BuildingType> = Object.fromEntries(
   (Object.keys(BUILDINGS) as (keyof typeof BUILDINGS)[]).map((k) => [BUILDINGS[k].hotkey, k]),
@@ -73,7 +81,9 @@ export function ValleyGame({
         audio: { noAudio: true },
       });
       // `?dev` exposes the engine for playtesting/balancing from the console.
-      if (window.location.search.includes("dev")) window.__valley = game;
+      if (window.location.search.includes("dev")) {
+        window.__valley = game;
+      }
       gameRef.current = game;
       setReady(true);
     })();
@@ -169,6 +179,8 @@ export function ValleyGame({
         togglePanel("books");
       } else if (k === "g") {
         togglePanel("civic");
+      } else if (k === "i") {
+        togglePanel("gear");
       } else if (HOTKEYS[e.key]) {
         bridge.send({ type: "setBuildMode", building: HOTKEYS[e.key] });
         setPanel("build");
@@ -208,6 +220,7 @@ export function ValleyGame({
           onJournal={() => togglePanel("journal")}
           onBooks={() => togglePanel("books")}
           onCivic={() => togglePanel("civic")}
+          onGear={() => togglePanel("gear")}
           onPause={() => togglePanel("pause")}
           onSell={() => bridge.send({ type: "sell", what: "all" })}
           onAutoSell={() => bridge.send({ type: "toggleAutoSell" })}
@@ -242,6 +255,15 @@ export function ValleyGame({
       )}
 
       {hud && panel === "journal" && <QuestJournal hud={hud} onClose={() => setPanel(null)} />}
+
+      {hud && panel === "gear" && (
+        <GearPanel
+          hud={hud}
+          onEquip={(id) => bridge.send({ type: "equip", id })}
+          onUnequip={(slot) => bridge.send({ type: "unequip", slot })}
+          onClose={() => setPanel(null)}
+        />
+      )}
 
       {hud && panel === "civic" && (
         <CivicPanel
