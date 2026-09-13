@@ -1,4 +1,4 @@
-import type { BuildingType, SkillId } from "./types";
+import type { BuildingType, CropKind, SkillId } from "./types";
 
 /** Every balance number lives here so tuning never means hunting through scenes. */
 
@@ -33,7 +33,7 @@ export const NIGHT_SECONDS = 120;
 export const CYCLE_SECONDS = DAY_SECONDS + NIGHT_SECONDS;
 
 export const SAVE_KEY = "shalom-valley-save";
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 export const AUTOSAVE_MS = 30_000;
 export const OFFLINE_CAP_HOURS = 8;
 export const OFFLINE_RENT_RATE = 0.5;
@@ -125,6 +125,33 @@ export const BUILDINGS: Record<Exclude<BuildingType, "altar" | "idol">, Building
   },
   flax: { name: "Flax plot", cost: 14, altarLevel: 1, light: 0, blocks: false, size: 1, blurb: "Flax. Blue flowers, sells well.", hotkey: "[" },
   grove: { name: "Olive grove", cost: 28, altarLevel: 2, light: 0, blocks: false, size: 1, blurb: "Olives. Slow. Eating also drinks.", hotkey: "=" },
+  store: { name: "Storehouse", cost: 35, altarLevel: 1, light: 1, blocks: true, size: 2, blurb: "Village grain. Deposit crops (E).", hotkey: ";" },
+  changer: { name: "Money changer", cost: 40, altarLevel: 1, light: 2, blocks: true, size: 1, blurb: "Bank. Deposit coins (E). Earns at dawn.", hotkey: "]" },
+};
+
+export const CROP_KINDS = ["wheat", "grapes", "olives", "flax"] as const;
+
+export const emptyStores = (): Record<CropKind, number> => ({ wheat: 0, grapes: 0, olives: 0, flax: 0 });
+export const evenPrices = (): Record<CropKind, number> => ({ wheat: 1, grapes: 1, olives: 1, flax: 1 });
+
+export const ECONOMY = {
+  titheRate: 0.1,
+  wagePerVillager: 2,
+  interestGood: 0.02,
+  interestMid: 0.01,
+  bankRunSin: 50,
+  bankRunLoss: 0.15,
+  bankRunMinSpawns: 3,
+  priceFloor: 0.6,
+  priceCeil: 1.8,
+  glutPerUnit: 0.025,
+  priceRecover: 0.08,
+  raidPriceBump: 0.12,
+  shareSinRelief: -2,
+  hungrySin: 3,
+  hoardSin: 4,
+  unpaidWageSin: 3,
+  titheSinRelief: -1,
 };
 
 export const GRANARY_RADIUS_TILES = 5;

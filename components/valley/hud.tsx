@@ -21,6 +21,7 @@ export function Hud({
   onSkills,
   onRoster,
   onJournal,
+  onBooks,
   onPause,
   onSell,
   onAutoSell,
@@ -34,6 +35,7 @@ export function Hud({
   onSkills: () => void;
   onRoster: () => void;
   onJournal: () => void;
+  onBooks: () => void;
   onPause: () => void;
   onSell: () => void;
   onAutoSell: () => void;
@@ -58,6 +60,7 @@ export function Hud({
         <Card>
           <div className="flex flex-wrap gap-x-3 gap-y-1">
             <Stat icon="🪙" label="coins" value={hud.coins} />
+            <Stat icon="🏦" label="bank" value={hud.bank} />
             <Stat icon="🌾" label="wheat" value={hud.wheat} />
             <Stat icon="🍇" label="grapes" value={hud.grapes} />
             <Stat icon="🫒" label="olives" value={hud.olives} />
@@ -93,6 +96,10 @@ export function Hud({
           <Pill>Hold E to pray · refills prayer, earns XP</Pill>
         ) : hud.nearMarket && hasCrops ? (
           <Pill>Press E to sell your crops</Pill>
+        ) : hud.nearChanger ? (
+          <Pill>Press E to deposit coins · L for the books</Pill>
+        ) : hud.nearStore && hasCrops ? (
+          <Pill>Press E to store crops · L for the books</Pill>
         ) : hud.nearDrink && hud.thirst < 90 ? (
           <Pill>Press E to drink · or stand in the shallows</Pill>
         ) : hint ? (
@@ -143,6 +150,9 @@ export function Hud({
           </Btn>
           <Btn onClick={onJournal} badge={readyQuests > 0 ? readyQuests : undefined}>
             Quests <Key>J</Key>
+          </Btn>
+          <Btn onClick={onBooks}>
+            Books <Key>L</Key>
           </Btn>
           <Btn onClick={onPause}>
             <Key>Esc</Key>

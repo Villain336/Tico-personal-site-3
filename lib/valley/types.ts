@@ -26,6 +26,8 @@ export type BuildingType =
   | "granary"
   | "flax"
   | "grove"
+  | "store"
+  | "changer"
   | "idol";
 
 export type CropKind = "wheat" | "grapes" | "olives" | "flax";
@@ -101,6 +103,14 @@ export type SaveData = {
   grapes: number;
   olives: number;
   flax: number;
+  /** Coins held by the money changer. */
+  bank: number;
+  /** Grain in the storehouse / granary. */
+  stores: Record<CropKind, number>;
+  /** Price multipliers vs the crop table (glut and raids move these). */
+  prices: Record<CropKind, number>;
+  titheOn: boolean;
+  shareOn: boolean;
   sin: number;
   health: number;
   hunger: number;
@@ -137,6 +147,15 @@ export type HudState = {
   grapes: number;
   olives: number;
   flax: number;
+  bank: number;
+  stores: Record<CropKind, number>;
+  prices: Record<CropKind, number>;
+  titheOn: boolean;
+  shareOn: boolean;
+  nearChanger: boolean;
+  nearStore: boolean;
+  hasChanger: boolean;
+  hasStore: boolean;
   sin: number;
   health: number;
   maxHealth: number;
@@ -220,6 +239,13 @@ export type DawnReport = {
   saved: number;
   /** Strangers who walked into the valley this dawn — their arrival lines. */
   arrivals: { name: string; line: string }[];
+  wages: number;
+  wagesShort: number;
+  titheHeld: number;
+  interest: number;
+  bankRun: number;
+  rationsFed: number;
+  rationsShort: number;
 };
 
 export type AwayReport = {
@@ -256,7 +282,11 @@ export type GameCommand =
   | { type: "turnInQuest"; id: BigRecruitId }
   | { type: "setDeployment"; id: RecruitId; mode: DeploymentMode }
   | { type: "recruitScattered"; id: ScatteredRecruitId }
-  | { type: "introSeen" };
+  | { type: "introSeen" }
+  | { type: "bank"; op: "deposit" | "withdraw"; amount: number }
+  | { type: "store"; op: "deposit" | "withdraw"; kind: CropKind | "all"; amount?: number }
+  | { type: "toggleTithe" }
+  | { type: "toggleShare" };
 
 export type GameEvent =
   | { type: "hud"; state: HudState }

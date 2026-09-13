@@ -15,7 +15,10 @@ import {
   START_COINS,
   START_WHEAT,
   TILE,
+  emptyStores,
+  evenPrices,
 } from "./config";
+import { settleDawnOn } from "./world/ledger";
 import { LETTER, letterLine, pickVisitName } from "./dialogue";
 
 export const ALTAR_TILE = { tx: Math.floor(MAP_W / 2) - 1, ty: Math.floor(MAP_H / 2) - 1 };
@@ -32,6 +35,11 @@ export function newSave(character: Character): SaveData {
     grapes: 0,
     olives: 0,
     flax: 0,
+    bank: 0,
+    stores: emptyStores(),
+    prices: evenPrices(),
+    titheOn: true,
+    shareOn: true,
     sin: 0,
     health: PLAYER.maxHealth,
     hunger: 100,
@@ -128,8 +136,11 @@ export function applyOfflineProgress(save: SaveData, now = Date.now()): { save: 
   let rentPerDawn = 0;
   for (const v of next.villagers) rentPerDawn += v.level * HOUSE.rentPerVillagerLevel * stewardMult;
   if (next.sin > SIN.rentHalvedAt) rentPerDawn *= 0.5;
-  const rent = Math.floor(rentPerDawn * dawns * OFFLINE_RENT_RATE);
-  next.coins += rent;
+  let rent = 0;
+  for (let i = 0; i < dawns; i++) {
+    const books = settleDawnOn(next, next.villagers.length, rentPerDawn * OFFLINE_RENT_RATE, 0);
+    rent += books.rentPaid;
+  }
 
   const villagerName = next.villagers.length > 0 ? pickVisitName(next.villagers[0].seed) : null;
   const storyLine =

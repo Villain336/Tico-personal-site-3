@@ -336,6 +336,62 @@ export const TOWER: PixelMap = [
   "................",
 ];
 
+/** 32×32 storehouse — sacks under a timber roof. */
+export const STORE: PixelMap = [
+  "..............KKKK..............",
+  "............KKWWWWKK............",
+  "..........KKWWWWWWWWKK..........",
+  "........KKWWWWWWWWWWWWKK........",
+  "......KKWWWWWWWWWWWWWWWWKK......",
+  "....KKWWWWWWWWWWWWWWWWWWWWKK....",
+  "...KWWWWWWWWWWWWWWWWWWWWWWWWK...",
+  "...KKKKKKKKKKKKKKKKKKKKKKKKKK...",
+  "....KCCCCCCCCCCCCCCCCCCCCCCK....",
+  "....KCCYYYYCCPPPPCCYYYYCCCCK....",
+  "....KCYYYYYCPPPPPPCCYYYYYCCK....",
+  "....KCYYYYYCPPPPPPCCYYYYYCCK....",
+  "....KCCYYYYCCPPPPCCYYYYCCCCK....",
+  "....KCCCCCCCCCCCCCCCCCCCCCCK....",
+  "....KCCCCCCCCKKKKCCCCCCCCCCK....",
+  "....KCCCCCCCCKWWKCCCCCCCCCCK....",
+  "....KCCCCCCCCKWWKCCCCCCCCCCK....",
+  "....KCCCCCCCCKKKKCCCCCCCCCCK....",
+  "....KCCCCCCCCCCCCCCCCCCCCCCK....",
+  "....KnnnnnnnnnnnnnnnnnnnnnnK....",
+  "....KKKKKKKKKKKKKKKKKKKKKKKK....",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+];
+
+/** 16×16 money changer — a gold-scale stall. */
+export const CHANGER: PixelMap = [
+  "KKKKKKKKKKKKKKKK",
+  "KGCGCGCGCGCGCGCK",
+  "KGCGCGCGCGCGCGCK",
+  "KKKKKKKKKKKKKKKK",
+  ".W....GGGG....W.",
+  ".W...GGggGG...W.",
+  ".W..GGKKKKGG..W.",
+  ".W.GG......GG.W.",
+  ".KKKKKKKKKKKKKK.",
+  ".KWWWWWWWWWWWWK.",
+  ".KWwWWWWWWWWwWK.",
+  ".KWWWWWWWWWWWWK.",
+  ".KKKKKKKKKKKKKK.",
+  "..W..........W..",
+  "..W..........W..",
+  "..w..........w..",
+];
+
 export const MARKET: PixelMap = [
   "KKKKKKKKKKKKKKKK",
   "KRCRCRCRCRCRCRCK",

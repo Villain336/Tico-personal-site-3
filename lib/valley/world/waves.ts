@@ -10,6 +10,7 @@ export class Waves {
   timer = 0;
   active = false;
   interval = WAVES.spawnIntervalS;
+  spawnedTonight = 0;
 
   constructor(private scene: WorldScene) {}
 
@@ -52,6 +53,7 @@ export class Waves {
     this.timer = 3;
     this.active = true;
     this.prophetTonight = false;
+    this.spawnedTonight = 0;
     this.scene.toast(
       `Night falls. ${count} shadows stir at the edge of the valley${st.sin >= SIN.extraEnemiesAt ? " — sin draws more" : ""}.`,
       "bad",
@@ -71,6 +73,7 @@ export class Waves {
     this.pending--;
     const kind = this.pick();
     const pos = this.scene.darkness.randomEdgeSpawn();
+    this.spawnedTonight++;
     this.scene.enemies.spawn(kind, pos.x, pos.y);
   }
 }

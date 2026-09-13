@@ -13,6 +13,7 @@ import { Modal, ModalButton } from "./modal";
 import { Ribbon } from "./ribbon";
 import { RosterPanel } from "./roster-panel";
 import { QuestJournal } from "./quest-journal";
+import { BooksPanel } from "./books-panel";
 import { Prologue } from "./prologue";
 
 declare global {
@@ -21,8 +22,8 @@ declare global {
   }
 }
 
-type Panel = "intro" | "build" | "skills" | "roster" | "journal" | "pause" | "away" | "victory" | null;
-const PAUSING: Panel[] = ["intro", "skills", "roster", "journal", "pause", "away", "victory"];
+type Panel = "intro" | "build" | "skills" | "roster" | "journal" | "books" | "pause" | "away" | "victory" | null;
+const PAUSING: Panel[] = ["intro", "skills", "roster", "journal", "books", "pause", "away", "victory"];
 
 const HOTKEYS: Record<string, BuildingType> = Object.fromEntries(
   (Object.keys(BUILDINGS) as (keyof typeof BUILDINGS)[]).map((k) => [BUILDINGS[k].hotkey, k]),
@@ -143,6 +144,8 @@ export function ValleyGame({
         togglePanel("roster");
       } else if (k === "j") {
         togglePanel("journal");
+      } else if (k === "l") {
+        togglePanel("books");
       } else if (HOTKEYS[e.key]) {
         bridge.send({ type: "setBuildMode", building: HOTKEYS[e.key] });
         setPanel("build");
@@ -174,6 +177,7 @@ export function ValleyGame({
           onSkills={() => togglePanel("skills")}
           onRoster={() => togglePanel("roster")}
           onJournal={() => togglePanel("journal")}
+          onBooks={() => togglePanel("books")}
           onPause={() => togglePanel("pause")}
           onSell={() => bridge.send({ type: "sell", what: "all" })}
           onAutoSell={() => bridge.send({ type: "toggleAutoSell" })}
@@ -208,6 +212,17 @@ export function ValleyGame({
       )}
 
       {hud && panel === "journal" && <QuestJournal hud={hud} onClose={() => setPanel(null)} />}
+
+      {hud && panel === "books" && (
+        <BooksPanel
+          hud={hud}
+          onBank={(op, amount) => bridge.send({ type: "bank", op, amount })}
+          onStore={(op, kind, amount) => bridge.send({ type: "store", op, kind, amount })}
+          onToggleTithe={() => bridge.send({ type: "toggleTithe" })}
+          onToggleShare={() => bridge.send({ type: "toggleShare" })}
+          onClose={() => setPanel(null)}
+        />
+      )}
 
       {panel === "pause" && (
         <PauseMenu
