@@ -87,6 +87,7 @@ describe("judgment", () => {
     assert.equal(canCallJudgment({ jesusDone: false, verdict: "none", verdictNext: false }).ok, false);
     assert.equal(canCallJudgment({ jesusDone: true, verdict: "none", verdictNext: false }).ok, true);
     assert.match(canCallJudgment({ jesusDone: true, verdict: "blessing", verdictNext: false }).reason, /already/);
+    assert.match(canCallJudgment({ jesusDone: false, verdict: "blessing", verdictNext: false }).reason, /already/);
   });
 
   it("keeps a Book of named souls and quotes the last line", () => {

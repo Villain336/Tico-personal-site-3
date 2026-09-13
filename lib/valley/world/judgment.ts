@@ -123,9 +123,9 @@ export function verdictEffects(kind: Exclude<DivineVerdict, "none">) {
 }
 
 export function canCallJudgment(input: { jesusDone: boolean; verdict: DivineVerdict; verdictNext: boolean }) {
-  if (!input.jesusDone) return { ok: false as const, reason: "The valley is not yet ready to be weighed." };
   if (input.verdict !== "none") return { ok: false as const, reason: "The valley has already been weighed." };
   if (input.verdictNext) return { ok: false as const, reason: "The valley will be weighed at dawn." };
+  if (!input.jesusDone) return { ok: false as const, reason: "The valley is not yet ready to be weighed." };
   return { ok: true as const };
 }
 
