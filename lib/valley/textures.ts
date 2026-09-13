@@ -248,6 +248,62 @@ export const ENEMY_LOOKS: Record<string, { look: CharLook; roles: Roles }> = {
   },
 };
 
+export const RAID_LEADER_LOOK = {
+  look: { gender: "man" as const, body: 2, face: 2, hairStyle: 0, mask: true, outfitStyle: 2 },
+  roles: {
+    ...BASE_CHAR_ROLES,
+    S: SKIN_TONES[2],
+    s: SKIN_SHADE[2],
+    H: "#111118",
+    C: C.gold,
+    T: C.goldDark,
+    O: C.robber,
+    o: "#3a2a10",
+  },
+};
+
+export const BAAL_LOOK = {
+  look: { gender: "man" as const, body: 2, face: 2, hairStyle: 2, beard: true, staff: true, outfitStyle: 1 },
+  roles: {
+    ...BASE_CHAR_ROLES,
+    S: SKIN_TONES[3],
+    s: SKIN_SHADE[3],
+    H: "#8d8d94",
+    C: C.gold,
+    T: C.prophetTrim,
+    O: C.gold,
+    o: C.goldDark,
+  },
+};
+
+export const MOLOCH_LOOK = {
+  look: { gender: "man" as const, body: 2, face: 2, hairStyle: 0, beard: true, outfitStyle: 2 },
+  roles: {
+    ...BASE_CHAR_ROLES,
+    S: "#c45c3e",
+    s: "#8a3320",
+    H: "#2b1d14",
+    C: C.fire,
+    T: C.fireBright,
+    O: "#8a3320",
+    o: "#3d2a19",
+  },
+};
+
+export const DRAGON_LOOK = {
+  look: { gender: "man" as const, body: 2, face: 2, hairStyle: 0, outfitStyle: 2 },
+  roles: {
+    ...BASE_CHAR_ROLES,
+    S: "#4a3a78",
+    s: "#2a2048",
+    H: "#1a1420",
+    C: C.violet,
+    T: C.lime,
+    O: "#3a2a60",
+    o: "#1a1428",
+  },
+};
+
 export const GOLIATH_LOOK = {
   look: { gender: "man" as const, body: 2, face: 2, hairStyle: 0, beard: true, outfitStyle: 2 },
   roles: {
@@ -400,6 +456,10 @@ export function registerTextures(scene: Phaser.Scene, character: Character) {
   }
   addCanvas(scene, "spirit", renderMap(SPIRIT, SPIRIT_ROLES));
   addCanvas(scene, "goliath", renderMap(buildCharacter(GOLIATH_LOOK.look), GOLIATH_LOOK.roles, 2));
+  addCanvas(scene, "raidLeader", renderMap(buildCharacter(RAID_LEADER_LOOK.look), RAID_LEADER_LOOK.roles));
+  addCanvas(scene, "baal", renderMap(buildCharacter(BAAL_LOOK.look), BAAL_LOOK.roles, 2));
+  addCanvas(scene, "moloch", renderMap(buildCharacter(MOLOCH_LOOK.look), MOLOCH_LOOK.roles, 2));
+  addCanvas(scene, "dragon", renderMap(buildCharacter(DRAGON_LOOK.look), DRAGON_LOOK.roles, 2));
   addCanvas(scene, "idol", renderMap(IDOL, IDOL_ROLES));
 
   for (const [id, { look, roles }] of Object.entries(BIG_RECRUIT_LOOKS)) {

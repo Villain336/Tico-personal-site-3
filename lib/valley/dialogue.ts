@@ -133,6 +133,34 @@ export const LINES = {
     slam: ["Fall!", "Dust!"],
     hit: ["Hnh.", "That sting...", "Again!"],
   },
+  raidLeader: {
+    arrive: ["The city sent me.", "Banners up. Burn their light.", "A valley of shepherds. Easy."],
+    taunt: ["The idol city remembers you.", "Your walls are sticks.", "Muster. It will not save you."],
+    hit: ["Hold the line!", "The banner still stands!", "Again!"],
+    flee: ["Back to the hills!", "The city will send more!"],
+  },
+  baal: {
+    arrive: ["Kneel to Baal.", "Your altar is a cold stone.", "I am the storm they wanted."],
+    taunt: ["Bow.", "Gold answers.", "Your light is a lie."],
+    plant: ["A calf for the valley.", "Worship here."],
+    pulse: ["Burn.", "Mine."],
+    hit: ["Heretic!", "You dare?"],
+  },
+  moloch: {
+    arrive: ["Feed the fire.", "The furnace is hungry.", "A child of flame walks."],
+    taunt: ["Step closer.", "Ash is mercy.", "Your flesh is fuel."],
+    windup: ["The grate opens!", "Heat!"],
+    slam: ["Cinders!", "Burn!"],
+    hit: ["Hnh.", "The iron holds."],
+  },
+  dragon: {
+    arrive: ["The outer dark sent a beast — not a god.", "Wings over the ridge.", "I am hunger with scales."],
+    taunt: ["Little lamp.", "Your valley is a nest.", "Run, shepherd."],
+    dash: ["I come.", "Down."],
+    windup: ["Breath."],
+    breath: ["Fire.", "Ash."],
+    hit: ["A scratch.", "Again, then."],
+  },
   prophet: {
     preach: [
       "Bow to the golden calf!",

@@ -63,6 +63,11 @@ export function Hud({
             <span className="text-white/60">{hud.isNight ? "Night" : "Day"}</span>
           </div>
           <Bar value={hud.phaseProgress} color={hud.isNight ? "bg-indigo-400" : "bg-amber-300"} className="mt-1.5" />
+          {hud.isNight && hud.nightKind !== "night" && (
+            <div className={`mt-1 font-semibold ${hud.nightKind === "siege" ? "text-brand-coral" : "text-amber-200"}`}>
+              {hud.nightKind === "siege" ? "Siege night" : "Raid night"}
+            </div>
+          )}
         </Card>
         <Card>
           <div className="flex flex-wrap gap-x-3 gap-y-1">

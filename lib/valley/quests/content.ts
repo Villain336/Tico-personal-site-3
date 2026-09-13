@@ -133,9 +133,11 @@ export const SCATTERED_RECRUITS: Record<ScatteredRecruitId, ScatteredRecruitDef>
   ruth: { name: "Ruth", unlockLevel: 7, cost: 100, role: "healer" },
 };
 
-export type BossId = "goliath";
+export type BossId = "goliath" | "baal" | "moloch" | "dragon";
 
-/** Boss roster entries are name-only flags (R5) — no fight logic ships in this plan. */
 export const BOSSES: Record<BossId, { name: string }> = {
   goliath: { name: "Goliath" },
+  baal: { name: "Baal" },
+  moloch: { name: "Moloch" },
+  dragon: { name: "The dragon" },
 };

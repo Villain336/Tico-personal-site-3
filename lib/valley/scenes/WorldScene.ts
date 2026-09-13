@@ -21,9 +21,12 @@ import {
   VICTORY_LIT_RATIO,
   XP,
   emptySkills,
+  emptyUnlocks,
 } from "../config";
 import type { CropKind, GearId } from "../types";
 import { emptyGear, equipGear, GEAR, grantGear, unequipSlot } from "../world/gear";
+import { MUSTER_COST, canMuster, emptyWar, payMuster } from "../world/war";
+import { hasIntent } from "../world/laws";
 import { line, pickVisitName } from "../dialogue";
 import { BIG_RECRUITS, SCATTERED_RECRUITS } from "../quests/content";
 import { worldTime, writeSave } from "../save";
@@ -100,7 +103,8 @@ export class WorldScene extends Phaser.Scene {
     st0.skills = { ...emptySkills(), ...st0.skills };
     st0.gear = st0.gear ?? emptyGear();
     st0.relics = st0.relics ?? 0;
-    if (st0.unlocks.goliathDefeated == null) st0.unlocks.goliathDefeated = false;
+    st0.unlocks = { ...emptyUnlocks(), ...st0.unlocks, abilities: st0.unlocks.abilities ?? [] };
+    st0.war = st0.war ?? emptyWar();
     registerTextures(this, this.state.character);
     this.input.keyboard?.clearCaptures();
 
@@ -265,9 +269,19 @@ export class WorldScene extends Phaser.Scene {
     const st = this.state;
     st.clock -= CYCLE_SECONDS;
     st.day++;
+    const nightKind = this.waves.nightKind;
+    const captainFell = this.waves.captainKilledTonight;
     this.enemies.clearAll();
     this.waves.endNight();
-    if (this.enemies.livingBoss()) this.toast("Goliath did not flee with the dawn.", "bad");
+    const boss = this.enemies.livingBoss();
+    if (boss) this.toast(`${boss.def.name} did not flee with the dawn.`, "bad");
+    if (nightKind === "raid" || nightKind === "siege") {
+      if (captainFell) {
+        this.toast(nightKind === "siege" ? "The host holds. The idol city reels." : "The raid broke. The hills went quiet.", "good");
+      } else {
+        this.toast(nightKind === "siege" ? "The siege slipped back to the ridge." : "The raid slipped back to the hills.", "bad");
+      }
+    }
     const r = this.villagers.onDawn();
     const sinBefore = st.sin;
     const civicDawn = this.civic.settleDawn();
@@ -807,6 +821,29 @@ export class WorldScene extends Phaser.Scene {
         this.toast("Unequipped. Press I to swap gear.", "info");
         break;
       }
+      case "muster": {
+        const check = canMuster({
+          hasHall: this.civic.hasHall(),
+          conscription: hasIntent(st.civic, "conscription"),
+          coins: st.coins,
+          bank: st.bank,
+          dragonDefeated: st.unlocks.dragonDefeated,
+          goliathDefeated: st.unlocks.goliathDefeated,
+          raidsCleared: st.war.raidsCleared,
+          siegeNext: st.war.siegeNext,
+        });
+        if (!check.ok) {
+          this.toast(check.reason, "bad");
+          break;
+        }
+        const paid = payMuster(st.coins, st.bank);
+        st.coins = paid.coins;
+        st.bank = paid.bank;
+        st.war.mustered = true;
+        st.war.siegeNext = true;
+        this.toast(`The host is mustered (${MUSTER_COST} coins). Night will be a siege.`, "good");
+        break;
+      }
     }
     this.emitHud();
   }
@@ -853,6 +890,29 @@ export class WorldScene extends Phaser.Scene {
       boss: (() => {
         const b = this.enemies.livingBoss();
         return b ? { name: b.def.name, hp: Math.max(0, Math.round(b.hp)), maxHp: b.def.hp } : null;
+      })(),
+      nightKind: this.isNight() ? this.waves.nightKind : "night",
+      war: (() => {
+        const check = canMuster({
+          hasHall: this.civic.hasHall(),
+          conscription: hasIntent(st.civic, "conscription"),
+          coins: st.coins,
+          bank: st.bank,
+          dragonDefeated: st.unlocks.dragonDefeated,
+          goliathDefeated: st.unlocks.goliathDefeated,
+          raidsCleared: st.war.raidsCleared,
+          siegeNext: st.war.siegeNext,
+        });
+        return {
+          raidsCleared: st.war.raidsCleared,
+          victories: st.war.victories,
+          siegeNext: st.war.siegeNext,
+          canMuster: check.ok,
+          hint: check.ok
+            ? `Muster a host. ${MUSTER_COST} coins. Conscription must stand. Next night is a siege.`
+            : check.reason,
+          cost: MUSTER_COST,
+        };
       })(),
       inside: this.interiors?.label ?? null,
       nearEnter: p.nearEnter,
@@ -957,7 +1017,44 @@ export class WorldScene extends Phaser.Scene {
       },
       goliath: () => {
         this.state.unlocks.goliathBoss = true;
-        this.waves.trySpawnGoliath();
+        this.waves.spawnNamed("goliath");
+        this.emitHud();
+      },
+      raid: () => {
+        this.state.unlocks.goliathDefeated = true;
+        this.state.war.forceKind = "raid";
+        this.waves.spawnNamed("raidLeader");
+        this.toast("A raid captain is in the valley.", "bad");
+        this.emitHud();
+      },
+      siege: () => {
+        this.state.unlocks.goliathDefeated = true;
+        this.state.war.raidsCleared = Math.max(1, this.state.war.raidsCleared);
+        this.state.war.forceKind = "siege";
+        this.state.war.siegeNext = true;
+        this.toast("Siege booked. If it is night, the next wave is a siege.", "info");
+        if (this.isNight()) this.waves.spawnNamed("raidLeader");
+        this.emitHud();
+      },
+      baal: () => {
+        this.state.unlocks.goliathDefeated = true;
+        this.state.unlocks.baalBoss = true;
+        this.waves.spawnNamed("baal");
+        this.emitHud();
+      },
+      moloch: () => {
+        this.state.unlocks.goliathDefeated = true;
+        this.state.unlocks.baalDefeated = true;
+        this.state.unlocks.molochBoss = true;
+        this.waves.spawnNamed("moloch");
+        this.emitHud();
+      },
+      dragon: () => {
+        this.state.unlocks.goliathDefeated = true;
+        this.state.unlocks.baalDefeated = true;
+        this.state.unlocks.molochDefeated = true;
+        this.state.unlocks.dragonBoss = true;
+        this.waves.spawnNamed("dragon");
         this.emitHud();
       },
       david: () => {
@@ -977,7 +1074,7 @@ export class WorldScene extends Phaser.Scene {
       swingNear: () => {
         const b = this.enemies.livingBoss();
         if (!b) {
-          this.toast("No Goliath to swing at.", "bad");
+          this.toast("No named boss to swing at.", "bad");
           return;
         }
         this.player.setPosition(b.x - 12, b.y);

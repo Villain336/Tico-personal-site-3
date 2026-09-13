@@ -89,6 +89,13 @@ describe("gear", () => {
     assert.equal(applied.gear.bag.includes("goliathMail"), false);
   });
 
+  it("always drops later-boss named gear", () => {
+    assert.equal(rollEnemyDrop("raidLeader", 0, seq([0, 0])).gear, "raidBanner");
+    assert.equal(rollEnemyDrop("baal", 0, seq([0, 0])).gear, "baalsCenser");
+    assert.equal(rollEnemyDrop("moloch", 0, seq([0, 0])).gear, "molochBrand");
+    assert.equal(rollEnemyDrop("dragon", 0, seq([0, 0])).gear, "dragonScale");
+  });
+
   it("puts a first unique drop into an empty slot", () => {
     const applied = applyDrop(emptyGear(), { scraps: 3, relic: true, gear: "prophetLamp" });
     assert.equal(applied.gained, "prophetLamp");

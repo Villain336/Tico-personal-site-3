@@ -1,6 +1,7 @@
 import type { WorldScene } from "../scenes/WorldScene";
-import { ENEMIES, NIGHT_SECONDS, SIN, TILE, WAVES, type EnemyKind } from "../config";
+import { ENEMIES, NIGHT_SECONDS, SIN, TILE, WAVES, isNamedBoss, type EnemyKind } from "../config";
 import { civicDawnMods } from "./civic";
+import { nextNamedBoss, nightCount, pickNightKind, type NightKind } from "./war";
 
 const ORDER: EnemyKind[] = ["robber", "tempter", "deceiver", "spirit", "prophet"];
 const WEIGHTS = [5, 3, 2, 2, 1];
@@ -12,6 +13,8 @@ export class Waves {
   active = false;
   interval = WAVES.spawnIntervalS;
   spawnedTonight = 0;
+  nightKind: NightKind = "night";
+  captainKilledTonight = false;
 
   constructor(private scene: WorldScene) {}
 
@@ -27,7 +30,6 @@ export class Waves {
   pick(): EnemyKind {
     const pool = this.unlocked();
     if (pool.length === 0) return "robber";
-    // prophets show up at most once per night
     const filtered = pool.filter((k) => k !== "prophet" || !this.prophetTonight);
     const weights = filtered.map((k) => WEIGHTS[ORDER.indexOf(k)]);
     const total = weights.reduce((a, b) => a + b, 0);
@@ -46,32 +48,78 @@ export class Waves {
 
   startNight() {
     const st = this.scene.state;
+    const war = st.war;
+    this.nightKind = pickNightKind({
+      goliathDefeated: st.unlocks.goliathDefeated,
+      siegeNext: war.siegeNext,
+      forceKind: war.forceKind,
+      lastNight: war.lastNight,
+      raidsCleared: war.raidsCleared,
+      day: st.day,
+      rng: Math.random,
+    });
+    war.forceKind = null;
+    if (this.nightKind === "siege") {
+      war.siegeNext = false;
+      war.mustered = false;
+    }
+    war.lastNight = this.nightKind;
+    this.captainKilledTonight = false;
+
     let count = WAVES.baseCount(st.day) + Math.floor(this.scene.villagers.population * WAVES.perPopulation);
     if (st.sin >= SIN.extraEnemiesAt) count += WAVES.sinBonus;
     count += civicDawnMods(st.civic).spawnDelta;
-    count = Math.max(1, Math.min(count, 22));
+    count = nightCount(count, this.nightKind);
     this.pending = count;
     this.interval = Math.min(WAVES.spawnIntervalS, (NIGHT_SECONDS - 15) / Math.max(1, count));
     this.timer = 3;
     this.active = true;
     this.prophetTonight = false;
     this.spawnedTonight = 0;
-    this.scene.toast(
-      `Night falls. ${count} shadows stir at the edge of the valley${st.sin >= SIN.extraEnemiesAt ? " — sin draws more" : ""}.`,
-      "bad",
-    );
-    this.trySpawnGoliath();
+
+    if (this.nightKind === "siege") {
+      this.scene.toast(`Siege night. A host from the idol city presses the altar — ${count} in the dark.`, "bad");
+    } else if (this.nightKind === "raid") {
+      this.scene.toast(`A raid from the hills. Banners in the fog — ${count} shadows, and a captain.`, "bad");
+    } else {
+      this.scene.toast(
+        `Night falls. ${count} shadows stir at the edge of the valley${st.sin >= SIN.extraEnemiesAt ? " — sin draws more" : ""}.`,
+        "bad",
+      );
+    }
+
+    if (this.nightKind === "raid" || this.nightKind === "siege") {
+      const pos = this.nightKind === "siege" ? this.nearAltar(7) : this.scene.darkness.randomEdgeSpawn();
+      this.scene.enemies.spawn("raidLeader", pos.x, pos.y);
+    }
+    this.trySpawnNamedBoss();
   }
 
   trySpawnGoliath() {
-    const st = this.scene.state;
-    if (!st.unlocks.goliathBoss || st.unlocks.goliathDefeated) return;
+    this.trySpawnNamedBoss();
+  }
+
+  trySpawnNamedBoss() {
     if (this.scene.enemies.livingBoss()) return;
+    const kind = nextNamedBoss(this.scene.state.unlocks);
+    if (!kind) return;
+    const pos = this.nearAltar(8);
+    this.scene.enemies.spawn(kind, pos.x, pos.y);
+  }
+
+  spawnNamed(kind: EnemyKind) {
+    if (!isNamedBoss(kind) && kind !== "raidLeader") return;
+    if (isNamedBoss(kind) && this.scene.enemies.livingBoss()) return;
+    const pos = this.nearAltar(8);
+    this.scene.enemies.spawn(kind, pos.x, pos.y);
+  }
+
+  nearAltar(tiles: number) {
     const c = this.scene.buildings.center(this.scene.buildings.altar);
-    let pos = { x: c.x, y: c.y + TILE * 8 };
+    let pos = { x: c.x, y: c.y + TILE * tiles };
     for (let i = 0; i < 24; i++) {
       const a = Math.PI * 0.5 + (Math.random() - 0.5);
-      const r = TILE * (7 + Math.random() * 3);
+      const r = TILE * (tiles - 1 + Math.random() * 3);
       const x = c.x + Math.cos(a) * r;
       const y = c.y + Math.sin(a) * r;
       if (this.scene.map.isWalkablePoint(x, y, false)) {
@@ -79,12 +127,17 @@ export class Waves {
         break;
       }
     }
-    this.scene.enemies.spawn("goliath", pos.x, pos.y);
+    return pos;
   }
 
   endNight() {
     this.active = false;
     this.pending = 0;
+  }
+
+  spawnPoint() {
+    if (this.nightKind === "siege") return this.nearAltar(6 + Math.random() * 3);
+    return this.scene.darkness.randomEdgeSpawn();
   }
 
   update(dt: number) {
@@ -94,7 +147,7 @@ export class Waves {
     this.timer = this.interval;
     this.pending--;
     const kind = this.pick();
-    const pos = this.scene.darkness.randomEdgeSpawn();
+    const pos = this.spawnPoint();
     this.spawnedTonight++;
     this.scene.enemies.spawn(kind, pos.x, pos.y);
   }
