@@ -1,6 +1,6 @@
 import type { WorldScene } from "../scenes/WorldScene";
 import type { Gender, SavedVillager } from "../types";
-import { ALTAR, HOUSE, SIN, TILE, VILLAGER, XP } from "../config";
+import { ALTAR, CIVIC, HOUSE, SIN, TILE, VILLAGER, XP } from "../config";
 import { line } from "../dialogue";
 import { VILLAGER_VARIANTS } from "../textures";
 import { Actor, dist, type Afflictable } from "./actor";
@@ -40,9 +40,12 @@ export class Villager extends Actor implements Afflictable {
   alive = true;
   variant: number;
 
+  private world: WorldScene;
+
   constructor(scene: WorldScene, saved: SavedVillager, home: { x: number; y: number }) {
     const variant = Math.abs(saved.seed) % VILLAGER_VARIANTS;
     super(scene, saved.tx * TILE + TILE / 2, saved.ty * TILE + TILE, `vil_${variant}`);
+    this.world = scene;
     this.variant = variant;
     this.seed = saved.seed;
     this.gender = saved.gender;
@@ -57,7 +60,8 @@ export class Villager extends Actor implements Afflictable {
   }
 
   get canFight() {
-    return this.level >= VILLAGER.fightLevel;
+    const need = this.world.state.civic.edicts.conscription ? CIVIC.conscriptionFightLevel : VILLAGER.fightLevel;
+    return this.level >= need;
   }
 
   get busy() {
@@ -199,6 +203,7 @@ export class Villagers {
     v.sprite.setAlpha(0.75);
     this.scene.addSin(SIN.fall);
     this.fallenToday++;
+    this.scene.civic.maybeFileFall(v.seed);
     this.scene.toast(`A villager fell to ${reason}. Sin +${SIN.fall}. Cast out (E) near them to redeem.`, "bad");
     this.scene.speech.say(v.sprite, line("villager", "fallen"), "dark", 0);
     this.grieveNear(v, 2);
@@ -413,7 +418,7 @@ export class Villagers {
           if (v.timer > 0) break;
           const roll = Math.random();
           if (isNight) {
-            if (v.canFight) {
+            if (v.canFight && !sc.state.civic.edicts.curfew) {
               v.state = "wander";
               v.target = this.altarSpot();
             } else {
@@ -439,6 +444,10 @@ export class Villagers {
         }
         case "wander":
         case "toHome": {
+          if (v.state === "wander" && isNight && sc.state.civic.edicts.curfew) {
+            v.state = "toHome";
+            break;
+          }
           const t = v.state === "toHome" ? v.home : v.target;
           v.timer -= dt;
           if (v.moveToward(t.x, t.y, VILLAGER.speed, dt, sc.map, 6) || v.timer < -8) {

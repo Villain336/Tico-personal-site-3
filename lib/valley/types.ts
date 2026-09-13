@@ -28,6 +28,7 @@ export type BuildingType =
   | "grove"
   | "store"
   | "changer"
+  | "hall"
   | "idol";
 
 export type CropKind = "wheat" | "grapes" | "olives" | "flax";
@@ -82,6 +83,34 @@ export type Unlocks = {
   blessing: boolean;
 };
 
+export type EdictId = "curfew" | "openGates" | "sanctuary" | "conscription";
+export type StatuteId = "noIdols" | "protectWeak" | "keepSabbath" | "openHand";
+export type OfficeId = "watchman" | "scribe" | "treasurer";
+export type CaseKind = "fall" | "nightSale" | "idol" | "hoard";
+export type Verdict = "mercy" | "fine" | "exile";
+export type TitheRate = 0 | 10 | 20;
+export type StewardId = RecruitId | "self";
+
+export type CivicCase = {
+  id: string;
+  kind: CaseKind;
+  day: number;
+  accused: string;
+  accusedSeed?: number;
+  note: string;
+};
+
+export type CivicState = {
+  loyalty: number;
+  steward: StewardId | null;
+  edicts: Record<EdictId, boolean>;
+  statutes: Record<StatuteId, boolean>;
+  titheRate: TitheRate;
+  offices: Partial<Record<OfficeId, number>>;
+  docket: CivicCase[];
+  nextCaseId: number;
+};
+
 export type LandmarkId =
   | "shepherdCamp"
   | "boatyard"
@@ -111,6 +140,7 @@ export type SaveData = {
   prices: Record<CropKind, number>;
   titheOn: boolean;
   shareOn: boolean;
+  civic: CivicState;
   sin: number;
   health: number;
   hunger: number;
@@ -154,8 +184,12 @@ export type HudState = {
   shareOn: boolean;
   nearChanger: boolean;
   nearStore: boolean;
+  nearHall: boolean;
   hasChanger: boolean;
   hasStore: boolean;
+  hasHall: boolean;
+  civic: CivicState;
+  villagerOffices: { seed: number; name: string }[];
   sin: number;
   health: number;
   maxHealth: number;
@@ -246,6 +280,9 @@ export type DawnReport = {
   bankRun: number;
   rationsFed: number;
   rationsShort: number;
+  loyalty: number;
+  casesPending: number;
+  casesIgnored: number;
 };
 
 export type AwayReport = {
@@ -286,7 +323,13 @@ export type GameCommand =
   | { type: "bank"; op: "deposit" | "withdraw"; amount: number }
   | { type: "store"; op: "deposit" | "withdraw"; kind: CropKind | "all"; amount?: number }
   | { type: "toggleTithe" }
-  | { type: "toggleShare" };
+  | { type: "toggleShare" }
+  | { type: "setEdict"; id: EdictId; on: boolean }
+  | { type: "setStatute"; id: StatuteId; on: boolean }
+  | { type: "setTitheRate"; rate: TitheRate }
+  | { type: "setSteward"; who: StewardId }
+  | { type: "setOffice"; office: OfficeId; seed: number | null }
+  | { type: "judge"; id: string; verdict: Verdict };
 
 export type GameEvent =
   | { type: "hud"; state: HudState }
@@ -294,4 +337,5 @@ export type GameEvent =
   | { type: "away"; report: AwayReport }
   | { type: "toast"; text: string; tone?: "info" | "good" | "bad" }
   | { type: "victory" }
-  | { type: "gameover" };
+  | { type: "gameover" }
+  | { type: "openCivic" };

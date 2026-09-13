@@ -18,6 +18,7 @@ import {
   emptyStores,
   evenPrices,
 } from "./config";
+import { defaultCivic } from "./world/civic";
 import { settleDawnOn } from "./world/ledger";
 import { LETTER, letterLine, pickVisitName } from "./dialogue";
 
@@ -40,6 +41,7 @@ export function newSave(character: Character): SaveData {
     prices: evenPrices(),
     titheOn: true,
     shareOn: true,
+    civic: defaultCivic(),
     sin: 0,
     health: PLAYER.maxHealth,
     hunger: 100,

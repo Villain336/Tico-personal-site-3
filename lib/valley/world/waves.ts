@@ -1,5 +1,6 @@
 import type { WorldScene } from "../scenes/WorldScene";
 import { ENEMIES, NIGHT_SECONDS, SIN, WAVES, type EnemyKind } from "../config";
+import { civicDawnMods } from "./civic";
 
 const ORDER: EnemyKind[] = ["robber", "tempter", "deceiver", "spirit", "prophet"];
 const WEIGHTS = [5, 3, 2, 2, 1];
@@ -47,7 +48,8 @@ export class Waves {
     const st = this.scene.state;
     let count = WAVES.baseCount(st.day) + Math.floor(this.scene.villagers.population * WAVES.perPopulation);
     if (st.sin >= SIN.extraEnemiesAt) count += WAVES.sinBonus;
-    count = Math.min(count, 22);
+    count += civicDawnMods(st.civic).spawnDelta;
+    count = Math.max(1, Math.min(count, 22));
     this.pending = count;
     this.interval = Math.min(WAVES.spawnIntervalS, (NIGHT_SECONDS - 15) / Math.max(1, count));
     this.timer = 3;

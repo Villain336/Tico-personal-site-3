@@ -33,7 +33,7 @@ export const NIGHT_SECONDS = 120;
 export const CYCLE_SECONDS = DAY_SECONDS + NIGHT_SECONDS;
 
 export const SAVE_KEY = "shalom-valley-save";
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 export const AUTOSAVE_MS = 30_000;
 export const OFFLINE_CAP_HOURS = 8;
 export const OFFLINE_RENT_RATE = 0.5;
@@ -127,6 +127,7 @@ export const BUILDINGS: Record<Exclude<BuildingType, "altar" | "idol">, Building
   grove: { name: "Olive grove", cost: 28, altarLevel: 2, light: 0, blocks: false, size: 1, blurb: "Olives. Slow. Eating also drinks.", hotkey: "=" },
   store: { name: "Storehouse", cost: 35, altarLevel: 1, light: 1, blocks: true, size: 2, blurb: "Village grain. Deposit crops (E).", hotkey: ";" },
   changer: { name: "Money changer", cost: 40, altarLevel: 1, light: 2, blocks: true, size: 1, blurb: "Bank. Deposit coins (E). Earns at dawn.", hotkey: "]" },
+  hall: { name: "Town hall", cost: 55, altarLevel: 2, light: 3, blocks: true, size: 2, blurb: "Edicts, court, offices. Press G.", hotkey: "." },
 };
 
 export const CROP_KINDS = ["wheat", "grapes", "olives", "flax"] as const;
@@ -152,6 +153,38 @@ export const ECONOMY = {
   hoardSin: 4,
   unpaidWageSin: 3,
   titheSinRelief: -1,
+};
+
+export const CIVIC = {
+  startLoyalty: 70,
+  fineCoins: 8,
+  mercyLoyalty: 3,
+  fineLoyalty: 1,
+  exileLoyalty: -4,
+  ignoreLoyalty: -4,
+  ignoreSin: 2,
+  exileSin: -6,
+  fineSin: -2,
+  highLoyalty: 80,
+  lowLoyalty: 40,
+  highLoyaltyRent: 1,
+  lowLoyaltyRent: -1,
+  lowLoyaltySin: 2,
+  conscriptionWage: 1,
+  conscriptionLoyalty: -1,
+  conscriptionFightLevel: 2,
+  conscriptionDamage: 1.12,
+  openGatesSpawn: 2,
+  openGatesRent: 1,
+  curfewSpawn: -1,
+  watchmanSpawn: -1,
+  treasurerInterest: 0.005,
+  scribeLoyalty: 2,
+  mosesMercy: 2,
+  mosesExile: 2,
+  sanctuaryHypnoMult: 0.4,
+  sanctuaryCastBonus: 14,
+  hoardStores: 80,
 };
 
 export const GRANARY_RADIUS_TILES = 5;

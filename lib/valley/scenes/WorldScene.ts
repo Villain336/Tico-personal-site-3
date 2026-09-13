@@ -21,7 +21,7 @@ import {
   XP,
 } from "../config";
 import type { CropKind } from "../types";
-import { line } from "../dialogue";
+import { line, pickVisitName } from "../dialogue";
 import { BIG_RECRUITS, SCATTERED_RECRUITS } from "../quests/content";
 import { worldTime, writeSave } from "../save";
 import { registerTextures } from "../textures";
@@ -40,6 +40,7 @@ import { Speech } from "../world/speech";
 import { Villagers } from "../world/villager";
 import { CameraDirector } from "../world/camera";
 import { Ledger } from "../world/ledger";
+import { Civic } from "../world/civic";
 import { Sky } from "../world/sky";
 import { Waves } from "../world/waves";
 
@@ -64,6 +65,7 @@ export class WorldScene extends Phaser.Scene {
   cameraDirector!: CameraDirector;
   sky!: Sky;
   ledger!: Ledger;
+  civic!: Civic;
 
   paused = false;
   lightsDirty = true;
@@ -104,8 +106,10 @@ export class WorldScene extends Phaser.Scene {
     this.quests = new Quests(this);
     this.landmarks = new Landmarks(this);
     this.ledger = new Ledger(this);
+    this.civic = new Civic(this);
 
     this.buildings.loadFrom(this.state.buildings);
+    this.civic.ensureSteward();
     this.villagers.loadFrom(this.state.villagers);
     this.player = new Player(this, this.state.player.x, this.state.player.y);
     if (!this.map.isWalkablePoint(this.player.x, this.player.y - 3, false)) {
@@ -242,6 +246,7 @@ export class WorldScene extends Phaser.Scene {
     this.waves.endNight();
     const r = this.villagers.onDawn();
     const sinBefore = st.sin;
+    const civicDawn = this.civic.settleDawn();
     const books = this.ledger.settleDawn(this.villagers.population, r.rent, this.waves.spawnedTonight);
     this.waves.spawnedTonight = 0;
     this.addSin(SIN.dawnDecay * (st.unlocks.blessing ? UNLOCK_FX.blessingDawnDecayMult : 1));
@@ -267,6 +272,9 @@ export class WorldScene extends Phaser.Scene {
         bankRun: books.bankRun,
         rationsFed: books.rationsFed,
         rationsShort: books.rationsShort,
+        loyalty: civicDawn.loyalty,
+        casesPending: civicDawn.pending,
+        casesIgnored: civicDawn.ignored,
       },
     });
     this.saveNow();
@@ -368,6 +376,7 @@ export class WorldScene extends Phaser.Scene {
         "good",
       );
     }
+    this.civic.maybeFileNightSale();
     this.fx.coins(this.player.x, this.player.y - 12, Math.min(6, units));
   }
 
@@ -537,6 +546,10 @@ export class WorldScene extends Phaser.Scene {
     if (type === "farm") this.advanceTutorial(2);
     if (type === "market") this.advanceTutorial(4);
     if (type === "house") this.advanceTutorial(5);
+    if (type === "hall") {
+      this.civic.ensureSteward();
+      this.toast("The town hall stands. Press G to sit in judgment.", "good");
+    }
     // walls, farms, lamps and bridges are placed in runs; everything else exits build mode
     if (type !== "wall" && type !== "farm" && type !== "flax" && type !== "lamp" && type !== "bridge") this.setBuildMode(null);
     else if (st.coins < def.cost) this.setBuildMode(null);
@@ -652,13 +665,42 @@ export class WorldScene extends Phaser.Scene {
         break;
       }
       case "toggleTithe":
-        st.titheOn = !st.titheOn;
-        this.toast(st.titheOn ? "Tithe on: a tenth of sales goes to the altar." : "Tithe off. The altar will remember.", "info");
+        st.civic.titheRate = st.civic.titheRate > 0 ? 0 : 10;
+        st.titheOn = st.civic.titheRate > 0;
+        this.toast(
+          st.titheOn ? `Tithe on: ${st.civic.titheRate}% of sales goes to the altar.` : "Tithe off. The altar will remember.",
+          "info",
+        );
         break;
       case "toggleShare":
         st.shareOn = !st.shareOn;
         this.toast(st.shareOn ? "Share the bread: the village eats from stores at dawn." : "The barns stay shut at dawn.", "info");
         break;
+      case "setEdict":
+        if (!this.civic.setEdict(c.id, c.on)) this.toast("Build a town hall (.) first.", "bad");
+        else this.toast(c.on ? "Edict stands." : "Edict lifted.", "info");
+        break;
+      case "setStatute":
+        if (!this.civic.setStatute(c.id, c.on)) this.toast("Build a town hall (.) first.", "bad");
+        else this.toast(c.on ? "The statute is ratified." : "The statute is repealed.", "info");
+        break;
+      case "setTitheRate":
+        if (!this.civic.setTitheRate(c.rate)) this.toast("Build a town hall (.) first.", "bad");
+        else this.toast(c.rate === 0 ? "No tithe." : `Tithe set to ${c.rate}%.`, "info");
+        break;
+      case "setSteward":
+        if (!this.civic.setSteward(c.who)) this.toast("Build a town hall, then appoint someone on the roster.", "bad");
+        else this.toast(c.who === "self" ? "You sit as steward." : "A steward is appointed.", "good");
+        break;
+      case "setOffice":
+        if (!this.civic.setOffice(c.office, c.seed)) this.toast("Build a town hall and pick a living villager.", "bad");
+        else this.toast(c.seed == null ? "Office vacant." : "Office filled.", "good");
+        break;
+      case "judge": {
+        const result = this.civic.judge(c.id, c.verdict);
+        this.toast(result.toast, result.tone);
+        break;
+      }
     }
     this.emitHud();
   }
@@ -703,8 +745,20 @@ export class WorldScene extends Phaser.Scene {
       shareOn: st.shareOn,
       nearChanger: p.nearChanger,
       nearStore: p.nearStore,
+      nearHall: p.nearHall,
       hasChanger: this.buildings.count("changer") > 0,
       hasStore: this.buildings.count("store") + this.buildings.count("granary") > 0,
+      hasHall: this.civic.hasHall(),
+      civic: {
+        ...st.civic,
+        edicts: { ...st.civic.edicts },
+        statutes: { ...st.civic.statutes },
+        offices: { ...st.civic.offices },
+        docket: st.civic.docket.map((x) => ({ ...x })),
+      },
+      villagerOffices: this.villagers.list
+        .filter((v) => v.alive)
+        .map((v) => ({ seed: v.seed, name: pickVisitName(v.seed) })),
       sin: Math.round(st.sin),
       health: Math.round(st.health),
       maxHealth: p.stats.maxHealth,

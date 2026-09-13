@@ -14,6 +14,7 @@ import { Ribbon } from "./ribbon";
 import { RosterPanel } from "./roster-panel";
 import { QuestJournal } from "./quest-journal";
 import { BooksPanel } from "./books-panel";
+import { CivicPanel } from "./civic-panel";
 import { Prologue } from "./prologue";
 
 declare global {
@@ -22,8 +23,8 @@ declare global {
   }
 }
 
-type Panel = "intro" | "build" | "skills" | "roster" | "journal" | "books" | "pause" | "away" | "victory" | null;
-const PAUSING: Panel[] = ["intro", "skills", "roster", "journal", "books", "pause", "away", "victory"];
+type Panel = "intro" | "build" | "skills" | "roster" | "journal" | "books" | "civic" | "pause" | "away" | "victory" | null;
+const PAUSING: Panel[] = ["intro", "skills", "roster", "journal", "books", "civic", "pause", "away", "victory"];
 
 const HOTKEYS: Record<string, BuildingType> = Object.fromEntries(
   (Object.keys(BUILDINGS) as (keyof typeof BUILDINGS)[]).map((k) => [BUILDINGS[k].hotkey, k]),
@@ -96,6 +97,9 @@ export function ValleyGame({
           setDawn(e.report);
           window.setTimeout(() => setDawn((d) => (d?.day === e.report.day ? null : d)), 9000);
           break;
+        case "openCivic":
+          setPanel("civic");
+          break;
         case "victory":
           setPanel("victory");
           break;
@@ -146,6 +150,8 @@ export function ValleyGame({
         togglePanel("journal");
       } else if (k === "l") {
         togglePanel("books");
+      } else if (k === "g") {
+        togglePanel("civic");
       } else if (HOTKEYS[e.key]) {
         bridge.send({ type: "setBuildMode", building: HOTKEYS[e.key] });
         setPanel("build");
@@ -178,6 +184,7 @@ export function ValleyGame({
           onRoster={() => togglePanel("roster")}
           onJournal={() => togglePanel("journal")}
           onBooks={() => togglePanel("books")}
+          onCivic={() => togglePanel("civic")}
           onPause={() => togglePanel("pause")}
           onSell={() => bridge.send({ type: "sell", what: "all" })}
           onAutoSell={() => bridge.send({ type: "toggleAutoSell" })}
@@ -212,6 +219,19 @@ export function ValleyGame({
       )}
 
       {hud && panel === "journal" && <QuestJournal hud={hud} onClose={() => setPanel(null)} />}
+
+      {hud && panel === "civic" && (
+        <CivicPanel
+          hud={hud}
+          onEdict={(id, on) => bridge.send({ type: "setEdict", id, on })}
+          onStatute={(id, on) => bridge.send({ type: "setStatute", id, on })}
+          onTithe={(rate) => bridge.send({ type: "setTitheRate", rate })}
+          onSteward={(who) => bridge.send({ type: "setSteward", who })}
+          onOffice={(office, seed) => bridge.send({ type: "setOffice", office, seed })}
+          onJudge={(id, verdict) => bridge.send({ type: "judge", id, verdict })}
+          onClose={() => setPanel(null)}
+        />
+      )}
 
       {hud && panel === "books" && (
         <BooksPanel

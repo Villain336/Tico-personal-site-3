@@ -392,6 +392,42 @@ export const CHANGER: PixelMap = [
   "..w..........w..",
 ];
 
+/** 32×32 town hall — columns, steps, a gold lintel. */
+export const HALL: PixelMap = [
+  "..............KKKK..............",
+  "............KKRRRRKK............",
+  "..........KKRRRRRRRRKK..........",
+  "........KKRRRRRRRRRRRRKK........",
+  "......KKRRRRRRRRRRRRRRRRKK......",
+  "....KKRRRRRRRRRRRRRRRRRRRRKK....",
+  "...KRRRRRRRRRRRRRRRRRRRRRRRRK...",
+  "...KKKKKKKKKKKKKKKKKKKKKKKKKK...",
+  "....KNGGGGGGGGGGGGGGGGGGGGNK....",
+  "....KNGCCCCCCCCCCCCCCCCCCGNK....",
+  "....KNCCCCCCCCCCCCCCCCCCCCNK....",
+  "....KNCCKK...........KKCCCNK....",
+  "....KNCCKK...........KKCCCNK....",
+  "....KNCCKK...GGGGG...KKCCCNK....",
+  "....KNCCKK...GgggG...KKCCCNK....",
+  "....KNCCKK...........KKCCCNK....",
+  "....KNCCKK...........KKCCCNK....",
+  "....KNCCKK...........KKCCCNK....",
+  "....KNNNNNNNNNNNNNNNNNNNNNNK....",
+  "....KKKKKKKKKKKKKKKKKKKKKKKK....",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+];
+
 export const MARKET: PixelMap = [
   "KKKKKKKKKKKKKKKK",
   "KRCRCRCRCRCRCRCK",
