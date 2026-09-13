@@ -1,10 +1,29 @@
 import Phaser from "phaser";
 import type { WorldMap } from "./map";
+import type { Enemy } from "./enemy";
 
 export function dist(ax: number, ay: number, bx: number, by: number) {
   const dx = ax - bx;
   const dy = ay - by;
   return Math.hypot(dx, dy);
+}
+
+/**
+ * Shared shape for anything a tempter/deceiver can target — `Villager` and a
+ * vulnerable scattered-NPC `Recruit`. `state` stays a plain `string` here so
+ * each implementer keeps its own narrower state union; affliction code reads
+ * and writes the shared affliction states ("lured", "fallen", "hypno") only.
+ */
+export interface Afflictable {
+  readonly x: number;
+  readonly y: number;
+  alive: boolean;
+  state: string;
+  lureBy: Enemy | null;
+  lureT: number;
+  hypnoBy: Enemy | null;
+  hypnoT: number;
+  level: number;
 }
 
 /**

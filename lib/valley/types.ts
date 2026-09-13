@@ -44,6 +44,35 @@ export type SavedVillager = {
   ty: number;
 };
 
+export type BigRecruitId = "moses" | "david" | "paul" | "noah" | "holyGhost";
+export type ScatteredRecruitId = "deborah" | "gideon" | "ruth";
+export type RecruitId = BigRecruitId | ScatteredRecruitId;
+
+export type RecruitRole = "guard" | "harvester" | "healer" | null;
+export type DeploymentMode = "follow" | "station";
+
+export type SavedRecruit = {
+  id: RecruitId;
+  mode: DeploymentMode | null;
+  station?: { x: number; y: number };
+};
+
+export type QuestState = "available" | "active" | "ready" | "completed";
+
+export type SavedQuest = {
+  id: BigRecruitId;
+  state: QuestState;
+  progress: number;
+};
+
+export type Unlocks = {
+  weapon: boolean;
+  goliathBoss: boolean;
+  building: boolean;
+  abilities: BigRecruitId[];
+  blessing: boolean;
+};
+
 export type SaveData = {
   version: number;
   savedAt: number;
@@ -65,6 +94,9 @@ export type SaveData = {
   autoSell: boolean;
   buildings: SavedBuilding[];
   villagers: SavedVillager[];
+  recruits: SavedRecruit[];
+  quests: SavedQuest[];
+  unlocks: Unlocks;
   player: { x: number; y: number };
   stats: { kills: number; redeemed: number; fallen: number; idolsSmashed: number };
   tutorialStep: number;
@@ -106,6 +138,35 @@ export type HudState = {
   /** null when this visit has no day ribbon yet (no qualifying letter and not dusk). */
   jobs: Job[] | null;
   ribbonMode: "day" | "dusk" | null;
+  recruits: HudRecruit[];
+  quests: HudQuest[];
+  scatteredOffers: ScatteredRecruitOffer[];
+};
+
+export type HudRecruit = {
+  id: RecruitId;
+  name: string;
+  big: boolean;
+  mode: DeploymentMode | null;
+  role: RecruitRole;
+};
+
+export type HudQuest = {
+  id: BigRecruitId;
+  name: string;
+  state: QuestState;
+  progress: number;
+  target: number;
+};
+
+export type ScatteredRecruitOffer = {
+  id: ScatteredRecruitId;
+  name: string;
+  unlockLevel: number;
+  cost: number;
+  role: RecruitRole;
+  unlocked: boolean;
+  recruited: boolean;
 };
 
 export type DawnReport = {
@@ -146,7 +207,11 @@ export type GameCommand =
   | { type: "pause" }
   | { type: "resume" }
   | { type: "save" }
-  | { type: "advanceTutorial" };
+  | { type: "advanceTutorial" }
+  | { type: "acceptQuest"; id: BigRecruitId }
+  | { type: "turnInQuest"; id: BigRecruitId }
+  | { type: "setDeployment"; id: RecruitId; mode: DeploymentMode }
+  | { type: "recruitScattered"; id: ScatteredRecruitId };
 
 export type GameEvent =
   | { type: "hud"; state: HudState }

@@ -17,7 +17,7 @@ export const NIGHT_SECONDS = 120;
 export const CYCLE_SECONDS = DAY_SECONDS + NIGHT_SECONDS;
 
 export const SAVE_KEY = "shalom-valley-save";
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 export const AUTOSAVE_MS = 30_000;
 export const OFFLINE_CAP_HOURS = 8;
 export const OFFLINE_RENT_RATE = 0.5;

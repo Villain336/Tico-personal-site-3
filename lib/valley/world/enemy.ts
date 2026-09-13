@@ -1,7 +1,8 @@
 import type { WorldScene } from "../scenes/WorldScene";
 import { ENEMIES, SIN, TILE, WAVES, XP, type EnemyDef, type EnemyKind } from "../config";
 import { line } from "../dialogue";
-import { Actor, dist } from "./actor";
+import { Actor, dist, type Afflictable } from "./actor";
+import { Recruit } from "./recruit";
 import type { Villager } from "./villager";
 
 export type DamageSource = "sword" | "tower" | "staff" | "cast";
@@ -16,7 +17,8 @@ export class Enemy extends Actor {
   attackCd = 0;
   stun = 0;
   retarget = 0;
-  target: Villager | null = null;
+  /** A villager or a vulnerable scattered-NPC recruit — anything `Afflictable`. */
+  target: Afflictable | null = null;
   goal: { x: number; y: number } | null = null;
   revealed = false;
   dashT = 0;
@@ -86,6 +88,44 @@ export class Enemies {
     return best;
   }
 
+  /** Villagers plus vulnerable scattered-NPC recruits — anything a tempter/deceiver may target (R12). */
+  private afflictablePools(): Afflictable[][] {
+    return [this.scene.villagers.list, this.scene.recruitManager.vulnerableList];
+  }
+
+  /** `Afflictable` has exactly two implementors, `Villager` and `Recruit` — the cast below reflects that. */
+  private releaseHypnoTarget(v: Afflictable) {
+    if (v instanceof Recruit) this.scene.recruitManager.releaseHypno(v);
+    else this.scene.villagers.releaseHypno(v as Villager);
+  }
+
+  private lowestLevelTarget(filter: (v: Afflictable) => boolean): Afflictable | null {
+    let best: Afflictable | null = null;
+    for (const pool of this.afflictablePools()) {
+      for (const v of pool) {
+        if (!v.alive || !filter(v)) continue;
+        if (!best || v.level < best.level) best = v;
+      }
+    }
+    return best;
+  }
+
+  private nearestTarget(x: number, y: number, maxD: number, filter: (v: Afflictable) => boolean): Afflictable | null {
+    let best: Afflictable | null = null;
+    let bd = maxD;
+    for (const pool of this.afflictablePools()) {
+      for (const v of pool) {
+        if (!v.alive || !filter(v)) continue;
+        const d = dist(x, y, v.x, v.y);
+        if (d < bd) {
+          bd = d;
+          best = v;
+        }
+      }
+    }
+    return best;
+  }
+
   remove(e: Enemy) {
     e.alive = false;
     const i = this.list.indexOf(e);
@@ -98,6 +138,14 @@ export class Enemies {
         if (v.state === "lured") v.state = "flee";
       }
       if (v.hypnoBy === e) this.scene.villagers.releaseHypno(v);
+    }
+    for (const r of this.scene.recruitManager.vulnerableList) {
+      if (r.lureBy === e) {
+        r.lureBy = null;
+        r.lureT = 0;
+        if (r.state === "lured") r.state = "flee";
+      }
+      if (r.hypnoBy === e) this.scene.recruitManager.releaseHypno(r);
     }
     e.destroy();
   }
@@ -136,6 +184,8 @@ export class Enemies {
       this.scene.addCoins(coins);
       this.scene.addXp(e.kind === "prophet" ? XP.prophet : XP.kill);
       st.stats.kills++;
+      if (e.kind === "robber") this.scene.quests.reportProgress("david", 1);
+      else if (e.kind === "deceiver") this.scene.quests.reportProgress("paul", 1);
       this.scene.fx.coins(x, y - 10, Math.min(6, Math.ceil(coins / 5)));
     }
     this.scene.fx.burst(x, y - 10, e.kind === "spirit" ? "px_violet" : "px_coral", 8);
@@ -154,7 +204,7 @@ export class Enemies {
       } else if (e.kind === "deceiver") {
         e.revealed = true;
         e.stun = 2.5;
-        if (e.target?.state === "hypno") this.scene.villagers.releaseHypno(e.target);
+        if (e.target?.state === "hypno") this.releaseHypnoTarget(e.target);
         this.scene.speech.say(e.sprite, line("deceiver", "revealed"), "dark", 0);
       } else if (e.kind === "tempter") {
         e.stun = 1.2;
@@ -233,7 +283,8 @@ export class Enemies {
           if (e.moveToward(tx, ty, e.def.speed, dt, sc.map, 13) && e.attackCd <= 0) {
             e.attackCd = 1.4;
             if (e.target?.alive) {
-              sc.villagers.damage(e.target, e.def.damage, e);
+              // robbers only ever target villagers (assigned above) — never scattered-NPC recruits
+              sc.villagers.damage(e.target as Villager, e.def.damage, e);
             } else if (player.hurt(e.def.damage)) {
               const stolen = Math.min(Math.floor(st.coins), 2);
               if (stolen > 0) {
@@ -276,7 +327,7 @@ export class Enemies {
           if (!e.target || !e.target.alive || e.target.state === "fallen" || e.target.state === "hypno") {
             if (e.retarget <= 0) {
               e.retarget = 2;
-              e.target = sc.villagers.lowestLevel((v) => v.state !== "fallen" && v.state !== "hypno" && !v.lureBy);
+              e.target = this.lowestLevelTarget((t) => t.state !== "fallen" && t.state !== "hypno" && !t.lureBy);
             }
           }
           const v = e.target;
@@ -320,7 +371,7 @@ export class Enemies {
           if (!e.target || !e.target.alive || e.target.state === "fallen") {
             if (e.retarget <= 0) {
               e.retarget = 1.5;
-              e.target = sc.villagers.nearest(e.x, e.y, 400, (v) => v.state !== "fallen" && v.state !== "hypno" && v.state !== "lured");
+              e.target = this.nearestTarget(e.x, e.y, 400, (t) => t.state !== "fallen" && t.state !== "hypno" && t.state !== "lured");
             }
           }
           const v = e.target;
@@ -347,7 +398,8 @@ export class Enemies {
             e.retarget = 1;
             e.target = sc.villagers.nearest(e.x, e.y, 400, (v) => v.state !== "fallen");
           }
-          const v = e.target?.alive ? e.target : null;
+          // spirits only ever target villagers (assigned above) — never scattered-NPC recruits
+          const v = e.target?.alive ? (e.target as Villager) : null;
           const tx = v ? v.x : player.x;
           const ty = v ? v.y : player.y;
           const wob = Math.sin(e.age * 3) * 10;

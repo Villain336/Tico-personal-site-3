@@ -3,7 +3,7 @@ import type { Gender, SavedVillager } from "../types";
 import { ALTAR, HOUSE, SIN, TILE, VILLAGER, XP } from "../config";
 import { line } from "../dialogue";
 import { VILLAGER_VARIANTS } from "../textures";
-import { Actor, dist } from "./actor";
+import { Actor, dist, type Afflictable } from "./actor";
 import type { Enemy } from "./enemy";
 
 export type VillagerState =
@@ -19,7 +19,7 @@ export type VillagerState =
   | "fallen"
   | "hypno";
 
-export class Villager extends Actor {
+export class Villager extends Actor implements Afflictable {
   seed: number;
   gender: Gender;
   level: number;
@@ -226,6 +226,7 @@ export class Villagers {
         this.scene.addSin(SIN.redeem);
         this.scene.addXp(XP.redeem);
         this.scene.state.stats.redeemed++;
+        this.scene.quests.reportProgress("moses", 1);
         this.savedToday++;
         this.scene.speech.say(v.sprite, line("villager", "thanks", this.scene.playerName), "good", 0);
         this.scene.fx.burst(v.x, v.y - 12, "px_lime", 8);
