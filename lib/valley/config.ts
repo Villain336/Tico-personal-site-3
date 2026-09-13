@@ -33,7 +33,7 @@ export const NIGHT_SECONDS = 120;
 export const CYCLE_SECONDS = DAY_SECONDS + NIGHT_SECONDS;
 
 export const SAVE_KEY = "shalom-valley-save";
-export const SAVE_VERSION = 7;
+export const SAVE_VERSION = 8;
 export const AUTOSAVE_MS = 30_000;
 export const OFFLINE_CAP_HOURS = 8;
 export const OFFLINE_RENT_RATE = 0.5;
@@ -129,6 +129,8 @@ export const BUILDINGS: Record<Exclude<BuildingType, "altar" | "idol">, Building
   changer: { name: "Money changer", cost: 40, altarLevel: 1, light: 2, blocks: true, size: 1, blurb: "Bank. Deposit coins (E). Earns at dawn.", hotkey: "]" },
   hall: { name: "Town hall", cost: 55, altarLevel: 2, light: 3, blocks: true, size: 2, blurb: "Edicts, court, offices. Press G. E to enter.", hotkey: "." },
   fold: { name: "Sheepfold", cost: 28, altarLevel: 1, light: 1, blocks: true, size: 2, blurb: "Raise sheep and goats. Wool at dawn.", hotkey: "," },
+  temple: { name: "Temple", cost: 90, altarLevel: 3, light: 4, blocks: true, size: 2, blurb: "Offer a gift. Lowers sin. E to enter.", hotkey: "'" },
+  loom: { name: "Loom", cost: 40, altarLevel: 2, light: 1, blocks: true, size: 2, blurb: "Weave wool and flax into a tunic.", hotkey: "/" },
 };
 
 export const CROP_KINDS = ["wheat", "grapes", "olives", "flax"] as const;

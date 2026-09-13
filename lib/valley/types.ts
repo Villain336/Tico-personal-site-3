@@ -8,7 +8,7 @@ export type Character = {
   hairColor: number; // index into HAIR_COLORS
   face: number; // 0..2
   body: number; // 0 slim, 1 average, 2 broad
-  outfit: number; // 0 shepherd, 1 merchant, 2 warrior
+  outfit: number; // 0 shepherd, 1 merchant, 2 warrior, 3 linen
 };
 
 export type BuildingType =
@@ -30,6 +30,8 @@ export type BuildingType =
   | "changer"
   | "hall"
   | "fold"
+  | "temple"
+  | "loom"
   | "idol";
 
 export type CropKind = "wheat" | "grapes" | "olives" | "flax";
@@ -172,6 +174,8 @@ export type SaveData = {
   flax: number;
   meat: number;
   wool: number;
+  cloth: number;
+  templeOffersToday: number;
   beasts: SavedBeast[];
   /** Coins held by the money changer. */
   bank: number;
@@ -220,6 +224,7 @@ export type HudState = {
   flax: number;
   meat: number;
   wool: number;
+  cloth: number;
   inside: string | null;
   nearEnter: string | null;
   bank: number;

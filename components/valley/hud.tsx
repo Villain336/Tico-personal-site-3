@@ -71,9 +71,10 @@ export function Hud({
             <Stat icon="🪻" label="flax" value={hud.flax} />
             <Stat icon="🍖" label="meat" value={hud.meat} />
             <Stat icon="🧶" label="wool" value={hud.wool} />
+            <Stat icon="👕" label="cloth" value={hud.cloth} />
           </div>
           <div className="mt-1 text-white/75">
-            Meat {hud.meat} · Wool {hud.wool}
+            Meat {hud.meat} · Wool {hud.wool} · Cloth {hud.cloth}
           </div>
         </Card>
       </div>
@@ -104,7 +105,12 @@ export function Hud({
       {/* top-center: hint / prompt */}
       <div className="absolute inset-x-0 flex justify-center px-[210px]" style={{ top: topOffset }}>
         {hud.inside ? (
-          <Pill>Inside {hud.inside} · E at the door to leave{hud.inside === "the town hall" ? " · G civic" : ""}</Pill>
+          <Pill>
+            Inside {hud.inside} · E at the door to leave
+            {hud.inside === "the town hall" ? " · G civic" : ""}
+            {hud.inside === "the temple" ? " · hold E to offer a gift" : ""}
+            {hud.inside === "the loom" ? " · E to weave or wear" : ""}
+          </Pill>
         ) : hud.nearAltar && !hud.isNight && hud.tutorialStep > 0 ? (
           <Pill>Hold E to pray · refills prayer, earns XP</Pill>
         ) : hud.nearEnter ? (

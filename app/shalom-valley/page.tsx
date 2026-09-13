@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/ui";
-import { ValleyApp } from "@/components/valley/valley-app";
+import { ValleyPlayShell } from "@/components/valley/valley-play-shell";
 import { valleyCopy } from "@/content/valley";
 import { site } from "@/content/site";
 
@@ -48,52 +47,14 @@ export default function ShalomValleyPage() {
   };
 
   return (
-    <div>
+    <div className="h-full">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-
-      <PageHeader eyebrow={valleyCopy.eyebrow} heading={valleyCopy.heading} sub={valleyCopy.sub} />
-
-      <div className="mx-auto max-w-5xl px-6 pb-20">
-        <ValleyApp />
-        <p className="mt-4 text-center text-sm text-muted">{valleyCopy.instructions}</p>
-
-        <section className="mt-16">
-          <h2 className="font-display text-2xl font-bold tracking-tight">{valleyCopy.howHeading}</h2>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            {valleyCopy.how.map((h, i) => (
-              <div key={h.title} className="rounded-2xl border border-border bg-surface p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-violet">Step {i + 1}</p>
-                <h3 className="mt-2 font-semibold">{h.title}</h3>
-                <p className="mt-1 text-sm text-muted">{h.body}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="mt-16">
-          <h2 className="font-display text-2xl font-bold tracking-tight">{valleyCopy.enemiesHeading}</h2>
-          <ul className="mt-6 divide-y divide-border rounded-2xl border border-border bg-surface">
-            {valleyCopy.enemies.map((e) => (
-              <li key={e.name} className="flex flex-col gap-1 px-5 py-4 sm:flex-row sm:gap-6">
-                <span className="w-32 shrink-0 font-semibold">{e.name}</span>
-                <span className="text-sm text-muted">{e.body}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="mt-16">
-          <h2 className="font-display text-2xl font-bold tracking-tight">FAQ</h2>
-          <div className="mt-6 space-y-4">
-            {valleyCopy.faq.map((f) => (
-              <details key={f.q} className="group rounded-2xl border border-border bg-surface px-5 py-4">
-                <summary className="cursor-pointer list-none font-semibold">{f.q}</summary>
-                <p className="mt-2 text-sm text-muted">{f.a}</p>
-              </details>
-            ))}
-          </div>
-        </section>
-      </div>
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `document.documentElement.dataset.valleyPlay="1"`,
+        }}
+      />
+      <ValleyPlayShell />
     </div>
   );
 }

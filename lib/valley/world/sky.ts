@@ -26,6 +26,14 @@ const DUSK2 = 0x6d3cf5;
 /** Above the fog so the horizon stays visible in the dark. */
 const Z = 1108;
 
+type Cloud = {
+  img: Phaser.GameObjects.Image;
+  speed: number;
+  home: number;
+  y: number;
+  parallax: number;
+};
+
 /**
  * Horizon band pinned to the top of the current camera view.
  * Positions are in world space at `worldView` so zoom and look-ahead
@@ -37,7 +45,7 @@ export class Sky {
   private stars: Phaser.GameObjects.Image[] = [];
   private farHills: Phaser.GameObjects.Image[] = [];
   private nearHills: Phaser.GameObjects.Image[] = [];
-  private clouds: { img: Phaser.GameObjects.Image; speed: number; home: number }[] = [];
+  private clouds: Cloud[] = [];
 
   constructor(private scene: WorldScene) {
     for (let i = 0; i < 16; i++) {
@@ -51,10 +59,17 @@ export class Sky {
     for (let i = 0; i < 7; i++) {
       this.nearHills.push(scene.add.image(0, 0, "sky_hill_near").setOrigin(0.5, 1).setDepth(Z + 5).setAlpha(0.95));
     }
-    const keys = ["sky_cloud_a", "sky_cloud_b"] as const;
-    for (let i = 0; i < 5; i++) {
-      const img = scene.add.image(0, 0, keys[i % 2]).setDepth(Z + 3).setAlpha(0.7);
-      this.clouds.push({ img, speed: 8 + i * 3, home: i * 200 });
+    const keys = ["sky_cloud_a", "sky_cloud_b", "sky_cloud_c"] as const;
+    for (let i = 0; i < 9; i++) {
+      const far = i < 5;
+      const img = scene.add.image(0, 0, keys[i % 3]).setDepth(Z + (far ? 3 : 6)).setAlpha(0.7);
+      this.clouds.push({
+        img,
+        speed: far ? 6 + i * 1.4 : 14 + (i - 5) * 3,
+        home: i * 110,
+        y: far ? 14 + (i % 3) * 4 : 22 + (i % 2) * 6,
+        parallax: far ? 0.05 : 0.14,
+      });
     }
   }
 
@@ -101,11 +116,13 @@ export class Sky {
       h.setPosition(v.x + wrap(i * 160 - cam.scrollX * 0.26, VIEW_W + 90) * sx, v.y + 64 * sx).setScale(sx);
     });
 
+    const tint = dusk ? 0xe08a4a : night ? 0x6d3cf5 : 0xffffff;
     for (const c of this.clouds) {
       c.home += c.speed * dt;
       if (c.home > VIEW_W + 90) c.home = -80;
-      c.img.setPosition(v.x + (c.home - cam.scrollX * 0.08) * sx, v.y + 18 * sx).setScale(sx);
-      c.img.setAlpha(night ? 0.16 : dusk ? 0.4 : 0.72);
+      c.img.setPosition(v.x + (c.home - cam.scrollX * c.parallax) * sx, v.y + c.y * sx).setScale(sx);
+      c.img.setAlpha(night ? 0.16 : dusk ? 0.45 : 0.74);
+      c.img.setTint(tint);
     }
   }
 }

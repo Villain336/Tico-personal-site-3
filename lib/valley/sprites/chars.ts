@@ -130,7 +130,11 @@ export function buildCharacter(look: CharLook): PixelMap {
   put(right + 2, 16, "K");
 
   const style = look.outfitStyle ?? 0;
-  if (style === 2) {
+  if (style === 3) {
+    // linen tunic — longer hem, pale sash
+    for (let y = 11; y <= 15; y++) put(cx, y, "T");
+    hline(left, right, 11, "T");
+  } else if (style === 2) {
     // shoulder pads
     hline(left, left + 1, 11, "T");
     hline(right - 1, right, 11, "T");

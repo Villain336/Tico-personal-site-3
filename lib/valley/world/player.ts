@@ -22,6 +22,7 @@ export class Player extends Actor {
   nearHall = false;
   nearEnter: string | null = null;
   lastDir = { x: 1, y: 0 };
+  private offerHold = 0;
   private hungryLineT = 0;
   private prayLineT = 0;
   private sparkleT = 0;
@@ -116,6 +117,17 @@ export class Player extends Actor {
 
     if (this.world.darkness.isDark(this.x, this.y)) this.world.jobs.complete("darkEdge");
 
+    const rooms = this.world.interiors;
+    if (rooms?.active === "temple" && this.keys.E.isDown && !rooms.atDoor(this.x, this.y)) {
+      this.offerHold += dt;
+      if (this.offerHold >= 0.75) {
+        this.offerHold = 0;
+        this.world.offerGift();
+      }
+    } else {
+      this.offerHold = 0;
+    }
+
     // hunger, thirst, regen
     st.hunger = Math.max(0, st.hunger - this.stats.hungerRate * dt);
     st.thirst = Math.max(0, st.thirst - this.stats.thirstRate * dt);
@@ -180,6 +192,7 @@ export class Player extends Actor {
     const rooms = this.world.interiors;
     if (rooms?.active) {
       if (rooms.atDoor(this.x, this.y)) rooms.leave();
+      else if (rooms.active === "loom") this.world.useLoom();
       return;
     }
     // A quest-giver is a rare, fixed encounter — it takes priority over the

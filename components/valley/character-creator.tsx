@@ -64,7 +64,7 @@ export function CharacterCreator({ onCreate }: { onCreate: (c: Character) => voi
   const canStart = c.name.trim().length > 0;
 
   return (
-    <div className="grid gap-8 rounded-3xl border border-border bg-surface p-6 shadow-xl sm:p-8 lg:grid-cols-[320px_1fr]">
+    <div className="mx-auto grid h-full w-full max-w-5xl gap-6 overflow-y-auto bg-surface p-4 sm:p-6 lg:grid-cols-[280px_1fr]">
       <div className="flex flex-col items-center gap-4">
         <div className="relative flex h-[220px] w-full items-end justify-center overflow-hidden rounded-2xl border border-border bg-[radial-gradient(circle_at_50%_30%,#f6f1dc,#e6d3a0)]">
           <div className="absolute inset-x-0 bottom-0 h-10 bg-[#7fb24a]" />
@@ -124,7 +124,7 @@ export function CharacterCreator({ onCreate }: { onCreate: (c: Character) => voi
         </Field>
 
         <Field label="Outfit">
-          <Segmented options={OUTFIT_NAMES} value={c.outfit} onChange={(i) => set("outfit", i)} />
+          <Segmented options={OUTFIT_NAMES.slice(0, 3)} value={c.outfit} onChange={(i) => set("outfit", i)} />
         </Field>
 
         <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">

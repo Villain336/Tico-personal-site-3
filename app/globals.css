@@ -206,3 +206,24 @@
     height: 12px;
   }
 }
+
+/* Shalom Valley play frame: collapse site chrome so 960×600 plus HUD fits. */
+html[data-valley-play] {
+  --valley-chrome: 2.75rem;
+  height: 100%;
+  overflow: hidden;
+}
+html[data-valley-play] body {
+  height: 100%;
+  overflow: hidden;
+}
+html[data-valley-play] main {
+  height: calc(100dvh - var(--valley-chrome));
+  overflow: hidden;
+}
+html[data-valley-play] footer {
+  display: none;
+}
+html[data-valley-play] [data-ask-tico] {
+  display: none;
+}
