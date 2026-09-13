@@ -1,6 +1,8 @@
 import Phaser from "phaser";
 import type { WorldScene } from "../scenes/WorldScene";
-import { ALTAR, CIVIC, PLAYER, TILE, UNLOCK_FX, XP } from "../config";
+import { ALTAR, CIVIC, FLOCK, PLAYER, TILE, UNLOCK_FX, XP } from "../config";
+import { hasIntent } from "./laws";
+import { ENTERABLE } from "./interiors";
 import { line } from "../dialogue";
 import { Actor, dist } from "./actor";
 
@@ -18,6 +20,7 @@ export class Player extends Actor {
   nearChanger = false;
   nearStore = false;
   nearHall = false;
+  nearEnter: string | null = null;
   lastDir = { x: 1, y: 0 };
   private hungryLineT = 0;
   private prayLineT = 0;
@@ -49,9 +52,9 @@ export class Player extends Actor {
         PLAYER.swordDamage *
         (1 + s.sword * 0.35) *
         (u.weapon ? UNLOCK_FX.weaponDamageMult : 1) *
-        (this.world.state.civic.edicts.conscription ? CIVIC.conscriptionDamage : 1),
+        (hasIntent(this.world.state.civic, "conscription") ? CIVIC.conscriptionDamage : 1),
       swordRange: PLAYER.swordRange + (u.weapon ? UNLOCK_FX.weaponRangeBonus : 0),
-      castRadius: PLAYER.castRadius + s.faith * 12 + (this.world.state.civic.edicts.sanctuary ? CIVIC.sanctuaryCastBonus : 0),
+      castRadius: PLAYER.castRadius + s.faith * 12 + (hasIntent(this.world.state.civic, "sanctuary") ? CIVIC.sanctuaryCastBonus : 0),
       hungerRate: PLAYER.hungerPerSecond * drain,
       thirstRate: PLAYER.thirstPerSecond * drain,
       idleRegen: PLAYER.prayerRegenIdle * (u.blessing ? UNLOCK_FX.blessingIdleRegenMult : 1),
@@ -100,6 +103,16 @@ export class Player extends Actor {
       this.world.buildings.nearest("granary", this.x, this.y, TILE * 2.4)
     );
     this.nearHall = !!this.world.buildings.nearest("hall", this.x, this.y, TILE * 2.6);
+    this.nearEnter = null;
+    if (!this.world.interiors?.active) {
+      for (const kind of ENTERABLE) {
+        const b = this.world.buildings.nearest(kind, this.x, this.y, TILE * 2.4);
+        if (b) {
+          this.nearEnter = kind;
+          break;
+        }
+      }
+    }
 
     if (this.world.darkness.isDark(this.x, this.y)) this.world.jobs.complete("darkEdge");
 
@@ -109,8 +122,11 @@ export class Player extends Actor {
     const well = this.world.buildings.nearest("well", this.x, this.y, TILE * 2.2);
     const { tx, ty } = this.world.tileAt(this.x, this.y);
     const inShallow = this.world.map.isShallow(tx, ty);
-    const atCistern = this.world.landmarks.at(this.x, this.y) === "cistern";
-    this.nearDrink = !!well || inShallow || atCistern;
+    const atWater = (() => {
+      const id = this.world.landmarks.at(this.x, this.y);
+      return !!id && this.world.landmarks.isDrinkable(id);
+    })();
+    this.nearDrink = !!well || inShallow || atWater;
     if (inShallow && st.thirst < 100) {
       st.thirst = Math.min(100, st.thirst + PLAYER.shallowDrinkPerSecond * dt);
     }
@@ -161,6 +177,11 @@ export class Player extends Actor {
 
   private onPrayKey() {
     if (this.world.paused) return;
+    const rooms = this.world.interiors;
+    if (rooms?.active) {
+      if (rooms.atDoor(this.x, this.y)) rooms.leave();
+      return;
+    }
     // A quest-giver is a rare, fixed encounter — it takes priority over the
     // market's routine sell action when both happen to be in range.
     if (this.world.interactWithQuestGiver()) return;
@@ -168,7 +189,15 @@ export class Player extends Actor {
       this.praying = true;
       return;
     }
-    if (this.nearMarket && this.world.hasCrops()) {
+    if (this.nearEnter && rooms) {
+      const door = this.world.buildings.nearest(this.nearEnter as (typeof ENTERABLE)[number], this.x, this.y, TILE * 2.6);
+      if (door) {
+        const c = this.world.buildings.center(door);
+        rooms.enter(this.nearEnter as (typeof ENTERABLE)[number], c.x, c.y + TILE);
+        return;
+      }
+    }
+    if (this.nearMarket && (this.world.hasCrops() || this.world.state.wool > 0)) {
       this.world.sell("all");
       return;
     }
@@ -180,11 +209,6 @@ export class Player extends Actor {
     if (this.nearStore && this.world.hasCrops()) {
       const n = this.world.ledger.depositAllCrops();
       if (n > 0) this.world.toast(`Stored ${n} crops. Press L for the books.`, "good");
-      return;
-    }
-    if (this.nearHall) {
-      this.world.civic.ensureSteward();
-      this.world.bridge.emit({ type: "openCivic" });
       return;
     }
     if (this.nearDrink) {
@@ -239,6 +263,7 @@ export class Player extends Actor {
         this.world.smashIdol(idol);
       }
     }
+    if (this.world.beasts?.hit(this.x, this.y - 8, range + 10, this.stats.swordDamage)) hit = true;
     if (hit) this.world.cameras.main.shake(60, 0.002);
   }
 
@@ -280,6 +305,9 @@ export class Player extends Actor {
     if (st.wheat > 0) {
       st.wheat--;
       st.hunger = Math.min(100, st.hunger + PLAYER.eatRestore);
+    } else if (st.meat > 0) {
+      st.meat--;
+      st.hunger = Math.min(100, st.hunger + FLOCK.meatRestore);
     } else if (st.olives > 0) {
       st.olives--;
       st.hunger = Math.min(100, st.hunger + PLAYER.eatRestore * 0.7);

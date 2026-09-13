@@ -12,6 +12,7 @@ import type {
   TitheRate,
   Verdict,
 } from "../types";
+import { compileLaw, hasIntent, makeLaw } from "./laws";
 
 export const EDICT_IDS: EdictId[] = ["curfew", "openGates", "sanctuary", "conscription"];
 export const STATUTE_IDS: StatuteId[] = ["noIdols", "protectWeak", "keepSabbath", "openHand"];
@@ -48,6 +49,8 @@ export function defaultCivic(): CivicState {
     offices: {},
     docket: [],
     nextCaseId: 1,
+    laws: [],
+    nextLawId: 1,
   };
 }
 
@@ -59,14 +62,14 @@ export function civicDawnMods(civic: CivicState) {
   let rentDelta = 0;
   if (civic.loyalty >= CIVIC.highLoyalty) rentDelta += CIVIC.highLoyaltyRent;
   if (civic.loyalty < CIVIC.lowLoyalty) rentDelta += CIVIC.lowLoyaltyRent;
-  if (civic.edicts.openGates) rentDelta += CIVIC.openGatesRent;
+  if (hasIntent(civic, "openGates")) rentDelta += CIVIC.openGatesRent;
   if (civic.steward && civic.steward !== "self") rentDelta += 1;
   let spawnDelta = 0;
-  if (civic.edicts.openGates) spawnDelta += CIVIC.openGatesSpawn;
-  if (civic.edicts.curfew) spawnDelta += CIVIC.curfewSpawn;
+  if (hasIntent(civic, "openGates")) spawnDelta += CIVIC.openGatesSpawn;
+  if (hasIntent(civic, "curfew")) spawnDelta += CIVIC.curfewSpawn;
   if (civic.offices.watchman != null) spawnDelta += CIVIC.watchmanSpawn;
   return {
-    wageExtra: civic.edicts.conscription ? CIVIC.conscriptionWage : 0,
+    wageExtra: hasIntent(civic, "conscription") ? CIVIC.conscriptionWage : 0,
     rentDelta,
     interestBump: civic.offices.treasurer != null ? CIVIC.treasurerInterest : 0,
     spawnDelta,
@@ -221,15 +224,48 @@ export class Civic {
     return fileCaseOn(this.data, kind, this.scene.state.day, accused, note, accusedSeed);
   }
 
+  writeLaw(text: string) {
+    if (!this.hasHall()) return { ok: false, toast: "Build a town hall (.) first.", tone: "bad" as const };
+    const trimmed = text.trim().replace(/\s+/g, " ");
+    if (!trimmed) return { ok: false, toast: "Speak a law first.", tone: "info" as const };
+    if (this.data.laws.length >= CIVIC.maxLaws) return { ok: false, toast: "The tablet is full. Repeal a law first.", tone: "bad" as const };
+    const law = makeLaw(trimmed, `l${this.data.nextLawId++}`);
+    this.data.laws.push(law);
+    if (law.intents.includes("tithe") && this.data.titheRate === 0) this.setTitheRate(10);
+    if (law.intents.includes("openHand")) this.scene.state.shareOn = true;
+    const { understood } = compileLaw(law.text);
+    this.scene.villagers.hearLaw(law.text);
+    return {
+      ok: true,
+      toast: understood
+        ? `The valley heard: "${law.text}"`
+        : `The words are written. The people will try: "${law.text}"`,
+      tone: "good" as const,
+    };
+  }
+
+  repealLaw(id: string) {
+    const i = this.data.laws.findIndex((l) => l.id === id);
+    if (i < 0) return false;
+    this.data.laws.splice(i, 1);
+    return true;
+  }
+
+  maybeFileHunt(accused: string, note: string) {
+    if (!hasIntent(this.data, "noHunt") && !hasIntent(this.data, "kindToBeasts")) return;
+    const filed = this.file("hunt", accused, note);
+    if (filed) this.scene.toast("The hunt broke a written law. Open Civic (G).", "bad");
+  }
+
   maybeFileFall(seed: number) {
-    if (!this.data.statutes.protectWeak) return;
+    if (!hasIntent(this.data, "protectWeak")) return;
     const name = pickVisitName(seed);
     const filed = this.file("fall", name, `${name} fell in the dark.`, seed);
     if (filed) this.scene.toast(`${name} is on the docket — protect the weak.`, "info");
   }
 
   maybeFileNightSale() {
-    if (!this.data.statutes.keepSabbath || !this.scene.isNight()) return;
+    if (!hasIntent(this.data, "keepSabbath") || !this.scene.isNight()) return;
     const v = this.scene.villagers.list.find((x) => x.alive);
     const name = v ? pickVisitName(v.seed) : "a merchant";
     const filed = this.file("nightSale", name, "Crops were sold after dusk.", v?.seed);
@@ -265,14 +301,14 @@ export class Civic {
     if (ignored.ignored > 0) {
       this.scene.addSin(ignored.ignored * CIVIC.ignoreSin);
     }
-    if (civic.edicts.conscription) civic.loyalty = clampLoyalty(civic.loyalty + CIVIC.conscriptionLoyalty);
+    if (hasIntent(civic, "conscription")) civic.loyalty = clampLoyalty(civic.loyalty + CIVIC.conscriptionLoyalty);
     if (civic.loyalty < CIVIC.lowLoyalty) this.scene.addSin(CIVIC.lowLoyaltySin);
 
-    if (civic.statutes.noIdols && this.scene.buildings.idols().length > 0) {
+    if (hasIntent(civic, "noIdols") && this.scene.buildings.idols().length > 0) {
       this.file("idol", "the valley", "An idol still stands in the light.");
     }
     const stores = Object.values(this.scene.state.stores).reduce((a, b) => a + b, 0);
-    if (civic.statutes.openHand && !this.scene.state.shareOn && stores >= CIVIC.hoardStores) {
+    if (hasIntent(civic, "openHand") && !this.scene.state.shareOn && stores >= CIVIC.hoardStores) {
       this.file("hoard", this.scene.playerName, "The barn is full and the bread is not shared.");
     }
 

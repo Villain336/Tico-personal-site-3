@@ -6,9 +6,9 @@ import { Modal, ModalButton } from "./modal";
 const CONTROLS: [string, string][] = [
   ["WASD / arrows", "Move"],
   ["Space / click", "Sword swing"],
-  ["E", "Hold at altar to pray · tap to cast out spirits & redeem the fallen · at market to sell"],
-  ["F", "Eat wheat or grapes"],
-  ["B / 1–8", "Build menu / quick-build"],
+  ["E", "Enter a building · hold at altar to pray · tap to cast · at market to sell"],
+  ["F", "Eat wheat, meat, olives or grapes"],
+  ["B / 1–8 / ,", "Build menu / quick-build (sheepfold is ,)"],
   ["K", "Skills"],
   ["Esc", "Pause"],
 ];

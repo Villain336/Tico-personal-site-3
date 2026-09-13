@@ -36,6 +36,9 @@ export function newSave(character: Character): SaveData {
     grapes: 0,
     olives: 0,
     flax: 0,
+    meat: 0,
+    wool: 0,
+    beasts: [],
     bank: 0,
     stores: emptyStores(),
     prices: evenPrices(),
@@ -75,6 +78,11 @@ export function loadSave(): SaveData | null {
     if (!data || typeof data !== "object" || data.version !== SAVE_VERSION) return null;
     if (!data.character || !Array.isArray(data.buildings)) return null;
     if (!data.civic) data.civic = defaultCivic();
+    if (!data.civic.laws) data.civic.laws = [];
+    if (!data.civic.nextLawId) data.civic.nextLawId = 1;
+    if (data.meat == null) data.meat = 0;
+    if (data.wool == null) data.wool = 0;
+    if (!data.beasts) data.beasts = [];
     return data;
   } catch {
     return null;

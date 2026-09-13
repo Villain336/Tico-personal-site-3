@@ -33,7 +33,7 @@ export const NIGHT_SECONDS = 120;
 export const CYCLE_SECONDS = DAY_SECONDS + NIGHT_SECONDS;
 
 export const SAVE_KEY = "shalom-valley-save";
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 export const AUTOSAVE_MS = 30_000;
 export const OFFLINE_CAP_HOURS = 8;
 export const OFFLINE_RENT_RATE = 0.5;
@@ -127,7 +127,8 @@ export const BUILDINGS: Record<Exclude<BuildingType, "altar" | "idol">, Building
   grove: { name: "Olive grove", cost: 28, altarLevel: 2, light: 0, blocks: false, size: 1, blurb: "Olives. Slow. Eating also drinks.", hotkey: "=" },
   store: { name: "Storehouse", cost: 35, altarLevel: 1, light: 1, blocks: true, size: 2, blurb: "Village grain. Deposit crops (E).", hotkey: ";" },
   changer: { name: "Money changer", cost: 40, altarLevel: 1, light: 2, blocks: true, size: 1, blurb: "Bank. Deposit coins (E). Earns at dawn.", hotkey: "]" },
-  hall: { name: "Town hall", cost: 55, altarLevel: 2, light: 3, blocks: true, size: 2, blurb: "Edicts, court, offices. Press G.", hotkey: "." },
+  hall: { name: "Town hall", cost: 55, altarLevel: 2, light: 3, blocks: true, size: 2, blurb: "Edicts, court, offices. Press G. E to enter.", hotkey: "." },
+  fold: { name: "Sheepfold", cost: 28, altarLevel: 1, light: 1, blocks: true, size: 2, blurb: "Raise sheep and goats. Wool at dawn.", hotkey: "," },
 };
 
 export const CROP_KINDS = ["wheat", "grapes", "olives", "flax"] as const;
@@ -185,6 +186,17 @@ export const CIVIC = {
   sanctuaryHypnoMult: 0.4,
   sanctuaryCastBonus: 14,
   hoardStores: 80,
+  maxLaws: 8,
+};
+
+export const FLOCK = {
+  woolPerSheep: 1,
+  meatOnHunt: 2,
+  woolOnHunt: 1,
+  woolPrice: 5,
+  meatRestore: 50,
+  gazelleCount: 7,
+  startSheep: 2,
 };
 
 export const GRANARY_RADIUS_TILES = 5;
@@ -308,3 +320,4 @@ export const UNLOCK_FX = {
 /** Discovering a landmark for the first time. */
 export const DISCOVER_XP = 25;
 export const DISCOVER_RADIUS_TILES = 2.2;
+export const SECRET_DISCOVER_RADIUS_TILES = 0.95;

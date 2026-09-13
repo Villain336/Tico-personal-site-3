@@ -62,7 +62,7 @@ export function QuestJournal({ hud, onClose }: { hud: HudState; onClose: () => v
         })}
       </ul>
       <p className="text-xs text-white/50">
-        Places found: {hud.discovered}/{hud.landmarks}. Strangers arrive at dawn over the first week; each waits at a landmark.
+        Places found: {hud.discovered}/{hud.landmarks}. Some are named in Scripture and stay quiet until you walk into them.
       </p>
       <ModalButton onClick={onClose} variant="ghost">
         Close (J)
