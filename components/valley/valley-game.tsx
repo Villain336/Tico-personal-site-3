@@ -13,6 +13,7 @@ import { Modal, ModalButton } from "./modal";
 import { Ribbon } from "./ribbon";
 import { RosterPanel } from "./roster-panel";
 import { QuestJournal } from "./quest-journal";
+import { Prologue } from "./prologue";
 
 declare global {
   interface Window {
@@ -20,8 +21,8 @@ declare global {
   }
 }
 
-type Panel = "build" | "skills" | "roster" | "journal" | "pause" | "away" | "victory" | null;
-const PAUSING: Panel[] = ["skills", "roster", "journal", "pause", "away", "victory"];
+type Panel = "intro" | "build" | "skills" | "roster" | "journal" | "pause" | "away" | "victory" | null;
+const PAUSING: Panel[] = ["intro", "skills", "roster", "journal", "pause", "away", "victory"];
 
 const HOTKEYS: Record<string, BuildingType> = Object.fromEntries(
   (Object.keys(BUILDINGS) as (keyof typeof BUILDINGS)[]).map((k) => [BUILDINGS[k].hotkey, k]),
@@ -41,7 +42,7 @@ export function ValleyGame({
   const [hud, setHud] = useState<HudState | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [dawn, setDawn] = useState<DawnReport | null>(null);
-  const [panel, setPanel] = useState<Panel>(away ? "away" : null);
+  const [panel, setPanel] = useState<Panel>(!save.introSeen ? "intro" : away ? "away" : null);
   const [ready, setReady] = useState(false);
   const toastId = useRef(0);
 
@@ -103,19 +104,27 @@ export function ValleyGame({
     });
   }, [bridge]);
 
-  // Pause the world whenever a blocking panel is open.
+  // Pause the world whenever a blocking panel is open. The first HUD frame is
+  // the signal that the scene's create() has run and it's listening for commands.
+  const sceneReady = hud !== null;
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || !sceneReady) return;
     bridge.send({ type: PAUSING.includes(panel) ? "pause" : "resume" });
-  }, [panel, ready, bridge]);
+  }, [panel, ready, sceneReady, bridge]);
 
   const togglePanel = useCallback((p: Panel) => setPanel((cur) => (cur === p ? null : p)), []);
+
+  const finishIntro = useCallback(() => {
+    bridge.send({ type: "introSeen" });
+    setPanel(away ? "away" : null);
+  }, [bridge, away]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA")) return;
       const k = e.key.toLowerCase();
+      if (panel === "intro") return; // the prologue owns the keyboard until it's dismissed
       if (k === "escape") {
         e.preventDefault();
         setPanel((cur) => {
@@ -141,14 +150,14 @@ export function ValleyGame({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [bridge, togglePanel]);
+  }, [bridge, togglePanel, panel]);
 
   const closeBuild = useCallback(() => {
     bridge.send({ type: "setBuildMode", building: null });
     setPanel(null);
   }, [bridge]);
 
-  const showRibbon = !!(hud?.jobs && hud.ribbonMode && panel !== "away" && panel !== "victory");
+  const showRibbon = !!(hud?.jobs && hud.ribbonMode && panel !== "away" && panel !== "victory" && panel !== "intro");
 
   return (
     <div className="relative w-full select-none overflow-hidden rounded-3xl border border-border bg-[#07060d] shadow-2xl">
@@ -172,7 +181,9 @@ export function ValleyGame({
         />
       )}
 
-      {dawn && <DawnSummary report={dawn} onClose={() => setDawn(null)} />}
+      {dawn && panel !== "intro" && <DawnSummary report={dawn} onClose={() => setDawn(null)} />}
+
+      {panel === "intro" && <Prologue name={save.character.name || "friend"} onDone={finishIntro} />}
 
       {hud && panel === "build" && (
         <BuildMenu
