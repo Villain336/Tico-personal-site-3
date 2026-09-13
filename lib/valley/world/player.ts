@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import type { WorldScene } from "../scenes/WorldScene";
 import { ALTAR, CIVIC, FLOCK, LANTERN_TILES, PLAYER, TILE, UNLOCK_FX, XP } from "../config";
+import { meleeReaches } from "./combat";
 import { bladeStats, emptyGear, incomingDamage, lanternBonus, wrapArmor } from "./gear";
 import { hasIntent } from "./laws";
 import { ENTERABLE } from "./interiors";
@@ -262,7 +263,7 @@ export class Player extends Actor {
     for (const e of this.world.enemies.list) {
       if (!e.alive) continue;
       const d = dist(this.x, this.y - 8, e.x, e.y - 8);
-      if (d > range + 10) continue;
+      if (!meleeReaches(range, e.def.hitRadius ?? 10, d)) continue;
       if (aimed) {
         const a = Math.atan2(e.y - 8 - (this.y - 8), e.x - this.x);
         let diff = Math.abs(a - ang);

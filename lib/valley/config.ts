@@ -292,6 +292,8 @@ export type EnemyDef = {
   bounty: number;
   swordImmune: boolean;
   ghost: boolean; // passes through walls
+  /** Extra melee reach past the sword tip. Bosses need this so a slam can be answered. */
+  hitRadius?: number;
 };
 
 export const ENEMIES: Record<EnemyKind, EnemyDef> = {
@@ -300,7 +302,7 @@ export const ENEMIES: Record<EnemyKind, EnemyDef> = {
   deceiver: { name: "Deceiver", minDay: 4, minLevel: 3, minAltar: 1, speed: 34, hp: 36, damage: 0, bounty: 14, swordImmune: false, ghost: false },
   spirit: { name: "Spirit", minDay: 6, minLevel: 4, minAltar: 2, speed: 58, hp: 1, damage: 6, bounty: 18, swordImmune: true, ghost: true },
   prophet: { name: "False Prophet", minDay: 8, minLevel: 5, minAltar: 3, speed: 30, hp: 90, damage: 4, bounty: 60, swordImmune: false, ghost: false },
-  goliath: { name: "Goliath", minDay: 99, minLevel: 99, minAltar: 99, speed: 26, hp: 220, damage: 16, bounty: 80, swordImmune: false, ghost: false },
+  goliath: { name: "Goliath", minDay: 99, minLevel: 99, minAltar: 99, speed: 26, hp: 220, damage: 12, bounty: 80, swordImmune: false, ghost: false, hitRadius: 38 },
 };
 
 export const WAVES = {

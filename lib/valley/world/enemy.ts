@@ -37,7 +37,6 @@ export class Enemy extends Actor {
       this.sprite.setAlpha(0.6);
     }
     if (kind === "goliath") {
-      this.sprite.setScale(1.85);
       this.sprite.setTint(0xd4b483);
     }
   }
@@ -466,12 +465,13 @@ export class Enemies {
             if (e.timer <= 0) {
               e.sprite.clearTint();
               e.sprite.setTint(0xd4b483);
-              this.scene.fx.ring(e.x, e.y - 12, 44, 0xc45c3e);
+              const slamR = e.def.hitRadius ?? 36;
+              this.scene.fx.ring(e.x, e.y - 12, slamR, 0xc45c3e);
               this.scene.cameras.main.shake(140, 0.006);
               this.scene.speech.say(e.sprite, line("goliath", "slam"), "dark", 0);
-              if (dp < 44) player.hurt(e.def.damage);
+              if (dp < slamR) player.hurt(e.def.damage);
               for (const v of sc.villagers.list) {
-                if (v.alive && dist(e.x, e.y, v.x, v.y) < 44) sc.villagers.damage(v, e.def.damage, e);
+                if (v.alive && dist(e.x, e.y, v.x, v.y) < slamR) sc.villagers.damage(v, e.def.damage, e);
               }
               e.state = "recover";
               e.timer = 1.1;
@@ -485,7 +485,7 @@ export class Enemies {
             if (e.timer <= 0) e.state = "hunt";
             break;
           }
-          if (e.moveToward(player.x, player.y, e.def.speed, dt, sc.map, 20) && e.attackCd <= 0) {
+          if (e.moveToward(player.x, player.y, e.def.speed, dt, sc.map, 14) && e.attackCd <= 0) {
             e.state = "windup";
             e.timer = 0.85;
             this.scene.speech.say(e.sprite, line("goliath", "windup"), "dark", 2000);
