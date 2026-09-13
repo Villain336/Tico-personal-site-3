@@ -26,6 +26,7 @@ declare global {
       goliath: () => void;
       david: () => void;
       points: (n?: number) => void;
+      swingNear: () => void;
     };
   }
 }

@@ -974,6 +974,16 @@ export class WorldScene extends Phaser.Scene {
         this.toast(`Skill points +${n}.`, "info");
         this.emitHud();
       },
+      swingNear: () => {
+        const b = this.enemies.livingBoss();
+        if (!b) {
+          this.toast("No Goliath to swing at.", "bad");
+          return;
+        }
+        this.player.setPosition(b.x - 12, b.y);
+        this.player.swing();
+        this.emitHud();
+      },
     };
   }
 }
