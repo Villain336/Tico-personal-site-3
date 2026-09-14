@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ideation: Make Shalom Valley more fun, detailed, and free</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;0,7..72,700;1,7..72,400&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #241c14;
+      --ink-soft: #4a3d2f;
+      --paper: #f6efe3;
+      --paper-deep: #efe4d0;
+      --rule: #d4c4a8;
+      --gold: #8a6a2f;
+      --gold-soft: #f0e2c4;
+      --olive: #3d5340;
+      --olive-soft: #dce6d8;
+      --clay: #7a3d2a;
+      --clay-soft: #f0d8ce;
+      --dusk: #3a4158;
+      --dusk-soft: #d9dde8;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: "Source Sans 3", "Segoe UI", sans-serif;
+      line-height: 1.55;
+      font-size: 1.05rem;
+    }
+    h1, h2, h3, .brand {
+      font-family: Literata, Georgia, serif;
+    }
+    a { color: var(--gold); }
+    strong { color: inherit; }
+    code {
+      font-size: 0.88em;
+      background: var(--paper-deep);
+      padding: 0.08em 0.35em;
+      border-radius: 4px;
+    }
+    .wrap { max-width: 74ch; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+    header.meta {
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 1.4rem;
+      margin-bottom: 2rem;
+    }
+    .eyebrow {
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 0.78rem;
+      color: var(--gold);
+      font-weight: 700;
+    }
+    h1 { font-size: 2.1rem; line-height: 1.2; margin: 0.35rem 0 0.8rem; }
+    .meta-list {
+      display: grid;
+      grid-template-columns: max-content 1fr;
+      gap: 0.25rem 1rem;
+      margin: 0;
+    }
+    .meta-list dt { color: var(--ink-soft); font-size: 0.88rem; }
+    .meta-list dd { margin: 0; }
+    nav.jump {
+      background: var(--paper-deep);
+      border: 1px solid var(--rule);
+      border-radius: 10px;
+      padding: 0.9rem 1rem;
+      margin: 1.5rem 0 2rem;
+    }
+    nav.jump ol { margin: 0.4rem 0 0; padding-left: 1.2rem; }
+    nav.jump a { text-decoration: none; }
+    nav.jump a:hover { text-decoration: underline; }
+    section { margin: 2.4rem 0; }
+    h2 {
+      font-size: 1.45rem;
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 0.35rem;
+    }
+    .axes { list-style: none; padding: 0; }
+    .axes li {
+      padding: 0.45rem 0.7rem;
+      border-left: 4px solid var(--gold);
+      background: var(--gold-soft);
+      margin: 0.45rem 0;
+    }
+    article.idea {
+      background: #fffdf8;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 1.15rem 1.2rem 1.3rem;
+      margin: 1.4rem 0;
+    }
+    article.idea h3 { margin: 0.2rem 0 0.7rem; font-size: 1.28rem; }
+    .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.8rem; }
+    .chip {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 0.15rem 0.65rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .chip-id { background: var(--gold-soft); color: var(--gold); }
+    .chip-axis { background: var(--olive-soft); color: var(--olive); }
+    .chip-conf-high { background: var(--olive-soft); color: var(--olive); }
+    .chip-conf-med { background: var(--gold-soft); color: var(--gold); }
+    .chip-cx-l { background: var(--dusk-soft); color: var(--dusk); }
+    .chip-cx-m { background: var(--dusk-soft); color: var(--dusk); }
+    .chip-cx-h { background: var(--clay-soft); color: var(--clay); }
+    dl.fields { margin: 0; }
+    dl.fields dt {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--ink-soft);
+      margin-top: 0.75rem;
+    }
+    dl.fields dd { margin: 0.15rem 0 0; }
+    figure.viz {
+      margin: 1rem 0 0.2rem;
+      background: var(--paper);
+      border: 1px dashed var(--rule);
+      border-radius: 10px;
+      padding: 0.6rem;
+    }
+    figure.viz figcaption {
+      font-size: 0.82rem;
+      color: var(--ink-soft);
+      padding: 0.2rem 0.4rem 0.4rem;
+    }
+    svg text { font-family: "Source Sans 3", sans-serif; fill: var(--ink); }
+    table.reject {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+    table.reject th, table.reject td {
+      text-align: left;
+      vertical-align: top;
+      padding: 0.45rem 0.5rem;
+      border-bottom: 1px solid var(--rule);
+    }
+    table.reject th { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; }
+    footer.composition-signal {
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--rule);
+      font-size: 0.85rem;
+      color: var(--ink-soft);
+    }
+    .sources a { word-break: break-word; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="meta">
+      <div class="eyebrow">Ideation</div>
+      <h1>Make Shalom Valley more fun, detailed, and free</h1>
+      <dl class="meta-list">
+        <dt>Date</dt>
+        <dd><time datetime="2026-09-13">2026-09-13</time></dd>
+        <dt>Topic</dt>
+        <dd>valley-fun-freedom</dd>
+        <dt>Focus</dt>
+        <dd>Fun, detail, and creative freedom after Era 5 — not another content era</dd>
+        <dt>Mode</dt>
+        <dd>repo-grounded</dd>
+      </dl>
+    </header>
+
+    <nav class="jump" aria-label="On this page">
+      <div class="eyebrow">Jump</div>
+      <ol>
+        <li><a href="#grounding-context">Grounding Context</a></li>
+        <li><a href="#topic-axes">Topic Axes</a></li>
+        <li><a href="#ranked-ideas">Ranked Ideas</a></li>
+        <li><a href="#rejection-summary">Rejection Summary</a></li>
+        <li><a href="#sources">Sources</a></li>
+      </ol>
+    </nav>
+
+    <section id="grounding-context">
+      <h2>Grounding Context</h2>
+      <h3>Codebase Context</h3>
+      <p>Shalom Valley is a Phaser world with a React overlay. A day is 240 seconds; a night is 120. Dawn already settles the ledger, civic offices, judgment, and stranger arrivals. Dusk always replaces the job ribbon with the same three combat chores. Seven panels already exist: Build, Skills, Roster, Quests, Books, Gear, Civic. Another panel is the failure mode this pass is trying to avoid.</p>
+      <p>Player writing exists but is thin: a character name; up to eight laws of 140 characters that compile through keyword lists; a Book that stores soul <em>kinds</em> (arrived, fallen, redeemed, mercy, fine, exile, lost) and a dawn letter that quotes the last line. Villagers have seed looks, a name from a 28-name pool, and fixed mood lines. On pass-by they quote a law 75% of the time. They have no wants, relationships, or memory.</p>
+      <p>David, Noah, Moses, and Paul arrive on calendar days with kill, harvest, or redeem counters. Signs (drought, long night, quiet dawn) are weather multipliers after day 4. Civic offices bump numbers. There is one tunic recipe. Beasts wander. Interiors are pocket rooms with one prop. Save version is 11. The Phaser–React bridge and the map seed stay. God is never a unit.</p>
+      <h3>External Context</h3>
+      <p>The research split that matters: <strong>authorship play</strong> (the game as a storytelling partner) versus <strong>participation play</strong> (experiencing a designer plot). Small named casts plus relationship labels beat extra quest panels. Dual loops feel alive only when each half changes the other’s option space (Recettear), and hollow when they do not (Moonlighter). More meters do not create depth. Faith-adjacent games that stay playful do it through craft and humour, not virtue dashboards.</p>
+    </section>
+
+    <section id="topic-axes">
+      <h2>Topic Axes</h2>
+      <ol class="axes">
+        <li>Daily loop — what your hands do in a 360-second cycle</li>
+        <li>Village as people — souls, the Book, relationships</li>
+        <li>Creative expression — player authorship that the world can quote</li>
+        <li>World texture — discovery on a fixed 16×16 map</li>
+        <li>Freedom vs rails — quests, eras, and gates</li>
+      </ol>
+    </section>
+
+    <section id="ranked-ideas">
+      <h2>Ranked Ideas</h2>
+      <p>Forty raw candidates across five frames, then a critique pass. Seven survivors. The top pick is the one that changes what you do next without adding a panel or an era.</p>
+      <nav class="jump" aria-label="Ranked ideas">
+        <ol>
+          <li><a href="#idea-1">The Book as partner</a></li>
+          <li><a href="#idea-2">The night that elects the law</a></li>
+          <li><a href="#idea-3">Strangers read the tablet</a></li>
+          <li><a href="#idea-4">A household of five</a></li>
+          <li><a href="#idea-5">Temptation that works</a></li>
+          <li><a href="#idea-6">Walk the sign</a></li>
+          <li><a href="#idea-7">After the weighing, the middle continues</a></li>
+        </ol>
+      </nav>
+
+      <article class="idea" id="idea-1">
+        <div class="chips">
+          <span class="chip chip-id">1</span>
+          <span class="chip chip-axis">Village as people</span>
+          <span class="chip chip-conf-high">Conf High</span>
+          <span class="chip chip-cx-m">Cx Medium</span>
+        </div>
+        <h3>The Book as partner</h3>
+        <dl class="fields">
+          <dt>Description</dt>
+          <dd>Stop treating the Book as a receipt printer. At dawn, sift yesterday into one causal sentence — because this law, this raid, this named fall — and let the player edit or strike that sentence on the existing Books panel or at the altar. The dawn letter quotes the player’s line. Soul entries gain one witness: another name or a landmark. Villagers stay simple; the Book does the remembering.</dd>
+          <dt>Axis</dt>
+          <dd>Village as people (souls, Book, relationships)</dd>
+          <dt>Basis</dt>
+          <dd><code>direct:</code> <code>quoteBook</code> only templates the last soul’s kind (“who fell / was brought back”). The Books panel is a read-only list; <code>SoulEntry.note</code> is system-written. Pass-by speech is a law quote or a greet pool — nobody remembers anybody.<br>
+          <code>external:</code> WAWLT’s editable transcript (simulation proposes, player writes the canon); RimWorld apophenia from two-line reasons; parish registers that reconstruct households from sparse pairs.</dd>
+          <dt>Rationale</dt>
+          <dd>This is the only existing artifact the design already says letters quote. Making it a partner — not a log — turns named souls into tomorrow’s vocabulary without a new HUD tab. It is authorship play using L and the dawn letter you already open.</dd>
+          <dt>Downsides</dt>
+          <dd>Sifting badly becomes fortune-cookie lore. Editing at dawn can feel like homework if the draft is dull. A witness field needs a save bump (v12).</dd>
+          <dt>Confidence</dt>
+          <dd>85%</dd>
+          <dt>Complexity</dt>
+          <dd>Medium</dd>
+        </dl>
+        <figure class="viz">
+          <svg viewBox="0 0 640 150" width="100%" height="150" role="img" aria-label="Play becomes a Book sentence the player can edit, then the letter quotes it.">
+            <rect x="8" y="40" width="110" height="54" rx="8" fill="#dce6d8"/>
+            <text x="63" y="72" text-anchor="middle" font-size="13">Play</text>
+            <path d="M122 67h28" stroke="#8a6a2f" stroke-width="2"/>
+            <polygon points="150,63 162,67 150,71" fill="#8a6a2f"/>
+            <rect x="168" y="40" width="120" height="54" rx="8" fill="#f0e2c4"/>
+            <text x="228" y="72" text-anchor="middle" font-size="13">Sift draft</text>
+            <path d="M292 67h28" stroke="#8a6a2f" stroke-width="2"/>
+            <polygon points="320,63 332,67 320,71" fill="#8a6a2f"/>
+            <rect x="338" y="40" width="130" height="54" rx="8" fill="#fffdf8" stroke="#8a6a2f"/>
+            <text x="403" y="72" text-anchor="middle" font-size="13">You write canon</text>
+            <path d="M472 67h28" stroke="#8a6a2f" stroke-width="2"/>
+            <polygon points="500,63 512,67 500,71" fill="#8a6a2f"/>
+            <rect x="518" y="40" width="114" height="54" rx="8" fill="#d9dde8"/>
+            <text x="575" y="72" text-anchor="middle" font-size="13">Letter quotes</text>
+          </svg>
+          <figcaption>Today the Book prints a kind. This idea inserts one authored sentence between the log and the letter.</figcaption>
+        </figure>
+      </article>
+
+      <article class="idea" id="idea-2">
+        <div class="chips">
+          <span class="chip chip-id">2</span>
+          <span class="chip chip-axis">Daily loop</span>
+          <span class="chip chip-conf-high">Conf High</span>
+          <span class="chip chip-cx-m">Cx Medium</span>
+        </div>
+        <h3>The night that elects the law</h3>
+        <dl class="fields">
+          <dt>Description</dt>
+          <dd>Dusk stops wiping the day’s ribbon. Named officers and written laws can staff “hold the wall” so the sword is a temptation, not the only night. At dawn, the night just survived marks exactly one already-written law as in force until the next dusk. The others stay on the tablet and in mouths; only the elected law feeds civic math and court. A drought can elect “share the bread”; a long night can elect curfew.</dd>
+          <dt>Axis</dt>
+          <dd>Daily loop / what you do with your hands</dd>
+          <dt>Basis</dt>
+          <dd><code>direct:</code> <code>enterDusk()</code> replaces the ribbon with the same three combat jobs regardless of the day’s letter. <code>hasIntent</code> ORs every written law at once, so eight tablet slots are a stacked buff, not a deck. <code>civicDawnMods</code> only emits rent, spawn, wage, and interest numbers.<br>
+          <code>external:</code> Recettear’s halves must change each other’s option space; Moonlighter’s combat half barely teaches the shop. Cult of the Lamb made the violent option <em>work</em>.</dd>
+          <dt>Rationale</dt>
+          <dd>Night is every cycle’s climax, and it currently throws away the day’s authorship. Electing a law makes hands-on night play compile tomorrow without a new meter. Writing laws becomes choosing a deck the night can draw from.</dd>
+          <dt>Downsides</dt>
+          <dd>Players who only fight may never see their prose “win.” Election rules can feel arbitrary if the sift is opaque. Skipping dusk overwrite without staffing the wall can make nights too easy.</dd>
+          <dt>Confidence</dt>
+          <dd>80%</dd>
+          <dt>Complexity</dt>
+          <dd>Medium</dd>
+        </dl>
+        <figure class="viz">
+          <svg viewBox="0 0 640 160" width="100%" height="160" role="img" aria-label="Night outcome chooses one written law to bind the next day.">
+            <rect x="20" y="20" width="180" height="120" rx="10" fill="#d9dde8"/>
+            <text x="110" y="55" text-anchor="middle" font-size="14" font-weight="700">Night</text>
+            <text x="110" y="80" text-anchor="middle" font-size="12">raid / quiet / hunt</text>
+            <text x="110" y="102" text-anchor="middle" font-size="12">who fell, who watched</text>
+            <path d="M210 80h40" stroke="#8a6a2f" stroke-width="2"/>
+            <polygon points="250,76 262,80 250,84" fill="#8a6a2f"/>
+            <rect x="270" y="20" width="160" height="120" rx="10" fill="#f0e2c4"/>
+            <text x="350" y="70" text-anchor="middle" font-size="14" font-weight="700">One law</text>
+            <text x="350" y="96" text-anchor="middle" font-size="12">in force till dusk</text>
+            <path d="M440 80h40" stroke="#8a6a2f" stroke-width="2"/>
+            <polygon points="480,76 492,80 480,84" fill="#8a6a2f"/>
+            <rect x="500" y="20" width="120" height="120" rx="10" fill="#dce6d8"/>
+            <text x="560" y="70" text-anchor="middle" font-size="14" font-weight="700">Day math</text>
+            <text x="560" y="96" text-anchor="middle" font-size="12">court + ledger</text>
+          </svg>
+          <figcaption>Today every law can fire at once. This idea lets the night choose which sentence actually binds.</figcaption>
+        </figure>
+      </article>
+
+      <article class="idea" id="idea-3">
+        <div class="chips">
+          <span class="chip chip-id">3</span>
+          <span class="chip chip-axis">Freedom vs rails</span>
+          <span class="chip chip-conf-high">Conf High</span>
+          <span class="chip chip-cx-m">Cx Medium</span>
+        </div>
+        <h3>Strangers read the tablet</h3>
+        <dl class="fields">
+          <dt>Description</dt>
+          <dd>Keep the famous arrivals if you want the calendar spine, but compile each stranger’s <em>ask</em> from the Book, the elected law, and last night’s kind — the same keyword compiler laws already use. Kill-eight-robbers can become “redeem the three who fell under your curfew.” A stronger variant: they arrive when a condition is ripe (a fold, a fallen name, a sign), not when a day index ticks. The journal stays J; it lists a spoken want instead of “N dawns.”</dd>
+          <dt>Axis</dt>
+          <dd>Freedom vs rails (quests, eras, gates)</dd>
+          <dt>Basis</dt>
+          <dd><code>direct:</code> David / Noah / Moses / Paul are <code>arrivesDay</code> 2 / 3 / 5 / 7 with fixed <code>killCount</code>, <code>harvestCount</code>, and <code>redeemCount</code>. The prologue promises each has a story and needs something from you first. Holy Ghost and Jesus already refuse the clock.<br>
+          <code>external:</code> Authorship versus participation play (Kreminski &amp; Mateas). Recettear gates feel dramatic because they read the other half of the run.</dd>
+          <dt>Rationale</dt>
+          <dd>The railroad is not that strangers come. It is that their homework ignores everything you authored. One recruit who reads the tablet proves the rest do not have to be patriarch skins on a progress bar.</dd>
+          <dt>Downsides</dt>
+          <dd>Generated asks can miss the biblical beat that made the name worth shipping. Ripe-condition timing is harder to tutorial than “day 2.”</dd>
+          <dt>Confidence</dt>
+          <dd>78%</dd>
+          <dt>Complexity</dt>
+          <dd>Medium</dd>
+        </dl>
+      </article>
+
+      <article class="idea" id="idea-4">
+        <div class="chips">
+          <span class="chip chip-id">4</span>
+          <span class="chip chip-axis">Village as people</span>
+          <span class="chip chip-conf-med">Conf Med</span>
+          <span class="chip chip-cx-h">Cx High</span>
+        </div>
+        <h3>A household of five</h3>
+        <dl class="fields">
+          <dt>Description</dt>
+          <dd>Cap living named souls at about five. Offices, letters, falls, mercy, and recruit-titles attach to those people. Newcomers stay unnamed until a name frees. Appointing Miriam <em>is</em> the watchman: she walks the dusk job, her pass-by line changes, the Book records the seat. Houses stop being empty pocket rooms — the people who belong there are inside.</dd>
+          <dt>Axis</dt>
+          <dd>Village as people (souls, Book, relationships)</dd>
+          <dt>Basis</dt>
+          <dd><code>direct:</code> <code>SOUL_NAMES</code> has 28 entries; <code>BOOK_CAP</code> is 40. <code>setOffice</code> already binds a villager seed, but office copy is a spawn / loyalty / interest bump. Interiors are a floor plus one prop; nobody is home.<br>
+          <code>external:</code> RimWorld’s ~12-colonist cap so players know individuals; Twilight Bazaar’s fewer, simpler traces; Quiet Year’s community zoom.</dd>
+          <dt>Rationale</dt>
+          <dd>Apophenia dies in a crowd. A household the player can actually hold in mind makes laws, offices, and rooms mean something. It is the opposite of arrive-fall-forget.</dd>
+          <dt>Downsides</dt>
+          <dd>A hard cap fights the “strangers at dawn” fantasy and may need a save bump plus spawn-rate retune. Occupied interiors are a second project hiding inside the first. Five can feel lonely if nights still spawn anonymous shadows.</dd>
+          <dt>Confidence</dt>
+          <dd>62%</dd>
+          <dt>Complexity</dt>
+          <dd>High</dd>
+        </dl>
+        <figure class="viz">
+          <svg viewBox="0 0 640 150" width="100%" height="150" role="img" aria-label="Five named seats share offices, the Book, and rooms.">
+            <circle cx="120" cy="75" r="28" fill="#dce6d8"/><text x="120" y="80" text-anchor="middle" font-size="12">Miriam</text>
+            <circle cx="230" cy="75" r="28" fill="#dce6d8"/><text x="230" y="80" text-anchor="middle" font-size="12">Boaz</text>
+            <circle cx="340" cy="75" r="28" fill="#f0e2c4"/><text x="340" y="80" text-anchor="middle" font-size="12">Watch</text>
+            <circle cx="450" cy="75" r="28" fill="#d9dde8"/><text x="450" y="80" text-anchor="middle" font-size="12">House</text>
+            <circle cx="560" cy="75" r="28" fill="#f0d8ce"/><text x="560" y="80" text-anchor="middle" font-size="12">Book</text>
+            <path d="M148 75h50M258 75h50M368 75h50M478 75h50" stroke="#8a6a2f" stroke-width="2"/>
+          </svg>
+          <figcaption>The same five names wear the offices, fill the rooms, and give the Book someone to quote.</figcaption>
+        </figure>
+      </article>
+
+      <article class="idea" id="idea-5">
+        <div class="chips">
+          <span class="chip chip-id">5</span>
+          <span class="chip chip-axis">Creative expression</span>
+          <span class="chip chip-conf-med">Conf Med</span>
+          <span class="chip chip-cx-m">Cx Medium</span>
+        </div>
+        <h3>Temptation that works</h3>
+        <dl class="fields">
+          <dt>Description</dt>
+          <dd>Let a cruel efficiency pay now and invoice later. Open gates already buy rent and extra shadows. Compound that: travelers who arrive while gates are open are written as named souls. If you later elect curfew or close the gates, some of those same names return as edge-walkers or as the accused. Hunting for a quick pelt can thin the flock and make the next drought likelier. The short-term win is real. The Book collects the bill. God stays a voice, never a unit.</dd>
+          <dt>Axis</dt>
+          <dd>Creative expression / player authorship</dd>
+          <dt>Basis</dt>
+          <dd><code>direct:</code> Open-gates copy already admits the tradeoff: more travelers and rent, and more enemies at the edge. Spawn today feeds anonymous night enemies, not named travelers. Hunt cases already file only if a no-hunt or kind-to-beasts law is compiled.<br>
+          <code>external:</code> Cult of the Lamb made sacrifice tempting with a real power upgrade, so moral authorship stayed player-owned.</dd>
+          <dt>Rationale</dt>
+          <dd>Authorship is not typing a nicer law. It is inviting bodies, taking the gold, and living with the names. Mercy versus order becomes a story you can retell without a virtue meter.</dd>
+          <dt>Downsides</dt>
+          <dd>If the invoice is delayed too long, it reads as random punishment. If it is too fast, players never take the bait. Named returning enemies need a small identity hook so they are not just reskins.</dd>
+          <dt>Confidence</dt>
+          <dd>68%</dd>
+          <dt>Complexity</dt>
+          <dd>Medium</dd>
+        </dl>
+      </article>
+
+      <article class="idea" id="idea-6">
+        <div class="chips">
+          <span class="chip chip-id">6</span>
+          <span class="chip chip-axis">World texture</span>
+          <span class="chip chip-conf-high">Conf High</span>
+          <span class="chip chip-cx-l">Cx Low</span>
+        </div>
+        <h3>Walk the sign</h3>
+        <dl class="fields">
+          <dt>Description</dt>
+          <dd>Keep the three signs and their grow / thirst / spawn math. Stop announcing them as HUD weather. Discover drought as hard ground and thirsty wells, long night as a dusk that will not lift, quiet dawn as empty roads. Optional second beat: the sign acts as a lens over the tablet (drought asks about open hands; long night asks about curfew). Discovery is attention on the tiles you already have.</dd>
+          <dt>Axis</dt>
+          <dd>World texture / discovery</dd>
+          <dt>Basis</dt>
+          <dd><code>direct:</code> Sign copy already wants to be walked (“The ground hardens…”, “The dark stays…”). <code>pickSign</code> refuses a sign before day 4 and refuses two in a row. The numbers exist; the tell is a toast and a HUD chip.<br>
+          <code>external:</code> Eastward’s freedom as living in the world; <em>The Serpent &amp; The Seed</em> leading with craft and wonder rather than virtue UI.</dd>
+          <dt>Rationale</dt>
+          <dd>This is the cheapest texture win on a locked map seed. It makes the divine surface something you inhabit, not a banner, and it stays off any new panel.</dd>
+          <dt>Downsides</dt>
+          <dd>Players who ignore wells may miss the sign entirely unless some existing toast remains as a whisper. A “lens” on top can balloon into idea 2 if both ship at once.</dd>
+          <dt>Confidence</dt>
+          <dd>82%</dd>
+          <dt>Complexity</dt>
+          <dd>Low</dd>
+        </dl>
+      </article>
+
+      <article class="idea" id="idea-7">
+        <div class="chips">
+          <span class="chip chip-id">7</span>
+          <span class="chip chip-axis">Freedom vs rails</span>
+          <span class="chip chip-conf-med">Conf Med</span>
+          <span class="chip chip-cx-m">Cx Medium</span>
+        </div>
+        <h3>After the weighing, the middle continues</h3>
+        <dl class="fields">
+          <dt>Description</dt>
+          <dd>The first verdict is not the credits. Blessing, exile, or dark reset permanently tilts the compiler and then drops the climax spine: blessing quietly keeps a sanctuary-like intent in force; exile strikes a law and keeps those names; dark reset leaves a standing scar the letter can quote. Play continues as tending, writing, and sifting. No second boss. No second weighing. God remains weather and a voice.</dd>
+          <dt>Axis</dt>
+          <dd>Freedom vs rails (quests, eras, gates)</dd>
+          <dt>Basis</dt>
+          <dd><code>direct:</code> <code>canCallJudgment</code> already says the valley has been weighed. After a verdict, <code>pickSign</code> returns none and <code>compileLaw</code> ignores the outcome — it is a stop, not a tilt.<br>
+          <code>external:</code> Stardew’s never-ending middle; The Quiet Year’s refusal of an epilogue score. The analogy is the <em>desire</em> for a middle, not a claim that the current verdict already provides one.</dd>
+          <dt>Rationale</dt>
+          <dd>The stacked eras march toward a single weighing. If that weighing retunes the valley, the work already shipped starts paying rent instead of emptying the loop.</dd>
+          <dt>Downsides</dt>
+          <dd>A tilted compiler can feel like a hidden new game the player did not opt into. Needs a clear “the trial is over; the village remains” beat so it does not read as a bug. Weaker until ideas 1 or 2 exist to give the middle something to tend.</dd>
+          <dt>Confidence</dt>
+          <dd>60%</dd>
+          <dt>Complexity</dt>
+          <dd>Medium</dd>
+        </dl>
+      </article>
+    </section>
+
+    <section id="rejection-summary">
+      <h2>Rejection Summary</h2>
+      <p>Cut from forty raw ideas plus six combinations. Reasons are one line each.</p>
+      <table class="reject">
+        <thead>
+          <tr><th>#</th><th>Idea</th><th>Reason rejected</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>More HUD panels or meters</td><td>Named failure mode; complexity is not depth</td></tr>
+          <tr><td>2</td><td>Era 6 bosses as the fun</td><td>Participation-play content; user asked for freedom, not another climax</td></tr>
+          <tr><td>3</td><td>Walk cycles as the core</td><td>Below ambition floor; texture, not authorship</td></tr>
+          <tr><td>4</td><td>Second map first</td><td>Out of scope; MAP_SEED is fixed</td></tr>
+          <tr><td>5</td><td>God as a unit</td><td>Hard constraint</td></tr>
+          <tr><td>6</td><td>Full Dwarf Fortress</td><td>Too expensive; anonymous crowds kill apophenia</td></tr>
+          <tr><td>7</td><td>Play the Book as the only UI</td><td>Too expensive relative to value; deletes seven working verbs</td></tr>
+          <tr><td>8</td><td>You are the village’s attention</td><td>Charter rewrite of combat identity; better as a later brainstorm variant of 2 or 4</td></tr>
+          <tr><td>9</td><td>Skip the dark entirely</td><td>Interesting but guts the night half before loops cross-feed</td></tr>
+          <tr><td>10</td><td>The people propose all laws</td><td>Removes the only writing verb; keep as a variant inside idea 1 or 2</td></tr>
+          <tr><td>11</td><td>The naming, not the arrival</td><td>Stronger cousin of idea 3; too much theology-identity fight for a first slice</td></tr>
+          <tr><td>12</td><td>Crock and culture</td><td>Metaphor duplicate of idea 2</td></tr>
+          <tr><td>13</td><td>Unused words as cantillation</td><td>Weaker than a flyleaf the letter can quote</td></tr>
+          <tr><td>14</td><td>An eruv of place</td><td>Better handled as a brainstorm variant of laws once 2 exists</td></tr>
+          <tr><td>15</td><td>Unprogrammed meeting / silence</td><td>Tone tweak; does not change option space</td></tr>
+          <tr><td>16</td><td>Rooms do the work (harvest indoors)</td><td>Duplicates outdoor verbs; occupied rooms (idea 4) are stronger</td></tr>
+          <tr><td>17</td><td>Dawn is a settlement dump</td><td>Pain statement absorbed by ideas 1 and 2</td></tr>
+          <tr><td>18</td><td>Judgment weather gates Jesus</td><td>Pain statement; walk-the-sign is the constructive form</td></tr>
+          <tr><td>19</td><td>You sit the dawn</td><td>Absorbed by idea 1’s altar/Book edit</td></tr>
+          <tr><td>20</td><td>Flock–hunt–tunic triangle</td><td>Good streamlining; fold into idea 5 if temptation ships</td></tr>
+          <tr><td>21</td><td>Raking light reveals</td><td>Overlaps idea 6; more speculative on a baked tilemap</td></tr>
+          <tr><td>22</td><td>Verdict as starting weather</td><td>Genre change; weaker first slice than a post-verdict middle</td></tr>
+          <tr><td>23</td><td>Village keeps your Sabbath (away sim)</td><td>Background enrichment without a live loop to attach to yet</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="sources" class="sources">
+      <h2>Sources</h2>
+      <ul>
+        <li><a href="https://github.com/Villain336/Tico-personal-site-3/blob/cursor/valley-divine-judgment-0306/lib/valley/world/judgment.ts">lib/valley/world/judgment.ts</a></li>
+        <li><a href="https://github.com/Villain336/Tico-personal-site-3/blob/cursor/valley-divine-judgment-0306/lib/valley/world/jobs.ts">lib/valley/world/jobs.ts</a></li>
+        <li><a href="https://github.com/Villain336/Tico-personal-site-3/blob/cursor/valley-divine-judgment-0306/lib/valley/world/laws.ts">lib/valley/world/laws.ts</a></li>
+        <li><a href="https://github.com/Villain336/Tico-personal-site-3/blob/cursor/valley-divine-judgment-0306/lib/valley/world/civic.ts">lib/valley/world/civic.ts</a></li>
+        <li><a href="https://github.com/Villain336/Tico-personal-site-3/blob/cursor/valley-divine-judgment-0306/lib/valley/quests/content.ts">lib/valley/quests/content.ts</a></li>
+        <li><a href="https://mkremins.github.io/publications/IENHistory_ICIDS2021.pdf">Kreminski &amp; Mateas — authorship vs participation</a></li>
+        <li><a href="https://mkremins.github.io/publications/WAWLT_ELO2020.pdf">WAWLT — editable transcript / author goals</a></li>
+        <li><a href="https://www.rockpapershotgun.com/how-rimworld-generates-great-stories">Rock Paper Shotgun — RimWorld apophenia</a></li>
+        <li><a href="https://game-wisdom.com/critical/surprising-success-shop-simulators">Game Wisdom — Recettear mutual loops</a></li>
+        <li><a href="https://game-wisdom.com/analysis/moonlighter">Game Wisdom — Moonlighter hollow shop</a></li>
+        <li><a href="https://www.gamedeveloper.com/design/interview-corralling-the-inherent-cuteness-of-cult-of-the-lamb">Game Developer — Cult of the Lamb streamlining</a></li>
+        <li><a href="https://buriedwithoutceremony.com/the-quiet-year">The Quiet Year</a></li>
+        <li><a href="https://www.iabdi.com/designblog/2024/11/23/more-ui-wont-save-poor-game-design">iABDI — more UI will not save a weak loop</a></li>
+      </ul>
+    </section>
+
+    <footer class="composition-signal">
+      Composed 2026-09-13T23:54Z by ce-ideate from the Shalom Valley fun/freedom brief after Era 5 Judgment. Grounding: codebase scan plus sandbox-village prior-art digest.
+    </footer>
+  </div>
+</body>
+</html>
